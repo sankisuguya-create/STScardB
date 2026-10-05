@@ -124,3 +124,5 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .cell.i-ok { border-color: var(--warn); }
 .nav { display: flex; justify-content: space-between; align-items: center; margin: 16px 0; }
 .dots { color: var(--sub); }
+.ctx { font-size: .75rem; color: var(--sub); }
+.m-bench { color: var(--sub); }

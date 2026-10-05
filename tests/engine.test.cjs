@@ -87,3 +87,15 @@ test('合格基準（各方針1000回）', () => {
   const r = stats(1000);
   for (const [name, ok] of verdict(r)) assert.ok(ok, name + ' ' + JSON.stringify(r));
 });
+
+test('場面に合わないカードは、その戦いの山札・手札に出ない', () => {
+  for (let seed = 1; seed < 300; seed++) {
+    const s = E.newRun(seed, 1);
+    E.chooseNode(s, 0);
+    const ctx = D.ENEMIES[s.battle.enemy.id].ctx;
+    const live = s.battle.draw.concat(s.battle.hand).filter((h) => !h.temp);
+    live.forEach((h) => assert.ok(E.fits(h.id, ctx), h.id + ' @' + ctx));
+    if (s.battle.enemy.id === 'bumped') { assert.ok(s.battle.bench.some((h) => h.id === 'try_it')); return; }
+  }
+  assert.fail('bumped が出なかった');
+});

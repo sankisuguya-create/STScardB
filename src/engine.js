@@ -24,6 +24,7 @@
   }
 
   function card(id) { return D.CARDS[id]; }
+  function fits(id, ctx) { var c = D.CARDS[id]; return !c.ctx || !ctx || c.ctx.indexOf(ctx) >= 0; }
   function statOf(c) { return D.STATS[c.type] ? c.type : null; }
 
   function log(s, e) { e.floor = s.floor; s.log.push(e); }
@@ -114,14 +115,17 @@
       revealed: !E.view, weak: E.weak.slice(), resist: E.resist.slice(),
       backfire: (E.backfire || []).slice(), stressMul: 1
     };
-    var draw = shuffle(s, s.deck.map(function (id) { return { id: id }; }));
+    var bench = [], cards = [];
+    s.deck.forEach(function (id) { (fits(id, E.ctx) ? cards : bench).push({ id: id }); });
+    var draw = shuffle(s, cards);
     s.battle = {
-      enemy: en, draw: draw, hand: [], discard: [], exhaust: [],
+      enemy: en, draw: draw, hand: [], discard: [], exhaust: [], bench: bench,
       energy: 0, guard: 0, turn: 0, calm: false,
       usage: { think: 0, act: 0, relate: 0 }, trustGained: 0, playedOk: {}, msgs: []
     };
     s.phase = 'battle';
-    log(s, { k: 'battle', enemy: eid, kind: E.kind });
+    if (bench.length) msg(s, 'この場面に 合わないカード ' + bench.length + 'まいは、今回は 休み。', 'bench');
+    log(s, { k: 'battle', enemy: eid, kind: E.kind, bench: bench.length });
     startTurn(s, true);
   }
 
@@ -436,7 +440,7 @@
     Object.keys(s.stats).forEach(function (k) { if (s.stats[k] < 0 || s.stats[k] > D.PLAYER.statMax) errs.push('stat range ' + k); });
     if (s.battle && s.phase === 'battle') {
       var b = s.battle;
-      var piles = b.draw.concat(b.hand, b.discard, b.exhaust).filter(function (h) { return !h.temp; });
+      var piles = b.draw.concat(b.hand, b.discard, b.exhaust, b.bench).filter(function (h) { return !h.temp; });
       var exhaustedPerm = b.exhaust.filter(function (h) { return !h.temp; }).length;
       if (piles.length !== s.deck.length) errs.push('card count ' + piles.length + '!=' + s.deck.length + ' (exhaust ' + exhaustedPerm + ')');
     }
@@ -486,7 +490,7 @@
     ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
-    optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, data: D
+    optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   else root.SST_ENGINE = API;

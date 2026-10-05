@@ -110,7 +110,8 @@
       h('div', { class: 'fxs' }, effects),
       c.chance ? h('div', { class: 'chance c-' + c.chance, text: D.CHANCE[c.chance].label }) : null,
       tags.length ? h('div', { class: 'tags' }, tags) : null,
-      lock ? h('div', { class: 'lock', text: lock }) : null
+      lock ? h('div', { class: 'lock', text: lock }) : null,
+      c.ctx && opts.showCtx ? h('div', { class: 'ctx', text: '使える場面：' + c.ctx.map(function (k) { return D.CTX_LABEL[k]; }).join('・') }) : null
     ]);
   }
 
@@ -165,7 +166,7 @@
       h('p', { class: 'other', text: r.other }),
       h('p', { class: 'hint', text: 'これから 使える 選択肢を 1つ えらぼう' }),
       h('div', { class: 'choices' }, r.choices.map(function (id) {
-        var el = cardView(E.card(id), { lock: lockText(E.card(id)) });
+        var el = cardView(E.card(id), { lock: lockText(E.card(id)), showCtx: true });
         el.addEventListener('click', function () { act(function () { E.pickReward(S, id); }); });
         return el;
       })),
@@ -179,7 +180,7 @@
       return h('main', { class: 'rest' }, [
         h('h2', { text: '手放す（卒業する）カードを えらぶ' }),
         h('div', { class: 'choices small' }, S.deck.map(function (id, i) {
-          var el = cardView(E.card(id));
+          var el = cardView(E.card(id), { showCtx: true });
           el.addEventListener('click', function () { removing = false; act(function () { E.rest(S, 'remove', i); }); });
           return el;
         })),
