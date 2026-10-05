@@ -126,3 +126,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .dots { color: var(--sub); }
 .ctx { font-size: .75rem; color: var(--sub); }
 .m-bench { color: var(--sub); }
+.sups { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.sup { min-height: 44px; padding: 4px 10px; border: 2px solid var(--relate); display: flex; flex-direction: column; align-items: flex-start; max-width: 220px; }
+.sup.selected { background: var(--relate); color: #fff; }
+.sup.empty { border: 2px dashed var(--line); color: var(--sub); border-radius: var(--radius); padding: 10px; font-size: .85rem; }
+.supoffer { display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--panel); border: 2px solid var(--relate); border-radius: var(--radius); padding: 8px 14px; }

@@ -37,7 +37,7 @@
       yoyu: D.PLAYER.maxYoyu, maxYoyu: D.PLAYER.maxYoyu,
       trust: D.PLAYER.trustStart,
       stats: { think: 0, act: 0, relate: 0 },
-      deck: D.STARTER.slice(),
+      deck: D.STARTER.slice(), supports: D.SUPPORT_RULES.start.slice(), usedConsult: [],
       usedNormals: [], usedEvents: [],
       map: null, battle: null, reward: null, event: null,
       log: [], result: null
@@ -350,7 +350,9 @@
     noteUnlocks(s, s.trust, statsBefore);
     if (en.kind === 'boss') { endRun(s, true); return; }
     s.phase = 'reward';
-    s.reward = { choices: rewardChoices(s), other: E.other };
+    var sup = null;
+    if (en.kind === 'elite' || rand(s) < D.SUPPORT_RULES.rewardChance) sup = pick(s, Object.keys(D.SUPPORTS));
+    s.reward = { choices: rewardChoices(s), other: E.other, support: sup };
   }
 
   function rewardChoices(s) {
@@ -359,6 +361,42 @@
     var situ = shuffle(s, Object.keys(b.playedOk)).slice(0, 2);
     var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0; }));
     return situ.concat(pool).slice(0, want);
+  }
+
+  function gainSupport(s, id, why) {
+    if (s.supports.length >= D.SUPPORT_RULES.slots) return false;
+    s.supports.push(id);
+    log(s, { k: 'support', id: id, why: why });
+    return true;
+  }
+
+  function takeSupport(s) {
+    if (s.phase !== 'reward' || !s.reward.support) throw new Error('no support');
+    if (gainSupport(s, s.reward.support, 'reward')) s.reward.support = null;
+    return s;
+  }
+
+  function useSupport(s, i) {
+    if (s.phase !== 'battle') throw new Error('not battle');
+    var id = s.supports[i]; if (!id) throw new Error('bad support');
+    var u = D.SUPPORTS[id], b = s.battle, en = b.enemy;
+    s.supports.splice(i, 1);
+    if (u.consult) s.usedConsult.push(id);
+    if (u.reveal) reveal(s);
+    if (u.calmDown && en.str > 0) { en.str = 0; msg(s, '問題の いきおいが おさまった。', 'reveal'); }
+    if (u.solve) en.hp -= u.solve;
+    if (u.guard) b.guard += u.guard;
+    if (u.heal) s.yoyu = Math.min(s.maxYoyu, s.yoyu + u.heal);
+    if (u.draw) drawCards(s, u.draw);
+    if (u.clearMoya) {
+      var n = 0;
+      b.hand = b.hand.filter(function (h) { if (h.id === 'moyamoya') { b.discard.push(h); n++; return false; } return true; });
+      if (n) msg(s, 'モヤモヤが ' + n + 'まい 気にならなくなった。', 'reveal');
+    }
+    msg(s, '「' + u.name + '」を つかった。', 'ally');
+    log(s, { k: 'useSupport', id: id, enemy: en.id });
+    if (en.hp <= 0) winBattle(s);
+    return s;
   }
 
   function pickReward(s, id) {
@@ -384,6 +422,8 @@
       s.deck.splice(deckIdx, 1);
       log(s, { k: 'remove', card: id });
     } else throw new Error('bad choice');
+    var back = s.usedConsult.splice(0, D.SUPPORT_RULES.restReturn);
+    back.forEach(function (id) { if (gainSupport(s, id, 'rest')) s.notice = '「' + D.SUPPORTS[id].name + '」が また できるようになった。'; });
     return advance(s);
   }
 
@@ -416,6 +456,7 @@
     if (e.trust) addTrust(s, e.trust, 'event:' + s.event.id, false);
     if (e.yoyu) s.yoyu = Math.max(1, Math.min(s.maxYoyu, s.yoyu + e.yoyu));
     if (e.addCard) { s.deck.push(e.addCard); log(s, { k: 'gain', card: e.addCard, why: 'event' }); }
+    if (e.support) gainSupport(s, e.support, 'event');
     if (e.curse) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'event:' + s.event.id }); }
     s.event.done = i;
     log(s, { k: 'choice', id: s.event.id, i: i });
@@ -479,6 +520,7 @@
       removed: L.filter(function (e) { return e.k === 'remove'; }),
       discovered: discovered,
       reveals: L.filter(function (e) { return e.k === 'reveal'; }),
+      supportUses: L.filter(function (e) { return e.k === 'useSupport'; }),
       others: L.filter(function (e) { return e.k === 'win'; }),
       grid: grid,
       goodCount: plays.filter(function (p) { return p.judge === 'good'; }).length,
@@ -487,7 +529,7 @@
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn,
+    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D

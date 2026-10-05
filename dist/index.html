@@ -133,6 +133,11 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .dots { color: var(--sub); }
 .ctx { font-size: .75rem; color: var(--sub); }
 .m-bench { color: var(--sub); }
+.sups { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.sup { min-height: 44px; padding: 4px 10px; border: 2px solid var(--relate); display: flex; flex-direction: column; align-items: flex-start; max-width: 220px; }
+.sup.selected { background: var(--relate); color: #fff; }
+.sup.empty { border: 2px dashed var(--line); color: var(--sub); border-radius: var(--radius); padding: 10px; font-size: .85rem; }
+.supoffer { display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--panel); border: 2px solid var(--relate); border-radius: var(--radius); padding: 8px 14px; }
 
 </style>
 </head>
@@ -171,7 +176,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 1.5, resist: 0.5, anxiety: 0.6,
-    restHeal: 0.3, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 1.4, stressScale: 1.35,
+    restHeal: 0.3, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 1.65, stressScale: 1.45,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -227,6 +232,16 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     moyamoya: { name: 'モヤモヤ', line: 'あのときのことが 気になって 手につかない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true }
   };
 
+  // 支え：ポーションに当たる。戦いの中ならいつでも使え（元気を使わない）、使うとなくなる。持てるのは slots まで
+  // 「相談」は使い切りだが、ひと休みで1つ戻る（相談は何度してもよい、という意味を残すため）
+  var SUPPORTS = {
+    teacher: { name: '先生に そうだん', line: '「先生、聞いてほしいことが あります」', solve: 12, reveal: true, calmDown: true, consult: true, note: '問題を 小さくし、ほんとうの ようすが わかる。問題の いきおいも おさまる' },
+    friend: { name: '友だちに そうだん', line: '「ねえ、どう思う？」', guard: 10, draw: 1, consult: true, note: 'ゆとり +10、カードを 1まい 引く' },
+    family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', heal: 12, consult: true, note: '心の余裕 +12' },
+    book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', heal: 6, clearMoya: true, note: '心の余裕 +6、手札の モヤモヤを すてる' }
+  };
+  var SUPPORT_RULES = { slots: 3, start: ['teacher'], rewardChance: 0.3, restReturn: 1 };
+
   var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'endure', 'breathe', 'talk', 'snap_back'];
   var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling'];
 
@@ -273,7 +288,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       title: 'わすれものに 気づいた朝',
       text: '教室について、算数のノートを わすれたことに 気づいた。',
       options: [
-        { label: '先生に 正直に言う', effects: { trust: 1 }, result: '「言いに来てくれて ありがとう」と言われた。' },
+        { label: '先生に 正直に言う', effects: { trust: 1, support: 'teacher' }, result: '「言いに来てくれて ありがとう」と言われた。' },
         { label: 'となりの子に 紙を 一まい もらう', req: { trust: 5 }, effects: { yoyu: 6 }, result: '「いいよ」と すぐ 貸してくれた。' },
         { label: 'だまっておく', effects: { curse: 1 }, result: 'じゅぎょう中、ずっと 気になってしまった。' }
       ]
@@ -282,7 +297,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       title: '友だちが こまっている',
       text: '給食のあと、友だちが 牛にゅうを こぼして こまっている。',
       options: [
-        { label: '「手つだおうか？」と言う', effects: { trust: 2, yoyu: -4, addCard: 'together' }, result: 'いっしょに ふいた。「ありがとう」と言われた。' },
+        { label: '「手つだおうか？」と言う', effects: { trust: 2, yoyu: -4, addCard: 'together', support: 'friend' }, result: 'いっしょに ふいた。「ありがとう」と言われた。' },
         { label: '先生を よびに行く', effects: { trust: 1 }, result: '先生が ぞうきんを 持ってきてくれた。' },
         { label: '見なかったことにする', effects: {}, result: 'そのまま 席にもどった。' }
       ]
@@ -292,7 +307,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       text: 'この前 言い合いになった子と、ろうかで 二人きりになった。',
       lowTrustOnly: true,
       options: [
-        { label: '「この前は ごめんね」と言う', effects: { trust: 3 }, result: '「ううん、こっちこそ」と言ってくれた。' },
+        { label: '「この前は ごめんね」と言う', effects: { trust: 3, support: 'friend' }, result: '「ううん、こっちこそ」と言ってくれた。' },
         { label: 'あいさつだけ する', effects: { trust: 1 }, result: '「おはよう」と 返ってきた。' }
       ]
     }
@@ -317,7 +332,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     stressIntrude: '心の余裕が へって、「カッとなる」が 手札に まざった。'
   };
 
-  var DATA = { CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
+  var DATA = { SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
   else root.SST_DATA = DATA;
 })(this);
@@ -361,7 +376,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       yoyu: D.PLAYER.maxYoyu, maxYoyu: D.PLAYER.maxYoyu,
       trust: D.PLAYER.trustStart,
       stats: { think: 0, act: 0, relate: 0 },
-      deck: D.STARTER.slice(),
+      deck: D.STARTER.slice(), supports: D.SUPPORT_RULES.start.slice(), usedConsult: [],
       usedNormals: [], usedEvents: [],
       map: null, battle: null, reward: null, event: null,
       log: [], result: null
@@ -674,7 +689,9 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     noteUnlocks(s, s.trust, statsBefore);
     if (en.kind === 'boss') { endRun(s, true); return; }
     s.phase = 'reward';
-    s.reward = { choices: rewardChoices(s), other: E.other };
+    var sup = null;
+    if (en.kind === 'elite' || rand(s) < D.SUPPORT_RULES.rewardChance) sup = pick(s, Object.keys(D.SUPPORTS));
+    s.reward = { choices: rewardChoices(s), other: E.other, support: sup };
   }
 
   function rewardChoices(s) {
@@ -683,6 +700,42 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var situ = shuffle(s, Object.keys(b.playedOk)).slice(0, 2);
     var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0; }));
     return situ.concat(pool).slice(0, want);
+  }
+
+  function gainSupport(s, id, why) {
+    if (s.supports.length >= D.SUPPORT_RULES.slots) return false;
+    s.supports.push(id);
+    log(s, { k: 'support', id: id, why: why });
+    return true;
+  }
+
+  function takeSupport(s) {
+    if (s.phase !== 'reward' || !s.reward.support) throw new Error('no support');
+    if (gainSupport(s, s.reward.support, 'reward')) s.reward.support = null;
+    return s;
+  }
+
+  function useSupport(s, i) {
+    if (s.phase !== 'battle') throw new Error('not battle');
+    var id = s.supports[i]; if (!id) throw new Error('bad support');
+    var u = D.SUPPORTS[id], b = s.battle, en = b.enemy;
+    s.supports.splice(i, 1);
+    if (u.consult) s.usedConsult.push(id);
+    if (u.reveal) reveal(s);
+    if (u.calmDown && en.str > 0) { en.str = 0; msg(s, '問題の いきおいが おさまった。', 'reveal'); }
+    if (u.solve) en.hp -= u.solve;
+    if (u.guard) b.guard += u.guard;
+    if (u.heal) s.yoyu = Math.min(s.maxYoyu, s.yoyu + u.heal);
+    if (u.draw) drawCards(s, u.draw);
+    if (u.clearMoya) {
+      var n = 0;
+      b.hand = b.hand.filter(function (h) { if (h.id === 'moyamoya') { b.discard.push(h); n++; return false; } return true; });
+      if (n) msg(s, 'モヤモヤが ' + n + 'まい 気にならなくなった。', 'reveal');
+    }
+    msg(s, '「' + u.name + '」を つかった。', 'ally');
+    log(s, { k: 'useSupport', id: id, enemy: en.id });
+    if (en.hp <= 0) winBattle(s);
+    return s;
   }
 
   function pickReward(s, id) {
@@ -708,6 +761,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       s.deck.splice(deckIdx, 1);
       log(s, { k: 'remove', card: id });
     } else throw new Error('bad choice');
+    var back = s.usedConsult.splice(0, D.SUPPORT_RULES.restReturn);
+    back.forEach(function (id) { if (gainSupport(s, id, 'rest')) s.notice = '「' + D.SUPPORTS[id].name + '」が また できるようになった。'; });
     return advance(s);
   }
 
@@ -740,6 +795,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     if (e.trust) addTrust(s, e.trust, 'event:' + s.event.id, false);
     if (e.yoyu) s.yoyu = Math.max(1, Math.min(s.maxYoyu, s.yoyu + e.yoyu));
     if (e.addCard) { s.deck.push(e.addCard); log(s, { k: 'gain', card: e.addCard, why: 'event' }); }
+    if (e.support) gainSupport(s, e.support, 'event');
     if (e.curse) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'event:' + s.event.id }); }
     s.event.done = i;
     log(s, { k: 'choice', id: s.event.id, i: i });
@@ -803,6 +859,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       removed: L.filter(function (e) { return e.k === 'remove'; }),
       discovered: discovered,
       reveals: L.filter(function (e) { return e.k === 'reveal'; }),
+      supportUses: L.filter(function (e) { return e.k === 'useSupport'; }),
       others: L.filter(function (e) { return e.k === 'win'; }),
       grid: grid,
       goodCount: plays.filter(function (p) { return p.judge === 'good'; }).length,
@@ -811,7 +868,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn,
+    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D
@@ -906,6 +963,26 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     ]);
   }
 
+  var selSup = -1;
+  function supportsRow(inBattle) {
+    var slots = [];
+    for (var i = 0; i < D.SUPPORT_RULES.slots; i++) {
+      (function (i) {
+        var id = S.supports[i];
+        if (!id) { slots.push(h('div', { class: 'sup empty', text: 'あき' })); return; }
+        var u = D.SUPPORTS[id];
+        slots.push(h('button', {
+          class: 'sup' + (selSup === i ? ' selected' : ''), disabled: !inBattle,
+          onclick: function () {
+            if (selSup === i) { selSup = -1; act(function () { E.useSupport(S, i); }); }
+            else { selSup = i; sel = -1; render(); }
+          }
+        }, [h('b', { text: u.name }), selSup === i ? h('small', { text: u.note + '（もう一度 タップで 使う）' }) : null]));
+      })(i);
+    }
+    return h('div', { class: 'sups' }, [h('span', { class: 'lbl', text: '支え' })].concat(slots));
+  }
+
   // --- タイトル ---
   function titleScreen(saved) {
     app.replaceChildren(h('main', { class: 'title' }, [
@@ -940,7 +1017,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
         }, [n.label]);
       })));
     }).reverse();
-    return h('main', { class: 'map' }, [h('p', { class: 'hint', text: '次に 行くところを えらぼう' })].concat(rows));
+    var notice = S.notice; S.notice = null;
+    return h('main', { class: 'map' }, [notice ? h('p', { class: 'praise', text: notice }) : null, supportsRow(false), h('p', { class: 'hint', text: '次に 行くところを えらぼう' })].concat(rows));
   }
 
   // --- 戦い ---
@@ -1006,6 +1084,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       var c = E.card(hc.id), ok = E.canPlay(S, i);
       var el = cardView(c, { preview: c.unplayable ? {} : E.preview(S, i), selected: sel === i, disabled: !ok, temp: hc.temp, lock: lockText(c) });
       el.addEventListener('click', function () {
+        selSup = -1;
         if (!ok) { sel = i; render(); return; }
         if (sel === i) act(function () { E.playCard(S, i); });
         else { sel = i; render(); }
@@ -1014,7 +1093,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     }));
     var help = h('p', { class: 'hint', text: sel >= 0 && E.canPlay(S, sel) ? 'もう一度 タップで 使う' : sel >= 0 ? (E.card(b.hand[sel].id).unplayable ? 'モヤモヤは 使えない' : '元気が たりない／条件が たりない') : 'カードを タップして えらぶ' });
     var end = h('button', { class: 'primary endturn', onclick: function () { act(function () { E.endTurn(S); }); }, text: 'ターンを おわる' });
-    return h('main', { class: 'battle' }, [enemy, msgs, h('div', { class: 'row' }, [me, help, end]), hand]);
+    return h('main', { class: 'battle' }, [enemy, msgs, h('div', { class: 'row' }, [me, supportsRow(true), help, end]), hand]);
   }
 
   // --- 報酬 ---
@@ -1023,6 +1102,13 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     return h('main', { class: 'reward' }, [
       h('h2', { text: '乗りこえた！' }),
       h('p', { class: 'other', text: r.other }),
+      r.support ? h('div', { class: 'supoffer' }, [
+        h('b', { text: '支えが 見つかった：「' + D.SUPPORTS[r.support].name + '」' }),
+        h('small', { text: D.SUPPORTS[r.support].note }),
+        S.supports.length < D.SUPPORT_RULES.slots
+          ? h('button', { class: 'secondary', onclick: function () { act(function () { E.takeSupport(S); }); }, text: '受け取る' })
+          : h('small', { text: '支えが いっぱいで 持てない（' + D.SUPPORT_RULES.slots + 'つまで）' })
+      ]) : null,
       h('p', { class: 'hint', text: 'これから 使える 選択肢を 1つ えらぼう' }),
       h('div', { class: 'choices' }, r.choices.map(function (id) {
         var el = cardView(E.card(id), { lock: lockText(E.card(id)), showCtx: true });
@@ -1113,6 +1199,11 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
         h('span', { text: g.why === 'elite' ? '大きなかべを 乗りこえて、いちばん 使った力が のびた。' : (used || D.STATS[g.stat].verb + 'カードを ' + g.uses + '回') + ' 使ったから。' })
       ]));
     });
+    if (sm.supportUses.length) {
+      var names = {};
+      sm.supportUses.forEach(function (e) { names[D.SUPPORTS[e.id].name] = 1; });
+      items.push(h('li', { class: 'unlock' }, [h('b', { text: 'こまったとき、' + Object.keys(names).map(function (n) { return '「' + n + '」'; }).join('・') + 'に たよれた' }), h('span', { text: 'たよれる人や ものを 使えるのも、大事な力。' })]));
+    }
     sm.unlocks.forEach(function (id) {
       items.push(h('li', { class: 'unlock' }, [h('b', { text: cardName(id) + 'が 使えるようになった' }), h('span', { text: '育った力と 信頼で、できることが ふえた。' })]));
     });

@@ -30,7 +30,7 @@
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 1.5, resist: 0.5, anxiety: 0.6,
-    restHeal: 0.3, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 1.4, stressScale: 1.35,
+    restHeal: 0.3, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 1.65, stressScale: 1.45,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -86,6 +86,16 @@
     moyamoya: { name: 'モヤモヤ', line: 'あのときのことが 気になって 手につかない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true }
   };
 
+  // 支え：ポーションに当たる。戦いの中ならいつでも使え（元気を使わない）、使うとなくなる。持てるのは slots まで
+  // 「相談」は使い切りだが、ひと休みで1つ戻る（相談は何度してもよい、という意味を残すため）
+  var SUPPORTS = {
+    teacher: { name: '先生に そうだん', line: '「先生、聞いてほしいことが あります」', solve: 12, reveal: true, calmDown: true, consult: true, note: '問題を 小さくし、ほんとうの ようすが わかる。問題の いきおいも おさまる' },
+    friend: { name: '友だちに そうだん', line: '「ねえ、どう思う？」', guard: 10, draw: 1, consult: true, note: 'ゆとり +10、カードを 1まい 引く' },
+    family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', heal: 12, consult: true, note: '心の余裕 +12' },
+    book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', heal: 6, clearMoya: true, note: '心の余裕 +6、手札の モヤモヤを すてる' }
+  };
+  var SUPPORT_RULES = { slots: 3, start: ['teacher'], rewardChance: 0.3, restReturn: 1 };
+
   var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'endure', 'breathe', 'talk', 'snap_back'];
   var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling'];
 
@@ -132,7 +142,7 @@
       title: 'わすれものに 気づいた朝',
       text: '教室について、算数のノートを わすれたことに 気づいた。',
       options: [
-        { label: '先生に 正直に言う', effects: { trust: 1 }, result: '「言いに来てくれて ありがとう」と言われた。' },
+        { label: '先生に 正直に言う', effects: { trust: 1, support: 'teacher' }, result: '「言いに来てくれて ありがとう」と言われた。' },
         { label: 'となりの子に 紙を 一まい もらう', req: { trust: 5 }, effects: { yoyu: 6 }, result: '「いいよ」と すぐ 貸してくれた。' },
         { label: 'だまっておく', effects: { curse: 1 }, result: 'じゅぎょう中、ずっと 気になってしまった。' }
       ]
@@ -141,7 +151,7 @@
       title: '友だちが こまっている',
       text: '給食のあと、友だちが 牛にゅうを こぼして こまっている。',
       options: [
-        { label: '「手つだおうか？」と言う', effects: { trust: 2, yoyu: -4, addCard: 'together' }, result: 'いっしょに ふいた。「ありがとう」と言われた。' },
+        { label: '「手つだおうか？」と言う', effects: { trust: 2, yoyu: -4, addCard: 'together', support: 'friend' }, result: 'いっしょに ふいた。「ありがとう」と言われた。' },
         { label: '先生を よびに行く', effects: { trust: 1 }, result: '先生が ぞうきんを 持ってきてくれた。' },
         { label: '見なかったことにする', effects: {}, result: 'そのまま 席にもどった。' }
       ]
@@ -151,7 +161,7 @@
       text: 'この前 言い合いになった子と、ろうかで 二人きりになった。',
       lowTrustOnly: true,
       options: [
-        { label: '「この前は ごめんね」と言う', effects: { trust: 3 }, result: '「ううん、こっちこそ」と言ってくれた。' },
+        { label: '「この前は ごめんね」と言う', effects: { trust: 3, support: 'friend' }, result: '「ううん、こっちこそ」と言ってくれた。' },
         { label: 'あいさつだけ する', effects: { trust: 1 }, result: '「おはよう」と 返ってきた。' }
       ]
     }
@@ -176,7 +186,7 @@
     stressIntrude: '心の余裕が へって、「カッとなる」が 手札に まざった。'
   };
 
-  var DATA = { CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
+  var DATA = { SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
   else root.SST_DATA = DATA;
 })(this);

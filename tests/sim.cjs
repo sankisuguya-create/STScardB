@@ -28,7 +28,13 @@ function rank(c, pol, s) {
   return (10 - r) * 10 + bonus;
 }
 
+function useSupports(s) {
+  // 余裕が半分を切ったら、支えを1つ使う
+  if (s.phase === 'battle' && s.supports.length && s.yoyu < s.maxYoyu * 0.5) E.useSupport(s, 0);
+}
+
 function playTurn(s, pol) {
+  useSupports(s);
   for (let guard = 0; guard < 30 && s.phase === 'battle'; guard++) {
     let best = -1, bestScore = -1;
     s.battle.hand.forEach((h, i) => {
@@ -57,6 +63,7 @@ function runOne(seed, polName) {
       E.chooseNode(s, col);
     } else if (s.phase === 'battle') playTurn(s, pol);
     else if (s.phase === 'reward') {
+      if (s.reward.support && s.supports.length < D.SUPPORT_RULES.slots) E.takeSupport(s);
       const c = s.reward.choices.find((id) => pol.reward(E.card(id)));
       E.pickReward(s, c || null);
     } else if (s.phase === 'rest') {

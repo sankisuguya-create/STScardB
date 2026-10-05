@@ -99,3 +99,26 @@ test('場面に合わないカードは、その戦いの山札・手札に出�
   }
   assert.fail('bumped が出なかった');
 });
+
+test('支え：いつでも使え、使うとなくなり、相談はひと休みで戻る', () => {
+  const s = E.newRun(3, 1);
+  assert.deepStrictEqual(s.supports, ['teacher']);
+  E.chooseNode(s, 0);
+  const hp = s.battle.enemy.hp, energy = s.battle.energy;
+  E.useSupport(s, 0);
+  assert.strictEqual(s.supports.length, 0);
+  assert.ok(s.battle.enemy.hp < hp || s.phase !== 'battle');
+  assert.strictEqual(s.battle ? s.battle.energy : energy, energy);
+  s.phase = 'rest'; s.battle = null;
+  E.rest(s, 'rest');
+  assert.deepStrictEqual(s.supports, ['teacher']);
+});
+
+test('支えは上限をこえて持てない', () => {
+  const s = E.newRun(3, 1);
+  s.supports = ['book', 'book', 'book'];
+  s.trust = 5; s.row = 1;
+  s.phase = 'map';
+  E.chooseNode(s, 1);
+  if (s.phase === 'event' && s.event.id === 'forgot') { E.chooseEvent(s, 0); assert.strictEqual(s.supports.length, 3); }
+});

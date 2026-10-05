@@ -47,6 +47,26 @@
     ]);
   }
 
+  var selSup = -1;
+  function supportsRow(inBattle) {
+    var slots = [];
+    for (var i = 0; i < D.SUPPORT_RULES.slots; i++) {
+      (function (i) {
+        var id = S.supports[i];
+        if (!id) { slots.push(h('div', { class: 'sup empty', text: 'あき' })); return; }
+        var u = D.SUPPORTS[id];
+        slots.push(h('button', {
+          class: 'sup' + (selSup === i ? ' selected' : ''), disabled: !inBattle,
+          onclick: function () {
+            if (selSup === i) { selSup = -1; act(function () { E.useSupport(S, i); }); }
+            else { selSup = i; sel = -1; render(); }
+          }
+        }, [h('b', { text: u.name }), selSup === i ? h('small', { text: u.note + '（もう一度 タップで 使う）' }) : null]));
+      })(i);
+    }
+    return h('div', { class: 'sups' }, [h('span', { class: 'lbl', text: '支え' })].concat(slots));
+  }
+
   // --- タイトル ---
   function titleScreen(saved) {
     app.replaceChildren(h('main', { class: 'title' }, [
@@ -81,7 +101,8 @@
         }, [n.label]);
       })));
     }).reverse();
-    return h('main', { class: 'map' }, [h('p', { class: 'hint', text: '次に 行くところを えらぼう' })].concat(rows));
+    var notice = S.notice; S.notice = null;
+    return h('main', { class: 'map' }, [notice ? h('p', { class: 'praise', text: notice }) : null, supportsRow(false), h('p', { class: 'hint', text: '次に 行くところを えらぼう' })].concat(rows));
   }
 
   // --- 戦い ---
@@ -147,6 +168,7 @@
       var c = E.card(hc.id), ok = E.canPlay(S, i);
       var el = cardView(c, { preview: c.unplayable ? {} : E.preview(S, i), selected: sel === i, disabled: !ok, temp: hc.temp, lock: lockText(c) });
       el.addEventListener('click', function () {
+        selSup = -1;
         if (!ok) { sel = i; render(); return; }
         if (sel === i) act(function () { E.playCard(S, i); });
         else { sel = i; render(); }
@@ -155,7 +177,7 @@
     }));
     var help = h('p', { class: 'hint', text: sel >= 0 && E.canPlay(S, sel) ? 'もう一度 タップで 使う' : sel >= 0 ? (E.card(b.hand[sel].id).unplayable ? 'モヤモヤは 使えない' : '元気が たりない／条件が たりない') : 'カードを タップして えらぶ' });
     var end = h('button', { class: 'primary endturn', onclick: function () { act(function () { E.endTurn(S); }); }, text: 'ターンを おわる' });
-    return h('main', { class: 'battle' }, [enemy, msgs, h('div', { class: 'row' }, [me, help, end]), hand]);
+    return h('main', { class: 'battle' }, [enemy, msgs, h('div', { class: 'row' }, [me, supportsRow(true), help, end]), hand]);
   }
 
   // --- 報酬 ---
@@ -164,6 +186,13 @@
     return h('main', { class: 'reward' }, [
       h('h2', { text: '乗りこえた！' }),
       h('p', { class: 'other', text: r.other }),
+      r.support ? h('div', { class: 'supoffer' }, [
+        h('b', { text: '支えが 見つかった：「' + D.SUPPORTS[r.support].name + '」' }),
+        h('small', { text: D.SUPPORTS[r.support].note }),
+        S.supports.length < D.SUPPORT_RULES.slots
+          ? h('button', { class: 'secondary', onclick: function () { act(function () { E.takeSupport(S); }); }, text: '受け取る' })
+          : h('small', { text: '支えが いっぱいで 持てない（' + D.SUPPORT_RULES.slots + 'つまで）' })
+      ]) : null,
       h('p', { class: 'hint', text: 'これから 使える 選択肢を 1つ えらぼう' }),
       h('div', { class: 'choices' }, r.choices.map(function (id) {
         var el = cardView(E.card(id), { lock: lockText(E.card(id)), showCtx: true });
@@ -254,6 +283,11 @@
         h('span', { text: g.why === 'elite' ? '大きなかべを 乗りこえて、いちばん 使った力が のびた。' : (used || D.STATS[g.stat].verb + 'カードを ' + g.uses + '回') + ' 使ったから。' })
       ]));
     });
+    if (sm.supportUses.length) {
+      var names = {};
+      sm.supportUses.forEach(function (e) { names[D.SUPPORTS[e.id].name] = 1; });
+      items.push(h('li', { class: 'unlock' }, [h('b', { text: 'こまったとき、' + Object.keys(names).map(function (n) { return '「' + n + '」'; }).join('・') + 'に たよれた' }), h('span', { text: 'たよれる人や ものを 使えるのも、大事な力。' })]));
+    }
     sm.unlocks.forEach(function (id) {
       items.push(h('li', { class: 'unlock' }, [h('b', { text: cardName(id) + 'が 使えるようになった' }), h('span', { text: '育った力と 信頼で、できることが ふえた。' })]));
     });

@@ -23,6 +23,8 @@ function contentMd(D) {
   const fx = (c) => [c.solve && '解決' + c.solve, c.guard && 'ゆとり' + c.guard, c.heal && '余裕+' + c.heal, c.draw && '引く' + c.draw, c.reveal && '見方', c.trust && '信頼' + (c.trust > 0 ? '+' : '') + c.trust, c.curse && 'モヤモヤ', c.chance && D.CHANCE[c.chance].label, c.fail && '失敗→' + D.CARDS[c.fail].name, c.req && '条件 ' + JSON.stringify(c.req), c.ctx && '場面 ' + c.ctx.map((k) => D.CTX_LABEL[k]).join('・')].filter(Boolean).join('／');
   L.push('## カード', '', '| 名前 | せりふ・行動 | 種類 | 判定 | 元気 | 効果 |', '|---|---|---|---|---|---|');
   for (const c of Object.values(D.CARDS)) L.push(`| ${c.name} | ${c.line} | ${D.TYPE_LABEL[c.type]} | ${c.judge} | ${c.unplayable ? '-' : c.cost} | ${fx(c)} |`);
+  L.push('', '## 支え（いつでも使える・使い切り）', '', '| 名前 | せりふ・行動 | 効果 |', '|---|---|---|');
+  for (const u of Object.values(D.SUPPORTS)) L.push(`| ${u.name} | ${u.line} | ${u.note}${u.consult ? '（ひと休みで戻る）' : ''} |`);
   L.push('', '## 課題', '');
   for (const e of Object.values(D.ENEMIES)) {
     L.push(`### ${e.scene}（${e.kind}）`, '', `- 最初の見え方：${e.name}`);
