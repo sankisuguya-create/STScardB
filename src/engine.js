@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 1;
+  var ENGINE_VER = 2;
 
   // --- 乱数 ---
   function rand(s) {
@@ -37,7 +37,7 @@
       yoyu: D.PLAYER.maxYoyu, maxYoyu: D.PLAYER.maxYoyu,
       trust: D.PLAYER.trustStart,
       stats: { think: 0, act: 0, relate: 0 },
-      deck: D.STARTER.slice(), supports: D.SUPPORT_RULES.start.slice(), usedConsult: [],
+      deck: D.STARTER.slice(), items: D.SUPPORT_RULES.start.slice(), equip: D.SUPPORT_RULES.start.slice(),
       usedNormals: [], usedEvents: [],
       map: null, battle: null, reward: null, event: null,
       log: [], result: null
@@ -111,8 +111,8 @@
   function startBattle(s, eid) {
     var E = D.ENEMIES[eid];
     var en = {
-      id: eid, name: E.name, hp: Math.round(E.hp * D.RULES.hpScale), maxHp: Math.round(E.hp * D.RULES.hpScale), kind: E.kind, str: 0, mi: 0,
-      revealed: !E.view, weak: E.weak.slice(), resist: E.resist.slice(),
+      id: eid, name: E.forms[0], form: 0, hp: Math.round(E.hp * D.RULES.hpScale), maxHp: Math.round(E.hp * D.RULES.hpScale), kind: E.kind, str: 0, mi: 0,
+      revealed: false, weak: E.weak.slice(), resist: E.resist.slice(),
       backfire: (E.backfire || []).slice(), stressMul: 1
     };
     var bench = [], cards = [];
@@ -121,9 +121,10 @@
     s.battle = {
       enemy: en, draw: draw, hand: [], discard: [], exhaust: [], bench: bench,
       energy: 0, guard: 0, turn: 0, calm: false,
-      usage: { think: 0, act: 0, relate: 0 }, trustGained: 0, playedOk: {}, msgs: []
+      usage: { think: 0, act: 0, relate: 0 }, trustGained: 0, playedOk: {}, msgs: [], usedItems: {}, teacherCard: null
     };
     s.phase = 'battle';
+    if (s.stats.think >= D.FORMS.organizeStat) { organize(s, true); }
     if (bench.length) msg(s, 'この場面に 合わないカード ' + bench.length + 'まいは、今回は 休み。', 'bench');
     log(s, { k: 'battle', enemy: eid, kind: E.kind, bench: bench.length });
     startTurn(s, true);
@@ -197,15 +198,25 @@
     return true;
   }
 
-  function reveal(s) {
+  // 状きょうを整理する：かいぶつ→現実＋オーラ→ふつうの現実。いきおいが弱まる
+  function organize(s, fromStat) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
-    if (en.revealed || !E.view) return;
-    en.revealed = true;
+    if (en.form >= 2) return;
     var from = en.name;
-    en.name = E.view.name; en.weak = E.view.weak.slice(); en.resist = E.view.resist.slice();
-    en.backfire = E.view.backfire.slice(); en.stressMul = E.view.stressMul;
-    msg(s, '見方が かわった：「' + from + '」→「' + en.name + '」', 'reveal');
-    log(s, { k: 'reveal', enemy: en.id, from: from, to: en.name, truth: E.view.truth });
+    en.form++;
+    en.name = E.forms[en.form];
+    en.str = Math.floor(en.str / 2);
+    en.stressMul = D.FORMS.stressMul[en.form];
+    if (en.form === 2) {
+      en.revealed = true;
+      if (E.view) {
+        en.weak = E.view.weak.slice(); en.resist = E.view.resist.slice();
+        en.backfire = E.view.backfire.slice(); en.stressMul *= E.view.stressMul;
+      }
+      log(s, { k: 'reveal', enemy: en.id, from: E.forms[0], to: en.name, truth: E.view ? E.view.truth : 'plain' });
+    }
+    msg(s, fromStat ? 'かしこさが 高いので、はじめから「' + en.name + '」に 見えている。' : '状きょうが 整理できた：「' + from + '」→「' + en.name + '」（いきおいが 弱まった）', 'reveal');
+    log(s, { k: 'form', enemy: en.id, form: en.form, stat: !!fromStat });
   }
 
   function solveAmount(s, c) {
@@ -245,7 +256,7 @@
     if (c.trust) addTrust(s, c.trust, h.id, c.trust > 0);
 
     if (ok) {
-      if (c.reveal) reveal(s);
+      if (c.organize) organize(s);
       if (c.solve) {
         var n = solveAmount(s, c);
         en.hp -= n; entry.solve = n;
@@ -359,7 +370,8 @@
       return;
     }
     var sup = null;
-    if (en.kind === 'elite' || rand(s) < D.SUPPORT_RULES.rewardChance) sup = pick(s, Object.keys(D.SUPPORTS));
+    var unowned = Object.keys(D.SUPPORTS).filter(function (k) { return s.items.indexOf(k) < 0; });
+    if (unowned.length && (en.kind === 'elite' || rand(s) < D.SUPPORT_RULES.rewardChance)) sup = pick(s, unowned);
     s.reward = { choices: rewardChoices(s), other: E.other, support: sup };
   }
 
@@ -367,43 +379,62 @@
     var b = s.battle;
     var want = s.trust >= D.RULES.highTrust ? D.RULES.rewardChoicesHighTrust : D.RULES.rewardChoices;
     var situ = shuffle(s, Object.keys(b.playedOk)).slice(0, 2);
+    if (b.teacherCard && situ.indexOf(b.teacherCard) < 0) situ = [b.teacherCard].concat(situ).slice(0, 2);
     var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0; }));
     return situ.concat(pool).slice(0, want);
   }
 
   function gainSupport(s, id, why) {
-    if (s.supports.length >= D.SUPPORT_RULES.slots) return false;
-    s.supports.push(id);
+    if (s.items.indexOf(id) >= 0) return false;
+    s.items.push(id);
+    if (s.equip.length < D.SUPPORT_RULES.slots) s.equip.push(id);
     log(s, { k: 'support', id: id, why: why });
     return true;
   }
 
   function takeSupport(s) {
     if (s.phase !== 'reward' || !s.reward.support) throw new Error('no support');
-    if (gainSupport(s, s.reward.support, 'reward')) s.reward.support = null;
+    gainSupport(s, s.reward.support, 'reward'); s.reward.support = null;
     return s;
   }
 
-  function useSupport(s, i) {
-    if (s.phase !== 'battle') throw new Error('not battle');
-    var id = s.supports[i]; if (!id) throw new Error('bad support');
-    var u = D.SUPPORTS[id], b = s.battle, en = b.enemy;
-    s.supports.splice(i, 1);
-    if (u.consult) s.usedConsult.push(id);
-    if (u.reveal) reveal(s);
-    if (u.calmDown && en.str > 0) { en.str = 0; msg(s, '問題の いきおいが おさまった。', 'reveal'); }
-    if (u.solve) en.hp -= u.solve;
-    if (u.guard) b.guard += u.guard;
+  function canUseSupport(s, id) {
+    return s.phase === 'battle' && s.equip.indexOf(id) >= 0 && !s.battle.usedItems[id];
+  }
+
+  function useSupport(s, id) {
+    if (!canUseSupport(s, id)) throw new Error('cannot use item');
+    var u = D.SUPPORTS[id], b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    b.usedItems[id] = 1;
+    msg(s, '「' + u.name + '」', 'ally');
     if (u.heal) s.yoyu = Math.min(s.maxYoyu, s.yoyu + u.heal);
-    if (u.draw) drawCards(s, u.draw);
+    if (id === 'teacher') {
+      var tc = D.TEACHER_CARDS[E.ctx];
+      b.hand.push({ id: tc, temp: true }); b.teacherCard = tc;
+      msg(s, '先生の すすめ：「' + card(tc).name + '」が 手札に 入った。', 'next');
+      organize(s);
+    }
+    if (id === 'friend') {
+      var fc = rand(s) < D.SUPPORT_RULES.junkChance ? 'junk_advice' : pick(s, D.FRIEND_CARDS);
+      s.deck.push(fc); b.hand.push({ id: fc });
+      log(s, { k: 'gain', card: fc, why: 'friend' });
+      msg(s, '友だちの アドバイス：「' + card(fc).name + '」' + (fc === 'junk_advice' ? '（あまり 役に立たなかった…）' : ''), fc === 'junk_advice' ? 'fail' : 'next');
+    }
     if (u.clearMoya) {
       var n = 0;
       b.hand = b.hand.filter(function (h) { if (h.id === 'moyamoya') { b.discard.push(h); n++; return false; } return true; });
       if (n) msg(s, 'モヤモヤが ' + n + 'まい 気にならなくなった。', 'reveal');
     }
-    msg(s, '「' + u.name + '」を つかった。', 'ally');
     log(s, { k: 'useSupport', id: id, enemy: en.id });
-    if (en.hp <= 0) winBattle(s);
+    return s;
+  }
+
+  // ひと休みで、つけるアイテムを えらび直す
+  function setEquip(s, ids) {
+    if (s.phase !== 'rest') throw new Error('not rest');
+    if (ids.length > D.SUPPORT_RULES.slots) throw new Error('too many');
+    ids.forEach(function (id) { if (s.items.indexOf(id) < 0) throw new Error('not owned'); });
+    s.equip = ids.slice();
     return s;
   }
 
@@ -430,8 +461,6 @@
       s.deck.splice(deckIdx, 1);
       log(s, { k: 'remove', card: id });
     } else throw new Error('bad choice');
-    var back = s.usedConsult.splice(0, D.SUPPORT_RULES.restReturn);
-    back.forEach(function (id) { if (gainSupport(s, id, 'rest')) s.notice = '「' + D.SUPPORTS[id].name + '」が また できるようになった。'; });
     return advance(s);
   }
 
@@ -537,7 +566,7 @@
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D

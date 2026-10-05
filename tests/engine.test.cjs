@@ -15,7 +15,7 @@ test('全カード・全課題の参照が正しい', () => {
 });
 
 test('相談・謝罪・整えるカードには使用条件がない', () => {
-  ['consult', 'tell_teacher', 'ask_teacher', 'apologize', 'breathe', 'name_feeling', 'breathe_first', 'say_dunno']
+  ['consult', 'tell_teacher', 'ask_teacher', 'apologize', 'firm_reply', 'tell_hurt', 'breathe', 'name_feeling', 'breathe_first', 'say_dunno']
     .forEach((id) => assert.ok(!D.CARDS[id].req, id));
   Object.values(D.CARDS).filter((c) => c.type === 'calm').forEach((c) => assert.ok(!c.req, c.name));
 });
@@ -67,9 +67,8 @@ test('見方カードで課題の名前と相性が変わる', () => {
     const s = E.newRun(seed, 1);
     E.chooseNode(s, 0);
     if (s.battle.enemy.id !== 'bumped') continue;
-    const i = s.battle.hand.findIndex((h) => h.id === 'watch_them');
-    E.playCard(s, i);
-    assert.strictEqual(s.battle.enemy.name, D.ENEMIES.bumped.view.name);
+    for (let k = 0; k < 2; k++) { s.battle.hand.push({ id: 'watch_them', temp: true }); s.battle.energy = 3; E.playCard(s, s.battle.hand.length - 1); }
+    assert.strictEqual(s.battle.enemy.name, D.ENEMIES.bumped.forms[2]);
     assert.ok(s.battle.enemy.backfire.includes('impulse'));
     return;
   }
@@ -100,27 +99,50 @@ test('場面に合わないカードは、その戦いの山札・手札に出�
   assert.fail('bumped が出なかった');
 });
 
-test('支え：いつでも使え、使うとなくなり、相談はひと休みで戻る', () => {
-  const s = E.newRun(3, 1);
-  assert.deepStrictEqual(s.supports, ['teacher']);
-  E.chooseNode(s, 0);
-  const hp = s.battle.enemy.hp, energy = s.battle.energy;
-  E.useSupport(s, 0);
-  assert.strictEqual(s.supports.length, 0);
-  assert.ok(s.battle.enemy.hp < hp || s.phase !== 'battle');
-  assert.strictEqual(s.battle ? s.battle.energy : energy, energy);
-  s.phase = 'rest'; s.battle = null;
-  E.rest(s, 'rest');
-  assert.deepStrictEqual(s.supports, ['teacher']);
+test('アイテム：戦いごとに1回、なくならない。先生は場面のカードをくれ、報酬にも出る', () => {
+  for (let seed = 1; seed < 300; seed++) {
+    const s = E.newRun(seed, 1);
+    E.chooseNode(s, 0);
+    if (s.battle.enemy.id !== 'dunno') continue;
+    E.useSupport(s, 'teacher');
+    assert.ok(!E.canUseSupport(s, 'teacher'));
+    assert.ok(s.battle.hand.some((h) => h.id === 'ask_teacher'));
+    assert.strictEqual(s.battle.enemy.form, 1);
+    assert.deepStrictEqual(s.equip, ['teacher']);
+    s.battle.enemy.hp = 0; s.battle.hand.push({ id: 'try_it', temp: true }); s.battle.energy = 3;
+    E.playCard(s, s.battle.hand.length - 1);
+    assert.strictEqual(s.phase, 'reward');
+    assert.ok(s.reward.choices.includes('ask_teacher'));
+    E.pickReward(s, null);
+    E.chooseNode(s, 0);
+    if (s.phase === 'battle') assert.ok(E.canUseSupport(s, 'teacher'));
+    return;
+  }
+  assert.fail('dunno が出なかった');
 });
 
-test('支えは上限をこえて持てない', () => {
+test('整理するカードで 姿が3段階 現実に近づき、いきおいが弱まる。かしこさ2なら 1段階目から', () => {
+  const s = E.newRun(11, 1);
+  E.chooseNode(s, 0);
+  const en = s.battle.enemy, E0 = D.ENEMIES[en.id];
+  assert.strictEqual(en.form, 0); assert.strictEqual(en.name, E0.forms[0]);
+  s.battle.hand.push({ id: 'sort_out', temp: true }); s.battle.energy = 3;
+  E.playCard(s, s.battle.hand.length - 1);
+  assert.strictEqual(en.form, 1); assert.ok(en.stressMul < 1);
+  const s2 = E.newRun(11, 1); s2.stats.think = 2;
+  E.chooseNode(s2, 0);
+  assert.strictEqual(s2.battle.enemy.form, 1);
+});
+
+test('ひと休みで アイテムを入れかえられる（3つまで・持っているものだけ）', () => {
   const s = E.newRun(3, 1);
-  s.supports = ['book', 'book', 'book'];
-  s.trust = 5; s.row = 1;
-  s.phase = 'map';
-  E.chooseNode(s, 1);
-  if (s.phase === 'event' && s.event.id === 'forgot') { E.chooseEvent(s, 0); assert.strictEqual(s.supports.length, 3); }
+  s.items = ['teacher', 'friend', 'family', 'book'];
+  s.phase = 'rest';
+  E.setEquip(s, ['friend', 'family', 'book']);
+  assert.deepStrictEqual(s.equip, ['friend', 'family', 'book']);
+  assert.throws(() => E.setEquip(s, ['teacher', 'friend', 'family', 'book']));
+  s.items = ['teacher'];
+  assert.throws(() => E.setEquip(s, ['friend']));
 });
 
 test('時間で過ぎ去る課題：ターン数を乗りこえると終わり、報酬はない。からかいは過ぎ去らない', () => {

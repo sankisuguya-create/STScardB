@@ -9,10 +9,10 @@ const fs = require('node:fs');
   const out = process.argv[2] || path.join(__dirname, '..', 'shots');
   fs.mkdirSync(out, { recursive: true });
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1366, height: 768 }, hasTouch: true, isMobile: false });
+  const page = await browser.newPage({ ignoreHTTPSErrors: true, viewport: { width: 1366, height: 768 }, hasTouch: true, isMobile: false });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('console', (m) => { if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) errors.push(m.text()); });
   await page.goto('file://' + path.join(__dirname, '..', 'dist', 'index.html') + '?mode=1');
   const shot = {};
   async function snap(name) { if (!shot[name]) { shot[name] = 1; await page.screenshot({ path: path.join(out, name + '.png') }); } }
@@ -30,7 +30,7 @@ const fs = require('node:fs');
       if (playable.length) { await playable[0].tap(); await snap('03-selected'); await page.tap('.hand .card.selected'); }
       else await page.tap('.endturn');
     }
-    else if (phase === 'reward') { await snap('04-reward'); await page.tap('.choices .card >> nth=0'); }
+    else if (phase === 'reward') { await snap('04-reward'); const c = await page.$('.choices .card'); if (c) await c.tap(); else await page.tap('.reward > button.secondary'); }
     else if (phase === 'rest') { await snap('05-rest'); await page.tap('.two button >> nth=0'); }
     else if (phase === 'event') {
       await snap('06-event');

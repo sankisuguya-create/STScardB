@@ -2,7 +2,7 @@
 // node scripts/build.mjs  /  --check で dist が最新かを確かめる
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 const r = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
-const js = ['src/data.js', 'src/engine.js', 'src/platform.js', 'src/ui.js'].map(r).join('\n').replace(/<\/script/gi, '<\\/script');
+const js = ['src/data.js', 'src/engine.js', 'src/platform.js', 'src/sprites.js', 'src/ui.js'].map(r).join('\n').replace(/<\/script/gi, '<\\/script');
 const html = r('src/index.template.html').replace('/*@@STYLE@@*/', () => r('src/style.css')).replace('/*@@SCRIPT@@*/', () => js);
 import { createRequire } from 'node:module';
 const D = createRequire(import.meta.url)('../src/data.js');

@@ -4,142 +4,197 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>こころの冒険</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
 <style>
-/* 仮の見た目（あとで差し替える）。色の役割はトークンで定義する */
+/* 見た目レベル3：ドットの舞台（案A）＋ 課題から出る吹き出しの文字盤。
+   色は役割ごとのトークン。種類・状態は色だけでなく文字でも出す */
 :root {
-  --bg: #f6f4ef; --panel: #ffffff; --ink: #1f2328; --sub: #57606a; --line: #d0d7de;
-  --primary: #1f6feb; --primary-ink: #fff;
-  --good: #1a7f37; --bad: #b42318; --warn: #9a6700;
-  --think: #3b5bdb; --act: #d9480f; --relate: #2b8a3e; --calm: #0c8599; --impulse: #c92a2a; --basic: #6e7781; --curse: #5f3dc4;
-  --yoyu: #2f9e44; --hp: #e8590c;
-  --radius: 10px;
-  font-family: "Hiragino Sans", "Yu Gothic UI", "BIZ UDPGothic", "Noto Sans JP", sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --bg: #16181c; --panel: #22262c; --ink: #e6edf3; --sub: #9da7b3; --line: #3a414a; }
+  --bg: #e9ecf3; --ink: #1c2230; --sub: #5b6578; --line: #12172a; --paper: #fffdf7; --panel: #ffffff;
+  --stage-top: #283153; --stage-bot: #3d4a7d; --floor: #4b5a92;
+  --primary: #2f6fe4; --primary-ink: #fff; --gold: #ffd23f;
+  --good: #1a7f37; --bad: #c4262e; --warn: #9a6700;
+  --think: #3b5bdb; --act: #e0661b; --relate: #2b8a3e; --calm: #0c8599; --impulse: #c92a2a; --basic: #6e7781; --curse: #5f3dc4;
+  --yoyu: #27a35a; --hp: #e8692a;
+  --radius: 10px; --shadow: 0 4px 0 var(--line);
+  --display: "DotGothic16", "BIZ UDGothic", "Hiragino Sans", monospace;
+  --body: "M PLUS Rounded 1c", "Hiragino Sans", "Yu Gothic UI", "BIZ UDPGothic", "Noto Sans JP", sans-serif;
+  font-family: var(--body);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-size: 16px; -webkit-tap-highlight-color: transparent; }
 #app { display: flex; flex-direction: column; height: 100vh; max-width: 1366px; margin: 0 auto; }
-button { font: inherit; border-radius: var(--radius); border: 2px solid var(--line); background: var(--panel); color: var(--ink); padding: 10px 18px; min-height: 48px; cursor: pointer; touch-action: manipulation; }
-button.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); font-weight: 700; }
-button.secondary { background: transparent; border-color: var(--primary); color: var(--primary); }
-button:disabled { opacity: .45; cursor: default; }
-button.big { font-size: 1.3rem; min-width: 220px; min-height: 72px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
-button small { font-size: .85rem; font-weight: 400; }
-h1, h2, h3 { margin: .3em 0; }
+h1, h2, h3 { margin: .3em 0; font-family: var(--display); font-weight: 400; }
+button { font: inherit; border-radius: var(--radius); border: 3px solid var(--line); background: var(--panel); color: var(--ink); padding: 10px 18px; min-height: 48px; cursor: pointer; touch-action: manipulation; box-shadow: var(--shadow); transition: transform .08s; }
+button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--line); }
+button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+button.primary { background: var(--primary); color: var(--primary-ink); font-family: var(--display); font-size: 1.15rem; }
+button.secondary { background: var(--panel); color: var(--primary); font-weight: 800; }
+button:disabled { opacity: .45; cursor: default; box-shadow: none; }
+button.big { font-size: 1.3rem; min-width: 220px; min-height: 76px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+button small { font-size: .85rem; font-family: var(--body); }
 .hint { color: var(--sub); margin: 4px 0; }
-.lbl { font-size: .8rem; color: var(--sub); margin-right: 6px; }
+.lbl { font-size: .78rem; color: var(--sub); margin-right: 6px; }
+canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
 
-.top { display: flex; align-items: center; gap: 12px; padding: 6px 12px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-.meter { display: flex; align-items: center; gap: 6px; min-width: 260px; }
-.meter .bar { flex: 1; height: 14px; background: var(--line); border-radius: 7px; overflow: hidden; min-width: 120px; }
-.meter .fill { height: 100%; background: var(--yoyu); transition: width .25s; }
-.meter.low .fill { background: var(--bad); }
-.meter.low b::after { content: " ！"; color: var(--bad); }
+/* 上の帯 */
+.top { display: flex; align-items: center; gap: 10px; padding: 6px 14px; background: var(--line); color: #fff; flex-wrap: wrap; }
+.top .lbl { color: #b8c2dc; }
+.meter { display: flex; align-items: center; gap: 6px; min-width: 250px; }
+.meter .bar { flex: 1; height: 16px; background: rgba(0,0,0,.3); border: 2px solid var(--line); border-radius: 4px; overflow: hidden; min-width: 120px; }
+.top .meter .bar { border-color: #fff; }
+.meter .fill { height: 100%; background: var(--yoyu); transition: width .35s; }
+.meter.low .fill { background: var(--bad); animation: pulse 1s steps(2) infinite; }
+.meter.low b::after { content: " ！"; color: #ff8a8a; }
 .meter.hp .fill { background: var(--hp); }
-.chip { display: inline-flex; align-items: baseline; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); }
-.chip b { font-size: 1.1rem; }
+.chip { display: inline-flex; align-items: baseline; padding: 3px 10px; border: 2px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--ink); }
+.chip b { font-size: 1.1rem; font-family: var(--display); font-weight: 400; }
+.chip .lbl { color: var(--sub); }
 .stats { display: flex; gap: 6px; }
-.chip.st-think { border-color: var(--think); } .chip.st-act { border-color: var(--act); } .chip.st-relate { border-color: var(--relate); }
-.floor { margin-left: auto; color: var(--sub); }
+.chip.st-think { box-shadow: inset 0 -4px 0 var(--think); } .chip.st-act { box-shadow: inset 0 -4px 0 var(--act); } .chip.st-relate { box-shadow: inset 0 -4px 0 var(--relate); }
+.floor { margin-left: auto; font-family: var(--display); }
 
 main { flex: 1; overflow: auto; padding: 10px 14px; }
-.title { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
-.title h1 { font-size: 2.6rem; }
-.sub { color: var(--sub); font-size: 1.1rem; }
+.title { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: linear-gradient(var(--stage-top), var(--stage-bot)); color: #fff; }
+.title h1 { font-size: 3rem; text-shadow: 0 4px 0 var(--line); }
+.sub { color: #d6dcf0; font-size: 1.1rem; }
 
-.map { display: flex; flex-direction: column; gap: 10px; align-items: center; }
-.maprow { display: flex; align-items: center; gap: 14px; }
-.maprow.past { opacity: .4; }
-.maprow .rownum { width: 70px; color: var(--sub); text-align: right; }
-.node { min-width: 180px; min-height: 64px; font-size: 1.15rem; font-weight: 700; }
-.maprow.now .node:not(:disabled) { border-width: 3px; box-shadow: 0 2px 0 var(--line); }
-.n-battle { border-color: var(--act); } .n-elite { border-color: var(--impulse); } .n-event { border-color: var(--think); } .n-rest { border-color: var(--yoyu); } .n-boss { border-color: var(--curse); }
+/* マップ */
+.map { display: flex; flex-direction: column; gap: 12px; align-items: center; background: linear-gradient(var(--stage-top), var(--stage-bot)); color: #fff; }
+.map .hint { color: #d6dcf0; }
+.maprow { display: flex; align-items: center; gap: 16px; }
+.maprow.past { opacity: .35; }
+.maprow .rownum { width: 72px; color: #b8c2dc; text-align: right; font-family: var(--display); }
+.node { min-width: 180px; min-height: 64px; font-size: 1.15rem; font-family: var(--display); }
+.maprow.now .node:not(:disabled) { animation: bob 1.4s steps(2) infinite; }
+.n-battle { background: #ffe3cf; } .n-elite { background: #ffd0d0; } .n-event { background: #dbe4ff; } .n-rest { background: #d3f5df; } .n-boss { background: #e5dbff; }
 
-.battle { display: flex; flex-direction: column; gap: 8px; }
-.enemy { background: var(--panel); border: 2px solid var(--line); border-radius: var(--radius); padding: 8px 14px; }
-.enemy.k-elite { border-color: var(--impulse); } .enemy.k-boss { border-color: var(--curse); }
-.ekind { font-size: .85rem; color: var(--sub); }
-.ename { font-size: 1.5rem; }
-.ename.unsure { text-decoration: underline dotted; }
-.unsure-note, .note { font-size: .9rem; color: var(--warn); }
+/* 戦い：舞台 */
+.battle { display: flex; flex-direction: column; gap: 6px; padding: 0; overflow: hidden; }
+.stage { position: relative; height: 340px; flex: none; background: linear-gradient(var(--stage-top) 0 74%, var(--floor) 74%); border-bottom: 4px solid var(--line); display: grid; grid-template-columns: 250px 300px 1fr; align-items: end; padding: 0 22px 16px; gap: 10px; }
+.items { position: absolute; left: 16px; top: 12px; display: flex; gap: 8px; align-items: flex-start; z-index: 2; }
+.item { width: 64px; height: 64px; min-height: 0; padding: 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--paper); }
+.item canvas { width: 40px; height: 40px; }
+.item .iname { font-size: 9px; line-height: 1.1; font-weight: 700; }
+.item.selected { background: var(--gold); transform: translateY(-3px); }
+.item.used { opacity: .35; filter: grayscale(1); }
+.item.empty { width: 64px; height: 64px; border: 3px dashed #8d98bd; border-radius: var(--radius); }
+.itemtip { max-width: 320px; background: var(--paper); border: 3px solid var(--line); border-radius: var(--radius); padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; font-size: .85rem; box-shadow: var(--shadow); }
+.hero { grid-column: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.hero canvas.me { width: 140px; height: 140px; }
+.chip.guard.on { background: #cfe6ff; }
+.monster { grid-column: 2; justify-self: center; }
+.monster canvas.mon { width: 260px; height: 260px; animation: bob 1.6s steps(2) infinite; }
+.monster.f1 canvas.mon { animation: bob 1.6s steps(2) infinite, flick 1.2s steps(2) infinite; }
+.monster.f2 canvas.mon { animation: none; }
+.bubble { grid-column: 3; align-self: center; position: relative; background: var(--paper); border: 3px solid var(--line); border-radius: 14px; padding: 10px 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 4px; }
+.bubble::before { content: ""; position: absolute; left: -22px; top: 46%; border: 11px solid transparent; border-right: 11px solid var(--line); }
+.bubble::after { content: ""; position: absolute; left: -15px; top: calc(46% + 2px); border: 9px solid transparent; border-right: 9px solid var(--paper); }
+.bubble.k-elite { box-shadow: 0 4px 0 var(--impulse); } .bubble.k-boss { box-shadow: 0 4px 0 var(--curse); }
+.ekind { font-size: .82rem; color: var(--sub); }
+.ename { font-size: 1.6rem; margin: 0; }
 .intent b { font-size: 1.05rem; }
-.msgs { min-height: 52px; }
-.msgs p { margin: 2px 0; font-size: .95rem; }
+.passin { font-size: .9rem; color: var(--calm); font-weight: 800; }
+.passin.no { color: var(--sub); font-weight: 500; }
+.forms { display: flex; gap: 4px; }
+.fstep { font-size: .75rem; padding: 1px 8px; border: 2px solid var(--line); border-radius: 999px; color: var(--sub); }
+.fstep.on { background: var(--calm); color: #fff; }
+.unsure-note, .note { font-size: .85rem; color: var(--warn); }
+.row { display: flex; align-items: center; gap: 12px; padding: 0 14px; }
+.orb { width: 70px; height: 70px; flex: none; border-radius: 50%; background: var(--gold); border: 4px solid var(--line); box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.orb b { font-family: var(--display); font-size: 1.4rem; font-weight: 400; line-height: 1; }
+.orb small { font-size: .7rem; }
+.msgs { flex: 1; min-width: 0; min-height: 48px; }
+.msgs p { margin: 1px 0; font-size: .92rem; }
 .m-fail, .m-backfire, .m-curse, .m-stress { color: var(--bad); }
 .m-next, .m-reveal, .m-ally { color: var(--good); font-weight: 700; }
-.row { display: flex; align-items: center; gap: 10px; }
-.me { display: flex; gap: 8px; align-items: center; }
-.piles { color: var(--sub); font-size: .85rem; }
-.endturn { margin-left: auto; min-width: 180px; }
-.hand { display: flex; gap: 8px; align-items: stretch; }
-.card { position: relative; flex: 1 1 0; min-width: 118px; max-width: 180px; background: var(--panel); border: 2px solid var(--line); border-top: 8px solid var(--basic); border-radius: var(--radius); padding: 8px; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: transform .12s; user-select: none; }
-.card.selected { transform: translateY(-10px); box-shadow: 0 6px 14px rgba(0,0,0,.18); border-color: var(--primary); }
-.card.off { opacity: .55; }
+.m-bench { color: var(--sub); }
+.endturn { min-width: 180px; }
+.handrow { flex: 1; display: grid; grid-template-columns: 72px 1fr 72px; align-items: start; gap: 6px; padding: 0 10px 8px; min-height: 0; }
+.pile { width: 64px; height: 88px; border: 3px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); display: flex; align-items: flex-end; justify-content: center; font-size: .72rem; color: #fff; padding-bottom: 4px; text-align: center; }
+.pile.draw { background: repeating-linear-gradient(45deg, #5b6fb5 0 6px, #4a5ea3 6px 12px); }
+.pile.disc { background: repeating-linear-gradient(45deg, #7a6aa8 0 6px, #6b5b99 6px 12px); }
+.hand { display: flex; justify-content: center; align-items: flex-start; gap: 0; min-width: 0; padding-top: 18px; }
+
+/* カード */
+.card { position: relative; flex: 0 1 152px; min-width: 104px; height: 196px; margin: 0 -4px; background: var(--paper); border: 3px solid var(--line); border-radius: var(--radius); padding: 8px 9px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; user-select: none; box-shadow: var(--shadow);
+  transform: translateY(var(--lift, 0)) rotate(var(--rot, 0deg)); transition: transform .15s; }
+.card::before { content: ""; height: 7px; border-radius: 3px; background: var(--basic); order: -1; margin-top: 4px; }
+.card.selected { transform: translateY(-22px) rotate(0deg) scale(1.06); z-index: 3; box-shadow: 0 8px 0 var(--line); }
+.card.off { filter: saturate(.3); opacity: .7; }
 .card.temp { border-style: dashed; }
-.card .cost { position: absolute; top: -14px; left: -6px; width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--panel); display: grid; place-items: center; font-weight: 700; }
-.ctype { font-size: .75rem; color: var(--sub); text-align: right; }
-.cname { font-weight: 700; font-size: 1rem; line-height: 1.3; }
-.cline { font-size: .82rem; color: var(--sub); line-height: 1.35; }
-.fxs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
-.fx { font-size: .8rem; padding: 1px 6px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); }
+.card.deal { animation: deal .42s cubic-bezier(.2,.9,.3,1.15) both; }
+.card .cost { position: absolute; top: -14px; left: -10px; width: 32px; height: 32px; border-radius: 50%; background: var(--gold); border: 3px solid var(--line); display: grid; place-items: center; font-family: var(--display); font-size: 1rem; }
+.ctype { font-size: .72rem; color: var(--sub); text-align: right; order: -2; }
+.cname { font-weight: 800; font-size: .98rem; line-height: 1.25; }
+.cline { font-size: .78rem; color: var(--sub); line-height: 1.35; }
+.fxs { display: flex; flex-wrap: wrap; gap: 3px; margin-top: auto; }
+.fx { font-size: .74rem; font-weight: 700; padding: 0 5px; border-radius: 5px; border: 2px solid var(--line); background: var(--panel); }
 .fx.bad { color: var(--bad); border-color: var(--bad); }
 .fx.trust, .fx.reveal { color: var(--good); border-color: var(--good); }
-.chance { font-size: .75rem; color: var(--warn); }
-.tags { display: flex; gap: 4px; flex-wrap: wrap; }
-.tag { font-size: .75rem; padding: 1px 6px; border-radius: 6px; border: 1px solid var(--sub); }
+.chance { font-size: .7rem; color: var(--warn); }
+.tags { display: flex; gap: 3px; flex-wrap: wrap; }
+.tag { font-size: .7rem; padding: 0 5px; border-radius: 5px; border: 2px solid var(--sub); }
 .tag.good { color: var(--good); border-color: var(--good); }
 .tag.bad { color: var(--bad); border-color: var(--bad); }
-.lock { font-size: .78rem; color: var(--bad); font-weight: 700; }
-.t-think { border-top-color: var(--think); } .t-act { border-top-color: var(--act); } .t-relate { border-top-color: var(--relate); }
-.t-calm { border-top-color: var(--calm); } .t-impulse { border-top-color: var(--impulse); } .t-curse { border-top-color: var(--curse); background: repeating-linear-gradient(45deg, var(--panel), var(--panel) 8px, var(--bg) 8px, var(--bg) 16px); }
+.lock { font-size: .74rem; color: var(--bad); font-weight: 800; }
+.ctx { font-size: .7rem; color: var(--sub); }
+.t-think::before { background: var(--think); } .t-act::before { background: var(--act); } .t-relate::before { background: var(--relate); }
+.t-calm::before { background: var(--calm); } .t-impulse::before { background: var(--impulse); } .t-curse::before { background: var(--curse); }
+.t-curse { background: repeating-linear-gradient(45deg, var(--paper) 0 8px, #ece6f7 8px 16px); }
 
+/* 報酬・休み・できごと */
 .reward, .rest, .event { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.choices { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-.choices .card { width: 180px; flex: none; min-height: 200px; }
-.choices.small .card { width: 140px; min-height: 150px; }
-.other { background: var(--panel); border-left: 4px solid var(--relate); padding: 8px 12px; max-width: 760px; }
+.choices { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; padding-top: 14px; }
+.choices .card { flex: none; width: 176px; height: auto; min-height: 210px; margin: 0; transform: none; }
+.choices.small .card { width: 140px; min-height: 160px; }
+.other { background: var(--panel); border: 3px solid var(--line); border-radius: var(--radius); padding: 8px 14px; max-width: 760px; box-shadow: var(--shadow); }
+.supoffer { display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--paper); border: 3px solid var(--relate); border-radius: var(--radius); padding: 8px 16px; box-shadow: var(--shadow); }
+.supoffer canvas { width: 60px; height: 60px; }
 .two { display: flex; gap: 24px; }
+.equip { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.equiplist { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.eq { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 130px; }
+.eq canvas { width: 48px; height: 48px; }
+.eq.on { background: #d3f5df; }
+.eq small { color: var(--sub); }
 .story { font-size: 1.15rem; max-width: 760px; }
 .opts { display: flex; flex-direction: column; gap: 10px; min-width: 420px; }
-.opt { text-align: left; font-size: 1.1rem; display: flex; flex-direction: column; align-items: flex-start; }
-.result { font-size: 1.1rem; background: var(--panel); padding: 10px 14px; border-radius: var(--radius); }
+.opt { text-align: left; font-size: 1.05rem; display: flex; flex-direction: column; align-items: flex-start; }
+.result { font-size: 1.1rem; background: var(--panel); padding: 10px 14px; border-radius: var(--radius); border: 3px solid var(--line); }
 
+/* 振り返り */
 .end { max-width: 900px; margin: 0 auto; width: 100%; }
-.verdict { font-size: 1.4rem; font-weight: 700; text-align: center; }
+.verdict { font-size: 1.6rem; text-align: center; font-family: var(--display); }
 .verdict.won { color: var(--good); }
 .growlist { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.growlist li { background: var(--panel); border-left: 6px solid var(--relate); padding: 8px 12px; border-radius: 6px; display: flex; flex-direction: column; }
-.growlist li.unlock { border-left-color: var(--primary); }
+.growlist li { background: var(--panel); border: 3px solid var(--line); box-shadow: inset 6px 0 0 var(--relate); padding: 8px 12px 8px 18px; border-radius: 8px; display: flex; flex-direction: column; }
+.growlist li.unlock { box-shadow: inset 6px 0 0 var(--primary); }
 .growlist b { font-size: 1.1rem; }
-.praise { background: var(--panel); border: 2px solid var(--good); padding: 8px 12px; border-radius: var(--radius); font-weight: 700; }
+.praise { background: var(--panel); border: 3px solid var(--good); padding: 8px 12px; border-radius: var(--radius); font-weight: 800; color: var(--ink); }
 .trustbox { margin-top: 10px; }
-.trustchart { width: 100%; max-width: 520px; height: 120px; background: var(--panel); border-radius: var(--radius); }
+.trustchart { width: 100%; max-width: 520px; height: 120px; background: var(--panel); border: 3px solid var(--line); border-radius: var(--radius); }
 .trustchart .tline { fill: none; stroke: var(--primary); stroke-width: 3; }
 .trustchart circle.up { fill: var(--good); } .trustchart circle.down { fill: var(--bad); } .trustchart circle.flat { fill: var(--sub); }
 .grad { color: var(--good); font-weight: 700; }
 .reveals s { color: var(--sub); }
 .reveals small { display: block; color: var(--sub); }
 .grid4 { display: grid; grid-template-columns: 110px 1fr 1fr; gap: 8px; }
-.gh { font-weight: 700; text-align: center; align-self: end; }
+.gh { font-weight: 800; text-align: center; align-self: end; }
 .gh.side { align-self: center; text-align: right; }
-.cell { background: var(--panel); border: 2px solid var(--line); border-radius: var(--radius); padding: 10px; min-height: 110px; }
+.cell { background: var(--panel); border: 3px solid var(--line); border-radius: var(--radius); padding: 10px; min-height: 110px; }
 .cell small { display: block; color: var(--sub); }
-.cell .num { font-size: 1.6rem; font-weight: 700; }
-.cell.g-ng { border-color: var(--good); }
-.cell.i-ok { border-color: var(--warn); }
+.cell .num { font-size: 1.6rem; font-family: var(--display); }
+.cell.g-ng { box-shadow: inset 0 -6px 0 var(--good); }
+.cell.i-ok { box-shadow: inset 0 -6px 0 var(--warn); }
 .nav { display: flex; justify-content: space-between; align-items: center; margin: 16px 0; }
-.dots { color: var(--sub); }
-.ctx { font-size: .75rem; color: var(--sub); }
-.m-bench { color: var(--sub); }
-.sups { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.sup { min-height: 44px; padding: 4px 10px; border: 2px solid var(--relate); display: flex; flex-direction: column; align-items: flex-start; max-width: 220px; }
-.sup.selected { background: var(--relate); color: #fff; }
-.sup.empty { border: 2px dashed var(--line); color: var(--sub); border-radius: var(--radius); padding: 10px; font-size: .85rem; }
-.supoffer { display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--panel); border: 2px solid var(--relate); border-radius: var(--radius); padding: 8px 14px; }
-.passin { font-size: .9rem; color: var(--calm); font-weight: 700; }
-.passin.no { color: var(--sub); font-weight: 400; }
+.dots { color: var(--sub); font-family: var(--display); }
+
+@keyframes bob { 50% { transform: translateY(-6px); } }
+@keyframes flick { 50% { filter: drop-shadow(0 0 6px #7a32c8); } }
+@keyframes pulse { 50% { opacity: .55; } }
+@keyframes deal { from { transform: translate(-60vw, 40px) rotate(-25deg) scale(.4); opacity: 0; } to { transform: translateY(var(--lift, 0)) rotate(var(--rot, 0deg)); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
 </style>
 </head>
@@ -166,7 +221,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 
   // うまくいきやすさ（3段階）。％は児童に見せない
   var CHANCE = {
-    high: { p: 0.85, label: 'たいてい うまくいく' },
+    high: { p: 0.8, label: 'たいてい うまくいく' },
     mid: { p: 0.6, label: 'ときどき うまくいく' },
     low: { p: 0.35, label: 'うまくいくのは むずかしい' }
   };
@@ -178,7 +233,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 1.5, resist: 0.5, anxiety: 0.6,
-    restHeal: 0.3, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 1.65, stressScale: 1.45,
+    restHeal: 0.3, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 1.85, stressScale: 1.45,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -191,17 +246,19 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     endure: { name: 'がまんする', line: 'ぐっと こらえる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 5 },
     breathe: { name: '深こきゅう', line: 'ゆっくり 3回 いきをすう。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 4, draw: 1 },
     talk: { name: '話してみる', line: '「ねえ、ちょっといい？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 4 },
-    snap_back: { name: '言い返す', line: '「そっちこそ！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 9, chance: 'high', trust: -1, curse: true, ctx: ['conflict', 'tease'] },
+    okoru: { name: '怒る', line: '「もう、なんなの！」と どなる。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 9, chance: 'high', trust: -1, curse: true },
 
     // --- 報酬で手に入るカード ---
     write_plan: { name: 'やることを紙に書く', line: '1. 2. 3. と じゅんばんに書く。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 4, draw: 1, ctx: ['study', 'stage'] },
-    their_view: { name: '相手の気もちを考える', line: '「あの子は どう思ったかな？」', type: 'think', judge: 'good', style: 'assertive', cost: 1, guard: 4, reveal: true, ctx: ['conflict', 'join', 'tease'] },
+    their_view: { name: '相手の気もちを考える', line: '「あの子は どう思ったかな？」', type: 'think', judge: 'good', style: 'assertive', cost: 1, guard: 4, organize: true, ctx: ['conflict', 'join', 'tease'] },
     start_now: { name: 'すぐ取りかかる', line: 'あとまわしに しない。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 8, ctx: ['study', 'stage'] },
     move_body: { name: '体を動かして 気分てんかん', line: '休み時間に 外で走る。', type: 'act', judge: 'good', style: 'assertive', cost: 1, heal: 5, exhaust: true },
     together: { name: '「いっしょにやろう」', line: '「いっしょにやろう」と 声をかける。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, trust: 1, chance: 'high', ctx: ['study', 'join'] },
     thanks: { name: '「ありがとう」を つたえる', line: '「さっきは ありがとう」', type: 'relate', judge: 'good', style: 'assertive', cost: 0, guard: 3, trust: 1 },
     apologize: { name: 'あやまる', line: '「さっきは ごめんね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 3, trust: 2, ctx: ['conflict', 'join'] },
     lead: { name: 'みんなを まとめる', line: '「じゃあ、じゅんばんに 言っていこう」', type: 'relate', judge: 'good', style: 'assertive', cost: 2, solve: 14, chance: 'mid', req: { relate: 2, trust: 6 }, ctx: ['study', 'join'] },
+    sort_out: { name: '状きょうを 整理する', line: '「何が あった？ 自分は どうしたい？」と 書き出す。', type: 'think', judge: 'good', style: 'assertive', cost: 1, guard: 3, draw: 1, organize: true },
+    firm_reply: { name: 'きっぱり 言い返す', line: '「そういうことは 言わないで」と 目を見て 言う。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'mid', fail: 'walk_away', ctx: ['conflict', 'tease'] },
     name_feeling: { name: '気もちを 言葉にする', line: '「いま、ちょっと くやしい」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 7 },
 
     // --- 場面カード（その戦いの間だけ手札に入る） ---
@@ -210,8 +267,9 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     ask_teacher: { name: '先生に 聞く', line: '「先生、ここを 教えてください」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high' },
     skip_it: { name: 'とばして 次へ', line: 'わからない問題は あとで。', type: 'think', judge: 'neutral', style: 'passive', cost: 1, guard: 4, solve: 2 },
 
-    ask_ok: { name: '「だいじょうぶ？」と聞く', line: '「だいじょうぶ？ いま、ぶつかったよね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, reveal: true, chance: 'high' },
-    watch_them: { name: '相手の ようすを見る', line: 'あわてている？ わらっている？', type: 'think', judge: 'good', style: 'assertive', cost: 1, guard: 3, reveal: true },
+    ask_ok: { name: '「だいじょうぶ？」と聞く', line: '「だいじょうぶ？ いま、ぶつかったよね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, organize: true, chance: 'high' },
+    watch_them: { name: '相手の ようすを見る', line: 'あわてている？ わらっている？', type: 'think', judge: 'good', style: 'assertive', cost: 1, guard: 3, organize: true },
+    tell_hurt: { name: '「いたかったよ」と つたえる', line: '「いたかったよ。気をつけてね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 8, chance: 'high' },
     hit_back: { name: 'やり返す', line: 'どんっと おし返す。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -2, curse: true },
 
     let_me_in: { name: '「入れて」と言う', line: '「ねえ、入れて！」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'mid', fail: 'next_time' },
@@ -222,11 +280,13 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 
     say_stop: { name: '「いやだ」と はっきり言う', line: '「それ、いやだから やめて」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 9, chance: 'mid', fail: 'walk_away' },
     walk_away: { name: 'その場を はなれる', line: 'だまって 先生の近くへ 行く。', type: 'act', judge: 'good', style: 'assertive', cost: 0, guard: 6, chance: 'high' },
-    tell_teacher: { name: '先生に つたえる', line: '「何回も 言われて こまっています」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'high', reveal: true },
+    tell_teacher: { name: '先生に つたえる', line: '「何回も 言われて こまっています」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'high', organize: true },
 
     read_memo: { name: 'メモを見ながら 話す', line: '書いておいたことを 読む。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 9, chance: 'high' },
     breathe_first: { name: '深こきゅうして 始める', line: 'すって、はいて、「はじめます」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 6 },
     friend_face: { name: '友だちの顔を見る', line: 'うなずいてくれる子を さがす。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 5, solve: 5, req: { trust: 6 } },
+    wameku: { name: 'わめく', line: 'ぎゃーっと 大声で わめく。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -2, curse: true },
+    junk_advice: { name: '「気にしなきゃ いいじゃん」', line: '友だちの アドバイス。でも、気になるものは 気になる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 1 },
     give_up: { name: '「やっぱり やめる」', line: 'だまって すわってしまう。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 12, chance: 'high', trust: -1, curse: true },
 
     // --- ストレスで入りこむカード・モヤモヤ ---
@@ -234,25 +294,33 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     moyamoya: { name: 'モヤモヤ', line: 'あのときのことが 気になって 手につかない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true }
   };
 
-  // 支え：ポーションに当たる。戦いの中ならいつでも使え（元気を使わない）、使うとなくなる。持てるのは slots まで
-  // 「相談」は使い切りだが、ひと休みで1つ戻る（相談は何度してもよい、という意味を残すため）
+  // アイテム（支え）：つけている（equip）ものは、戦いごとに1回ずつ使える。元気は使わない。なくならない。
+  // つけられるのは slots まで。ひと休みで、持っているものと入れかえられる
   var SUPPORTS = {
-    teacher: { name: '先生に そうだん', line: '「先生、聞いてほしいことが あります」', solve: 12, reveal: true, calmDown: true, consult: true, note: '問題を 小さくし、ほんとうの ようすが わかる。問題の いきおいも おさまる' },
-    friend: { name: '友だちに そうだん', line: '「ねえ、どう思う？」', guard: 10, draw: 1, consult: true, note: 'ゆとり +10、カードを 1まい 引く' },
-    family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', heal: 12, consult: true, note: '心の余裕 +12' },
-    book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', heal: 6, clearMoya: true, note: '心の余裕 +6、手札の モヤモヤを すてる' }
+    teacher: { name: '先生に そうだん', line: '「先生、聞いてほしいことが あります」', note: 'この場面で 先生に すすめられた カードが 手札に入る（戦いのあと 報酬にも出る）。状きょうも 1つ 整理される' },
+    friend: { name: '友だちに そうだん', line: '「ねえ、どう思う？」', note: '心の余裕 +5。友だちの アドバイスが カードになる（ときどき 役に立たないことも）', heal: 5 },
+    family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', note: '心の余裕 +10', heal: 10 },
+    book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', note: '心の余裕 +4、手札の モヤモヤを すてる', heal: 4, clearMoya: true }
   };
-  var SUPPORT_RULES = { slots: 3, start: ['teacher'], rewardChance: 0.3, restReturn: 1 };
+  // 先生がすすめるカード（場面ごと）、友だちのアドバイス（junk はハズレ）
+  var TEACHER_CARDS = { study: 'ask_teacher', conflict: 'consult', join: 'consult', tease: 'tell_teacher', stage: 'breathe_first' };
+  var FRIEND_CARDS = ['together', 'thanks', 'invite_other', 'name_feeling', 'firm_reply', 'sort_out'];
+  var SUPPORT_RULES = { slots: 3, start: ['teacher'], rewardChance: 0.3, junkChance: 0.3 };
 
-  var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'endure', 'breathe', 'talk', 'snap_back'];
-  var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling'];
+  // 課題の3つの姿：0=こわい かいぶつ／1=現実の姿＋ぶきみな オーラ／2=ふつうの 現実。
+  // 整理するカード（organize）で1つずつ現実に近づき、いきおいが弱まる。かしこさが organizeStat 以上なら 1 から始まる
+  var FORMS = { stressMul: [1, 0.8, 0.6], organizeStat: 2 };
+
+  var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'endure', 'breathe', 'talk', 'okoru'];
+  var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply'];
 
   // pass: そのターン数を乗りこえると、課題は時間とともに過ぎ去る（報酬なし。leave なら モヤモヤが のこる）。
   //   からかい・発表には付けない：放っておいても過ぎ去らない問題があることを残すため
   // moves: stress=心の余裕を n へらす／grow=問題が大きくなる（以後の stress に +n）／worry=モヤモヤを1まい まぜる
-  // view: 最初は「見え方」の名前で出る。reveal カードで「ほんとう」がわかる
+  // forms: 3つの姿の名前。view: いちばん現実の姿（2）になった時に わかる ほんとう（相性が変わる）
   var ENEMIES = {
     dunno: {
+      forms: ['ハテナ だいまじん', 'むずかしそうな プリント', 'わからない 1問'],
       ctx: 'study', scene: 'わからない問題', name: 'わからない問題', kind: 'normal', hp: 24,
       pass: { turns: 5, say: 'じゅぎょうが おわった。でも、わからないままだ。', leave: true },
       moves: [{ t: 'stress', n: 6, say: 'あせってくる' }, { t: 'grow', n: 2, say: 'どんどん むずかしく見えてくる' }, { t: 'stress', n: 7, say: 'まわりが すすんでいく' }],
@@ -260,14 +328,16 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       other: 'となりの子：「聞いてくれたら、すぐ 教えたのに」'
     },
     bumped: {
+      forms: ['ドンッと ぶつかる かいぶつ', 'わざと ぶつかってきた？ あの子', 'よそ見して ぶつかっただけ'],
       ctx: 'conflict', scene: 'ろうかで ぶつかられた', name: 'わざと ぶつかられた？', kind: 'normal', hp: 20,
       pass: { turns: 3, say: '時間がたって、気にならなくなった。' },
       moves: [{ t: 'stress', n: 7, say: 'むかむかしてくる' }, { t: 'stress', n: 8, say: '「わざとだ」と思えてくる' }],
-      weak: [], resist: ['relate'], backfire: [], situ: ['ask_ok', 'watch_them', 'hit_back'],
+      weak: [], resist: ['relate'], backfire: [], situ: ['ask_ok', 'tell_hurt', 'watch_them', 'hit_back'],
       view: { truth: 'benign', name: 'よそ見して ぶつかっただけ', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.5 },
       other: 'ぶつかった子：「あっ、ごめん！ 前を見てなかった」'
     },
     left_out: {
+      forms: ['ひとりぼっちの きり', '入れてくれない グループ？', '人数が ちょうどの 遊び'],
       ctx: 'join', scene: '遊びに 入れない', name: '遊びに 入れない', kind: 'normal', hp: 28,
       pass: { turns: 4, say: '休み時間が おわった。さびしさは 少し のこった。', leave: true },
       moves: [{ t: 'stress', n: 6, say: 'さびしくなる' }, { t: 'worry', say: '「きらわれてる？」と考えてしまう' }, { t: 'stress', n: 8, say: '休み時間が おわっていく' }],
@@ -275,13 +345,15 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       other: '遊んでいた子：「人数が ちょうどだったから、気づかなかった」'
     },
     teased: {
+      forms: ['チクチクことばの むれ', 'わらっている 子たち', 'くり返し からかわれている'],
       ctx: 'tease', scene: 'からかわれた', name: 'からかわれた', kind: 'elite', hp: 36,
       moves: [{ t: 'stress', n: 7, say: '同じことを また言われる' }, { t: 'grow', n: 3, say: 'まわりも わらいはじめる' }, { t: 'stress', n: 9, say: '学校に 行きたくなくなる' }],
-      weak: [], resist: [], backfire: ['impulse'], situ: ['say_stop', 'tell_teacher', 'snap_back'],
+      weak: [], resist: [], backfire: ['impulse'], situ: ['say_stop', 'tell_teacher', 'wameku'],
       view: { truth: 'hostile', name: 'くり返し からかわれている', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 1 },
       other: 'あとで 先生：「話してくれて よかった。一人で かかえなくて いいんだよ」'
     },
     presentation: {
+      forms: ['見つめる 大目玉', 'こっちを見る みんな', 'ふつうに 聞いている クラスの みんな'],
       ctx: 'stage', scene: 'みんなの前で 発表', name: 'みんなの前で 発表', kind: 'boss', hp: 48, anxiety: true,
       moves: [{ t: 'stress', n: 8, say: '心ぞうが どきどきする' }, { t: 'worry', say: '「まちがえたら どうしよう」' }, { t: 'stress', n: 11, say: 'みんなが こっちを見る' }, { t: 'grow', n: 2, say: '声が 小さくなってくる' }],
       weak: ['think'], resist: [], backfire: [], situ: ['read_memo', 'breathe_first', 'friend_face', 'give_up'],
@@ -339,7 +411,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     stressIntrude: '心の余裕が へって、「カッとなる」が 手札に まざった。'
   };
 
-  var DATA = { SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
+  var DATA = { FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
   else root.SST_DATA = DATA;
 })(this);
@@ -350,7 +422,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 1;
+  var ENGINE_VER = 2;
 
   // --- 乱数 ---
   function rand(s) {
@@ -383,7 +455,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       yoyu: D.PLAYER.maxYoyu, maxYoyu: D.PLAYER.maxYoyu,
       trust: D.PLAYER.trustStart,
       stats: { think: 0, act: 0, relate: 0 },
-      deck: D.STARTER.slice(), supports: D.SUPPORT_RULES.start.slice(), usedConsult: [],
+      deck: D.STARTER.slice(), items: D.SUPPORT_RULES.start.slice(), equip: D.SUPPORT_RULES.start.slice(),
       usedNormals: [], usedEvents: [],
       map: null, battle: null, reward: null, event: null,
       log: [], result: null
@@ -457,8 +529,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   function startBattle(s, eid) {
     var E = D.ENEMIES[eid];
     var en = {
-      id: eid, name: E.name, hp: Math.round(E.hp * D.RULES.hpScale), maxHp: Math.round(E.hp * D.RULES.hpScale), kind: E.kind, str: 0, mi: 0,
-      revealed: !E.view, weak: E.weak.slice(), resist: E.resist.slice(),
+      id: eid, name: E.forms[0], form: 0, hp: Math.round(E.hp * D.RULES.hpScale), maxHp: Math.round(E.hp * D.RULES.hpScale), kind: E.kind, str: 0, mi: 0,
+      revealed: false, weak: E.weak.slice(), resist: E.resist.slice(),
       backfire: (E.backfire || []).slice(), stressMul: 1
     };
     var bench = [], cards = [];
@@ -467,9 +539,10 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     s.battle = {
       enemy: en, draw: draw, hand: [], discard: [], exhaust: [], bench: bench,
       energy: 0, guard: 0, turn: 0, calm: false,
-      usage: { think: 0, act: 0, relate: 0 }, trustGained: 0, playedOk: {}, msgs: []
+      usage: { think: 0, act: 0, relate: 0 }, trustGained: 0, playedOk: {}, msgs: [], usedItems: {}, teacherCard: null
     };
     s.phase = 'battle';
+    if (s.stats.think >= D.FORMS.organizeStat) { organize(s, true); }
     if (bench.length) msg(s, 'この場面に 合わないカード ' + bench.length + 'まいは、今回は 休み。', 'bench');
     log(s, { k: 'battle', enemy: eid, kind: E.kind, bench: bench.length });
     startTurn(s, true);
@@ -543,15 +616,25 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     return true;
   }
 
-  function reveal(s) {
+  // 状きょうを整理する：かいぶつ→現実＋オーラ→ふつうの現実。いきおいが弱まる
+  function organize(s, fromStat) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
-    if (en.revealed || !E.view) return;
-    en.revealed = true;
+    if (en.form >= 2) return;
     var from = en.name;
-    en.name = E.view.name; en.weak = E.view.weak.slice(); en.resist = E.view.resist.slice();
-    en.backfire = E.view.backfire.slice(); en.stressMul = E.view.stressMul;
-    msg(s, '見方が かわった：「' + from + '」→「' + en.name + '」', 'reveal');
-    log(s, { k: 'reveal', enemy: en.id, from: from, to: en.name, truth: E.view.truth });
+    en.form++;
+    en.name = E.forms[en.form];
+    en.str = Math.floor(en.str / 2);
+    en.stressMul = D.FORMS.stressMul[en.form];
+    if (en.form === 2) {
+      en.revealed = true;
+      if (E.view) {
+        en.weak = E.view.weak.slice(); en.resist = E.view.resist.slice();
+        en.backfire = E.view.backfire.slice(); en.stressMul *= E.view.stressMul;
+      }
+      log(s, { k: 'reveal', enemy: en.id, from: E.forms[0], to: en.name, truth: E.view ? E.view.truth : 'plain' });
+    }
+    msg(s, fromStat ? 'かしこさが 高いので、はじめから「' + en.name + '」に 見えている。' : '状きょうが 整理できた：「' + from + '」→「' + en.name + '」（いきおいが 弱まった）', 'reveal');
+    log(s, { k: 'form', enemy: en.id, form: en.form, stat: !!fromStat });
   }
 
   function solveAmount(s, c) {
@@ -591,7 +674,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     if (c.trust) addTrust(s, c.trust, h.id, c.trust > 0);
 
     if (ok) {
-      if (c.reveal) reveal(s);
+      if (c.organize) organize(s);
       if (c.solve) {
         var n = solveAmount(s, c);
         en.hp -= n; entry.solve = n;
@@ -705,7 +788,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       return;
     }
     var sup = null;
-    if (en.kind === 'elite' || rand(s) < D.SUPPORT_RULES.rewardChance) sup = pick(s, Object.keys(D.SUPPORTS));
+    var unowned = Object.keys(D.SUPPORTS).filter(function (k) { return s.items.indexOf(k) < 0; });
+    if (unowned.length && (en.kind === 'elite' || rand(s) < D.SUPPORT_RULES.rewardChance)) sup = pick(s, unowned);
     s.reward = { choices: rewardChoices(s), other: E.other, support: sup };
   }
 
@@ -713,43 +797,62 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var b = s.battle;
     var want = s.trust >= D.RULES.highTrust ? D.RULES.rewardChoicesHighTrust : D.RULES.rewardChoices;
     var situ = shuffle(s, Object.keys(b.playedOk)).slice(0, 2);
+    if (b.teacherCard && situ.indexOf(b.teacherCard) < 0) situ = [b.teacherCard].concat(situ).slice(0, 2);
     var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0; }));
     return situ.concat(pool).slice(0, want);
   }
 
   function gainSupport(s, id, why) {
-    if (s.supports.length >= D.SUPPORT_RULES.slots) return false;
-    s.supports.push(id);
+    if (s.items.indexOf(id) >= 0) return false;
+    s.items.push(id);
+    if (s.equip.length < D.SUPPORT_RULES.slots) s.equip.push(id);
     log(s, { k: 'support', id: id, why: why });
     return true;
   }
 
   function takeSupport(s) {
     if (s.phase !== 'reward' || !s.reward.support) throw new Error('no support');
-    if (gainSupport(s, s.reward.support, 'reward')) s.reward.support = null;
+    gainSupport(s, s.reward.support, 'reward'); s.reward.support = null;
     return s;
   }
 
-  function useSupport(s, i) {
-    if (s.phase !== 'battle') throw new Error('not battle');
-    var id = s.supports[i]; if (!id) throw new Error('bad support');
-    var u = D.SUPPORTS[id], b = s.battle, en = b.enemy;
-    s.supports.splice(i, 1);
-    if (u.consult) s.usedConsult.push(id);
-    if (u.reveal) reveal(s);
-    if (u.calmDown && en.str > 0) { en.str = 0; msg(s, '問題の いきおいが おさまった。', 'reveal'); }
-    if (u.solve) en.hp -= u.solve;
-    if (u.guard) b.guard += u.guard;
+  function canUseSupport(s, id) {
+    return s.phase === 'battle' && s.equip.indexOf(id) >= 0 && !s.battle.usedItems[id];
+  }
+
+  function useSupport(s, id) {
+    if (!canUseSupport(s, id)) throw new Error('cannot use item');
+    var u = D.SUPPORTS[id], b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    b.usedItems[id] = 1;
+    msg(s, '「' + u.name + '」', 'ally');
     if (u.heal) s.yoyu = Math.min(s.maxYoyu, s.yoyu + u.heal);
-    if (u.draw) drawCards(s, u.draw);
+    if (id === 'teacher') {
+      var tc = D.TEACHER_CARDS[E.ctx];
+      b.hand.push({ id: tc, temp: true }); b.teacherCard = tc;
+      msg(s, '先生の すすめ：「' + card(tc).name + '」が 手札に 入った。', 'next');
+      organize(s);
+    }
+    if (id === 'friend') {
+      var fc = rand(s) < D.SUPPORT_RULES.junkChance ? 'junk_advice' : pick(s, D.FRIEND_CARDS);
+      s.deck.push(fc); b.hand.push({ id: fc });
+      log(s, { k: 'gain', card: fc, why: 'friend' });
+      msg(s, '友だちの アドバイス：「' + card(fc).name + '」' + (fc === 'junk_advice' ? '（あまり 役に立たなかった…）' : ''), fc === 'junk_advice' ? 'fail' : 'next');
+    }
     if (u.clearMoya) {
       var n = 0;
       b.hand = b.hand.filter(function (h) { if (h.id === 'moyamoya') { b.discard.push(h); n++; return false; } return true; });
       if (n) msg(s, 'モヤモヤが ' + n + 'まい 気にならなくなった。', 'reveal');
     }
-    msg(s, '「' + u.name + '」を つかった。', 'ally');
     log(s, { k: 'useSupport', id: id, enemy: en.id });
-    if (en.hp <= 0) winBattle(s);
+    return s;
+  }
+
+  // ひと休みで、つけるアイテムを えらび直す
+  function setEquip(s, ids) {
+    if (s.phase !== 'rest') throw new Error('not rest');
+    if (ids.length > D.SUPPORT_RULES.slots) throw new Error('too many');
+    ids.forEach(function (id) { if (s.items.indexOf(id) < 0) throw new Error('not owned'); });
+    s.equip = ids.slice();
     return s;
   }
 
@@ -776,8 +879,6 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       s.deck.splice(deckIdx, 1);
       log(s, { k: 'remove', card: id });
     } else throw new Error('bad choice');
-    var back = s.usedConsult.splice(0, D.SUPPORT_RULES.restReturn);
-    back.forEach(function (id) { if (gainSupport(s, id, 'rest')) s.notice = '「' + D.SUPPORTS[id].name + '」が また できるようになった。'; });
     return advance(s);
   }
 
@@ -883,7 +984,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D
@@ -927,6 +1028,48 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   function safeParse(j) { try { return j ? JSON.parse(j) : null; } catch (e) { return null; } }
 
   root.SST_PLATFORM = Platform;
+})(this);
+
+// 自動生成（scripts/sprites.py）。直接編集しない
+// ドット絵の描画。課題は form 0=かいぶつ／1=現実の姿＋ぶきみなオーラ／2=ふつうの現実
+(function (root) {
+  'use strict';
+  var PAL = {"k": "#12172a", "w": "#ffffff", "p": "#8e6ad8", "P": "#b79cf0", "y": "#ffd23f", "r": "#e5484d", "g": "#5c6b8a", "G": "#a7b2c8", "o": "#f08c3a", "s": "#f4c9a0", "b": "#3b5bdb", "n": "#7a4b2a", "e": "#2b8a3e", "c": "#7fd3e0", "d": "#3d2f63"};
+  var ART = {"dunno_m": ["......kkkk......", ".....kyyyyk.....", "....kyykkyyk....", ".........kyk....", ".......kyyk.....", ".......kyk......", ".......kkk......", "....kkkkkkkkk...", "...kdddddddddk..", "..kdkkddddkkddk.", "..kdrrkdddkrrdk.", "..kdddddddddddk.", "..kdkwkwkwkwkdk.", "..kdkrrrrrrrkdk.", "..kddkkkkkkkddk.", "...kkkkkkkkkkk.."], "bumped_m": [".......k........", "......kok....k..", "..k..kooo..kok..", "..kokooooookok..", "...koooooooook..", "..kkkkoooookkkk.", ".koookrooookrok.", ".kooorrooookrrk.", ".koooooooooooook", "..kokwkwkwkwkok.", "..kokrrrrrrrkok.", "...kokwkwkwkok..", "....koooooook...", ".....kkkkkkk....", "....kk.....kk...", "................"], "left_out_m": ["................", ".....kkkkkk.....", "....kgggggggk...", "...kgGGgggGggk..", "...kgkkkgkkkgk..", "...kgkrkgkrkgk..", "...kgkkkgkkkggk.", "...kggggggggggk.", "...kgggkkkkgggk.", "...kggkgggkggk..", "...kgggggggggk..", "....kgk.kgk.kgk.", ".....k...k...k..", "................", "..........kkk...", ".........kgggk.."], "teased_m": ["...k...k...k....", "..kgk.kgk.kgk...", ".kgggkgggkgggk..", "kgGGgggGgggGggk.", "kgkkgggggggkkgk.", "kggrrkgggkrrggk.", "kggrkkgggkkrggk.", "kgggggggggggggk.", "kggkkkkkkkkkggk.", "kgkwkwkwkwkwkgk.", "kggkrrrrrrrkggk.", "kgkwkwkwkwkwkgk.", ".kggkkkkkkkggk..", "..kggggggggk....", "...kkkkkkkk.....", "................"], "presentation_m": [".....kkkkkk.....", "...kkddddddkk...", "..kddddddddddk..", ".kddwwrwwwwrddk.", ".kdwwwwrwwrwwdk.", "kddwwwkkkkwwwddk", "kdrwwkrrrrkwwrdk", "kddwwkrkkrkwwddk", "kddwwkrrrrkwwddk", "kdrwwwkkkkwwwrdk", ".kdwwrwwwwrwwdk.", ".kddwwwrwwwwddk.", "..kddddddddddk..", "...kkddddddkk...", ".....kkkkkk.....", "................"], "dunno_r": ["................", "..kkkkkkkkkkk...", "..kwwwwwwwwwk...", "..kwGGGGGGwwk...", "..kwwwwwwwwwk...", "..kwGGGGGGwwk...", "..kwwwwwwwwwk...", "..kwGGGGGGwwk...", "..kwwwwwwwwwk...", "..kwGGGwbbbwk...", "..kwwwwwwwbwk...", "..kwGGGwwbwwk...", "..kwwwwwwwwwk...", "..kwwwwwwbwwk...", "..kkkkkkkkkkk...", "................"], "bumped_r": ["................", "................", "................", ".....kkkkk......", "....knnnnnk.....", "....knsssnk.....", "....ksksksk.....", "....ksssssk.....", ".....ksrsk......", "......kkk.......", "..s..keeek..s...", "...skeeeeeks....", "....keeeeek.....", ".....kk.kk......", "................", "................"], "left_out_r": ["................", "................", "................", "................", ".kkkkk....kkkkk.", "knnnnnk..kyyyyyk", "knsssnk..kysssyk", "ksksksk..ksksksk", "ksssssk..ksssssk", ".krrrk....krrrk.", "..kkk......kkk..", ".koook....kbbbk.", "koooookkkkbbbbbk", "koooookrrkbbbbbk", ".kk.kkkrrkkk.kk.", "......kkkk......"], "teased_r": ["................", "................", "................", "................", ".kkkkk....kkkkk.", "knnnnnk..kkkkkkk", "knsssnk..kkssskk", "ksksksk..ksksksk", "ksssssk..ksssssk", ".krrrk....krrrk.", "..kkk......kkk..", ".kgggk....kPPPk.", "kgggggk..kPPPPPk", "kgggggk..kPPPPPk", ".kk.kk....kk.kk.", "................"], "presentation_r": ["................", "................", "................", ".....kkkkk......", "....kkkkkkk.....", ".kkkkkssskkkkkk.", "knnnkskskskyyyyk", "knssksssssksssyk", "kskskksksksksksk", "kssssskkkksssssk", ".kskskeeekksksk.", "..kkkeeeeekkkk..", ".kbbkeeeeekoook.", "kbbbbkk.kkoooook", "kbbbbbk..koooook", ".kk.kk....kk.kk."], "hero": ["................", ".....kkkkkk.....", "....knnnnnnk....", "...knnnnnnnnk...", "...knssssssnk...", "...ksskssksk....", "...kssssssssk...", "....kssrrssk....", ".....kkkkkk.....", "....kbbbbbbk....", "...kbbbbbbbbk...", "..ksbbbbbbbbsk..", "...kbbbbbbbbk...", "....kkkkkkkk....", "....kk....kk....", "................"], "teacher": ["................", "................", "................", ".....kkkkk......", "....kGGGGGk.....", "....kGsssGk.....", "....kkkkkkk.....", "....ksssssk.....", ".....ksksk......", "......kkk.......", ".....keeek......", "....keeeeek.....", "....keeeeek.....", ".....kk.kk......", "................", "................"], "friend": ["................", "................", "................", "................", ".kkkkk....kkkkk.", "kyyyyyk..knnnnnk", "kysssyk..knsssnk", "ksksksk..ksksksk", "ksssssk..ksssssk", ".krrrk....krrrk.", "..kkk......kkk..", ".koook....kbbbk.", "koooook..kbbbbbk", "koooook..kbbbbbk", ".kk.kk....kk.kk.", "................"], "family": ["................", "................", ".kkkkk..........", "kkkkkkk.........", "kkssskk.........", "ksksksk...kkkkk.", "ksssssk..knnnnnk", ".ksksk...knsssnk", "..kkk....ksksksk", ".kPPPk...ksssssk", "kPPPPPk...ksksk.", "kPPPPPk....kkk..", ".kk.kk....kbbbk.", ".........kbbbbbk", ".........kbbbbbk", "..........kk.kk."], "book": ["................", "................", "..kkkkkk.kkkkk..", ".krrrrrrkrrrrrk.", ".krwwwwrkrwwwrk.", ".krrrrrrkrrrrrk.", ".krwwwwrkrwwwrk.", ".krrrrrrkrrrrrk.", ".krwwwwrkrwwwrk.", ".krrrrrrkrrrrrk.", ".kkkkkkkkkkkkkk.", "..kyyyyyyyyyyk..", "...kkkkkkkkkk...", "................", "................", "................"]};
+  var N = 16, M = 2, SIZE = N + M * 2;
+  function grid(key) {
+    var art = ART[key], g = [];
+    for (var y = 0; y < SIZE; y++) { g.push([]); for (var x = 0; x < SIZE; x++) g[y].push(null); }
+    for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) { var ch = art[r][c]; if (ch !== '.') g[r + M][c + M] = PAL[ch]; }
+    return g;
+  }
+  function aura(g) {
+    var ring = function (src, color) {
+      var out = [];
+      for (var y = 0; y < SIZE; y++) for (var x = 0; x < SIZE; x++) {
+        if (src[y][x]) continue;
+        if ((y > 0 && src[y - 1][x]) || (y < SIZE - 1 && src[y + 1][x]) || (x > 0 && src[y][x - 1]) || (x < SIZE - 1 && src[y][x + 1])) out.push([x, y]);
+      }
+      out.forEach(function (p) { src[p[1]][p[0]] = color; });
+    };
+    ring(g, '#5a1e8c'); ring(g, 'rgba(120,50,190,0.45)');
+    return g;
+  }
+  function draw(cv, key, form) {
+    cv.width = SIZE; cv.height = SIZE;
+    var x = cv.getContext('2d');
+    x.clearRect(0, 0, SIZE, SIZE);
+    var g = grid(key);
+    if (form === 1) g = aura(g);
+    for (var yy = 0; yy < SIZE; yy++) for (var xx = 0; xx < SIZE; xx++) if (g[yy][xx]) { x.fillStyle = g[yy][xx]; x.fillRect(xx, yy, 1, 1); }
+    if (form === 1) {
+      x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(70,20,110,0.28)'; x.fillRect(0, 0, SIZE, SIZE);
+      x.globalCompositeOperation = 'source-over';
+    }
+  }
+  // 課題の id と form から、使う絵を決める
+  function enemyKey(id, form) { return id + (form === 0 ? '_m' : '_r'); }
+  root.SST_SPRITES = { draw: draw, enemyKey: enemyKey, has: function (k) { return !!ART[k]; } };
 })(this);
 
 // 画面。状態は engine が持ち、ここは描画と操作の受け渡しだけをする。
@@ -978,24 +1121,33 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     ]);
   }
 
-  var selSup = -1;
-  function supportsRow(inBattle) {
+  var selSup = null;
+  var lastDealKey = '';
+  function sprite(key, form, cls) {
+    var cv = document.createElement('canvas');
+    cv.className = 'px ' + (cls || '');
+    if (root.SST_SPRITES && SST_SPRITES.has(key)) SST_SPRITES.draw(cv, key, form || 0);
+    return cv;
+  }
+  // アイテム：つけているもの（3つまで）。戦いごとに1回ずつ
+  function itemSlots(inBattle) {
     var slots = [];
     for (var i = 0; i < D.SUPPORT_RULES.slots; i++) {
-      (function (i) {
-        var id = S.supports[i];
-        if (!id) { slots.push(h('div', { class: 'sup empty', text: 'あき' })); return; }
-        var u = D.SUPPORTS[id];
+      (function (id) {
+        if (!id) { slots.push(h('div', { class: 'item empty', title: 'あき' })); return; }
+        var u = D.SUPPORTS[id], can = inBattle && E.canUseSupport(S, id);
+        var used = inBattle && !can;
         slots.push(h('button', {
-          class: 'sup' + (selSup === i ? ' selected' : ''), disabled: !inBattle,
+          class: 'item' + (selSup === id ? ' selected' : '') + (used ? ' used' : ''), disabled: !inBattle || used, 'aria-label': u.name,
           onclick: function () {
-            if (selSup === i) { selSup = -1; act(function () { E.useSupport(S, i); }); }
-            else { selSup = i; sel = -1; render(); }
+            if (selSup === id) { selSup = null; act(function () { E.useSupport(S, id); }); }
+            else { selSup = id; sel = -1; render(); }
           }
-        }, [h('b', { text: u.name }), selSup === i ? h('small', { text: u.note + '（もう一度 タップで 使う）' }) : null]));
-      })(i);
+        }, [sprite(id, 2), h('span', { class: 'iname', text: u.name })]));
+      })(S.equip[i]);
     }
-    return h('div', { class: 'sups' }, [h('span', { class: 'lbl', text: '支え' })].concat(slots));
+    var tip = selSup && inBattle ? h('div', { class: 'itemtip' }, [h('b', { text: D.SUPPORTS[selSup].name }), h('span', { text: D.SUPPORTS[selSup].note }), h('small', { text: 'もう一度 タップで 使う（この戦いで 1回）' })]) : null;
+    return h('div', { class: 'items' }, slots.concat([tip]));
   }
 
   // --- タイトル ---
@@ -1033,7 +1185,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       })));
     }).reverse();
     var notice = S.notice; S.notice = null;
-    return h('main', { class: 'map' }, [notice ? h('p', { class: 'praise', text: notice }) : null, supportsRow(false), h('p', { class: 'hint', text: '次に 行くところを えらぼう' })].concat(rows));
+    return h('main', { class: 'map' }, [notice ? h('p', { class: 'praise', text: notice }) : null, itemSlots(false), h('p', { class: 'hint', text: '次に 行くところを えらぼう' })].concat(rows));
   }
 
   // --- 戦い ---
@@ -1073,34 +1225,46 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     return 'あと ' + short.map(function (x) { return (x.k === 'trust' ? '信頼' : D.STATS[x.k].name) + x.need; }).join('・');
   }
 
+  var FORM_LABEL = ['かいぶつ', 'オーラ', 'ほんとうの すがた'];
   function battleScreen() {
-    var b = S.battle, en = b.enemy, it = E.intent(S);
+    var b = S.battle, en = b.enemy, it = E.intent(S), EN = D.ENEMIES[en.id];
     var itText = it.t === 'stress' ? '心の余裕 −' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
     var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
-    var enemy = h('section', { class: 'enemy k-' + en.kind }, [
-      h('div', { class: 'ekind', text: en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題' }),
-      h('h2', { class: 'ename' + (en.revealed ? '' : ' unsure'), text: en.name }),
-      !en.revealed ? h('div', { class: 'unsure-note', text: 'ほんとうに そう？（「見方を 変える」カードで たしかめられる）' }) : null,
+    var steps = h('div', { class: 'forms' }, FORM_LABEL.map(function (l, i) { return h('span', { class: 'fstep' + (i <= en.form ? ' on' : ''), text: l }); }));
+    var bubble = h('section', { class: 'bubble k-' + en.kind }, [
+      h('div', { class: 'ekind', text: (en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
+      h('h2', { class: 'ename', text: en.name }),
       h('div', { class: 'meter hp' }, [
         h('span', { class: 'lbl', text: '問題の大きさ' }),
         h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + hpPct + '%' })]),
         h('b', { text: Math.max(0, en.hp) + '/' + en.maxHp })
       ]),
       h('div', { class: 'intent' }, [h('span', { class: 'lbl', text: 'つぎに 起きそうなこと' }), h('b', { text: it.say + '（' + itText + '）' })]),
-      it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (D.ENEMIES[en.id].pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
-      D.ENEMIES[en.id].anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
+      it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (EN.pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
+      steps,
+      en.form < 2 ? h('div', { class: 'unsure-note', text: '「整理する」カードで、ほんとうの すがたに 近づく（いきおいが 弱まる）' }) : null,
+      EN.anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
     ]);
-    var me = h('section', { class: 'me' }, [
-      h('div', { class: 'chip energy' }, [h('span', { class: 'lbl', text: '元気' }), h('b', { text: b.energy + '/' + D.PLAYER.energy })]),
-      h('div', { class: 'chip guard' }, [h('span', { class: 'lbl', text: 'ゆとり' }), h('b', { text: String(b.guard) })]),
-      h('div', { class: 'piles', text: '山札 ' + b.draw.length + '・すて札 ' + b.discard.length })
+    var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(en.id, en.form), en.form, 'mon')]);
+    var hero = h('div', { class: 'hero' }, [
+      sprite('hero', 2, 'me'),
+      h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: 'ゆとり' }), h('b', { text: String(b.guard) })])
     ]);
-    var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.slice(-4).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
+    var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, monster, bubble]);
+    var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.slice(-3).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
+    var energy = h('div', { class: 'orb', title: '元気' }, [h('b', { text: b.energy + '/' + D.PLAYER.energy }), h('small', { text: '元気' })]);
+    var dealKey = S.floor + ':' + b.turn;
+    var deal = dealKey !== lastDealKey; lastDealKey = dealKey;
+    var n = b.hand.length, mid = (n - 1) / 2;
     var hand = h('section', { class: 'hand' }, b.hand.map(function (hc, i) {
       var c = E.card(hc.id), ok = E.canPlay(S, i);
       var el = cardView(c, { preview: c.unplayable ? {} : E.preview(S, i), selected: sel === i, disabled: !ok, temp: hc.temp, lock: lockText(c) });
+      var d = i - mid;
+      el.style.setProperty('--rot', (d * 2.2) + 'deg');
+      el.style.setProperty('--lift', (Math.abs(d) * Math.abs(d) * 1.4) + 'px');
+      if (deal) { el.classList.add('deal'); el.style.animationDelay = (i * 70) + 'ms'; }
       el.addEventListener('click', function () {
-        selSup = -1;
+        selSup = null;
         if (!ok) { sel = i; render(); return; }
         if (sel === i) act(function () { E.playCard(S, i); });
         else { sel = i; render(); }
@@ -1109,7 +1273,9 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     }));
     var help = h('p', { class: 'hint', text: sel >= 0 && E.canPlay(S, sel) ? 'もう一度 タップで 使う' : sel >= 0 ? (E.card(b.hand[sel].id).unplayable ? 'モヤモヤは 使えない' : '元気が たりない／条件が たりない') : 'カードを タップして えらぶ' });
     var end = h('button', { class: 'primary endturn', onclick: function () { act(function () { E.endTurn(S); }); }, text: 'ターンを おわる' });
-    return h('main', { class: 'battle' }, [enemy, msgs, h('div', { class: 'row' }, [me, supportsRow(true), help, end]), hand]);
+    var piles = h('div', { class: 'pile draw', text: '山札 ' + b.draw.length });
+    var disc = h('div', { class: 'pile disc', text: 'すて札 ' + b.discard.length });
+    return h('main', { class: 'battle' }, [stage, h('div', { class: 'row' }, [energy, msgs, help, end]), h('div', { class: 'handrow' }, [piles, hand, disc])]);
   }
 
   // --- 報酬 ---
@@ -1120,11 +1286,11 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       r.passed ? h('p', { class: 'story', text: r.passed + (r.leave ? '（モヤモヤが デッキに 入った）' : '') }) : null,
       h('p', { class: 'other', text: r.other }),
       r.support ? h('div', { class: 'supoffer' }, [
-        h('b', { text: '支えが 見つかった：「' + D.SUPPORTS[r.support].name + '」' }),
+        sprite(r.support, 2, 'offer'),
+        h('b', { text: 'アイテムが 見つかった：「' + D.SUPPORTS[r.support].name + '」' }),
         h('small', { text: D.SUPPORTS[r.support].note }),
-        S.supports.length < D.SUPPORT_RULES.slots
-          ? h('button', { class: 'secondary', onclick: function () { act(function () { E.takeSupport(S); }); }, text: '受け取る' })
-          : h('small', { text: '支えが いっぱいで 持てない（' + D.SUPPORT_RULES.slots + 'つまで）' })
+        h('button', { class: 'secondary', onclick: function () { act(function () { E.takeSupport(S); }); }, text: '受け取る' }),
+        S.equip.length >= D.SUPPORT_RULES.slots ? h('small', { text: 'いまは 3つ つけているので、持ち物に 入る（ひと休みで 入れかえられる）' }) : null
       ]) : null,
       r.choices.length ? h('p', { class: 'hint', text: 'これから 使える 選択肢を 1つ えらぼう' }) : null,
       h('div', { class: 'choices' }, r.choices.map(function (id) {
@@ -1149,8 +1315,22 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
         h('button', { class: 'secondary', onclick: function () { removing = false; render(); }, text: 'もどる' })
       ]);
     }
+    var equipPanel = S.items.length > 1 ? h('div', { class: 'equip' }, [
+      h('h3', { text: 'アイテムを 入れかえる（' + D.SUPPORT_RULES.slots + 'つまで つけられる）' }),
+      h('div', { class: 'equiplist' }, S.items.map(function (id) {
+        var on = S.equip.indexOf(id) >= 0, full = S.equip.length >= D.SUPPORT_RULES.slots;
+        return h('button', {
+          class: 'eq' + (on ? ' on' : ''), disabled: !on && full, 'aria-pressed': on ? 'true' : 'false',
+          onclick: function () {
+            var next = on ? S.equip.filter(function (x) { return x !== id; }) : S.equip.concat([id]);
+            act(function () { E.setEquip(S, next); });
+          }
+        }, [sprite(id, 2), h('b', { text: D.SUPPORTS[id].name }), h('small', { text: on ? 'つけている' : (full ? 'いっぱい' : 'つける') })]);
+      }))
+    ]) : null;
     return h('main', { class: 'rest' }, [
       h('h2', { text: 'ひと休み' }),
+      equipPanel,
       h('div', { class: 'two' }, [
         h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['休む', h('small', { text: '心の余裕を ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' 回ふく' })]),
         h('button', { class: 'secondary big', onclick: function () { removing = true; render(); } }, ['手放す', h('small', { text: 'いらない くせを 1つ 卒業する' })])

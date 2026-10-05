@@ -21,7 +21,7 @@ function rank(c, pol, s) {
   // 同じ順位の中では、見方を変えるカード・効く種類を先に
   let bonus = 0;
   const p = E.preview(s, s.battle.hand.findIndex((h) => E.card(h.id) === c));
-  if (c.reveal && !s.battle.enemy.revealed) bonus += 3;
+  if (c.organize && s.battle.enemy.form < 2) bonus += 3;
   if (p.weak) bonus += 2;
   if (p.backfire && pol !== POLICIES.impulse) bonus -= 5;
   if (c.type === 'calm' && D.ENEMIES[s.battle.enemy.id].anxiety && !s.battle.calm) bonus += 4;
@@ -29,8 +29,16 @@ function rank(c, pol, s) {
 }
 
 function useSupports(s) {
-  // 余裕が半分を切ったら、支えを1つ使う
-  if (s.phase === 'battle' && s.supports.length && s.yoyu < s.maxYoyu * 0.5) E.useSupport(s, 0);
+  // 先生は最初のターンに、ほかは余裕が減ったら使う
+  const b = s.battle;
+  const want = (id) => {
+    if (id === 'teacher') return true;
+    if (id === 'friend') return s.yoyu < s.maxYoyu * 0.6;
+    if (id === 'family') return s.yoyu < s.maxYoyu * 0.5;
+    if (id === 'book') return b.hand.some((h) => h.id === 'moyamoya') || s.yoyu < s.maxYoyu * 0.4;
+    return false;
+  };
+  for (const id of s.equip) if (s.phase === 'battle' && E.canUseSupport(s, id) && want(id)) E.useSupport(s, id);
 }
 
 function playTurn(s, pol) {
@@ -63,10 +71,11 @@ function runOne(seed, polName) {
       E.chooseNode(s, col);
     } else if (s.phase === 'battle') playTurn(s, pol);
     else if (s.phase === 'reward') {
-      if (s.reward.support && s.supports.length < D.SUPPORT_RULES.slots) E.takeSupport(s);
+      if (s.reward.support) E.takeSupport(s);
       const c = s.reward.choices.find((id) => pol.reward(E.card(id)));
       E.pickReward(s, c || null);
     } else if (s.phase === 'rest') {
+      E.setEquip(s, s.items.slice(0, D.SUPPORT_RULES.slots));
       const idx = s.deck.findIndex((id) => E.card(id).judge === 'impulse' || id === 'moyamoya');
       if (pol.rest === 'remove-impulse' && idx >= 0 && s.yoyu > s.maxYoyu * 0.4) E.rest(s, 'remove', idx);
       else E.rest(s, 'rest');

@@ -47,24 +47,33 @@
     ]);
   }
 
-  var selSup = -1;
-  function supportsRow(inBattle) {
+  var selSup = null;
+  var lastDealKey = '';
+  function sprite(key, form, cls) {
+    var cv = document.createElement('canvas');
+    cv.className = 'px ' + (cls || '');
+    if (root.SST_SPRITES && SST_SPRITES.has(key)) SST_SPRITES.draw(cv, key, form || 0);
+    return cv;
+  }
+  // アイテム：つけているもの（3つまで）。戦いごとに1回ずつ
+  function itemSlots(inBattle) {
     var slots = [];
     for (var i = 0; i < D.SUPPORT_RULES.slots; i++) {
-      (function (i) {
-        var id = S.supports[i];
-        if (!id) { slots.push(h('div', { class: 'sup empty', text: 'あき' })); return; }
-        var u = D.SUPPORTS[id];
+      (function (id) {
+        if (!id) { slots.push(h('div', { class: 'item empty', title: 'あき' })); return; }
+        var u = D.SUPPORTS[id], can = inBattle && E.canUseSupport(S, id);
+        var used = inBattle && !can;
         slots.push(h('button', {
-          class: 'sup' + (selSup === i ? ' selected' : ''), disabled: !inBattle,
+          class: 'item' + (selSup === id ? ' selected' : '') + (used ? ' used' : ''), disabled: !inBattle || used, 'aria-label': u.name,
           onclick: function () {
-            if (selSup === i) { selSup = -1; act(function () { E.useSupport(S, i); }); }
-            else { selSup = i; sel = -1; render(); }
+            if (selSup === id) { selSup = null; act(function () { E.useSupport(S, id); }); }
+            else { selSup = id; sel = -1; render(); }
           }
-        }, [h('b', { text: u.name }), selSup === i ? h('small', { text: u.note + '（もう一度 タップで 使う）' }) : null]));
-      })(i);
+        }, [sprite(id, 2), h('span', { class: 'iname', text: u.name })]));
+      })(S.equip[i]);
     }
-    return h('div', { class: 'sups' }, [h('span', { class: 'lbl', text: '支え' })].concat(slots));
+    var tip = selSup && inBattle ? h('div', { class: 'itemtip' }, [h('b', { text: D.SUPPORTS[selSup].name }), h('span', { text: D.SUPPORTS[selSup].note }), h('small', { text: 'もう一度 タップで 使う（この戦いで 1回）' })]) : null;
+    return h('div', { class: 'items' }, slots.concat([tip]));
   }
 
   // --- タイトル ---
@@ -102,7 +111,7 @@
       })));
     }).reverse();
     var notice = S.notice; S.notice = null;
-    return h('main', { class: 'map' }, [notice ? h('p', { class: 'praise', text: notice }) : null, supportsRow(false), h('p', { class: 'hint', text: '次に 行くところを えらぼう' })].concat(rows));
+    return h('main', { class: 'map' }, [notice ? h('p', { class: 'praise', text: notice }) : null, itemSlots(false), h('p', { class: 'hint', text: '次に 行くところを えらぼう' })].concat(rows));
   }
 
   // --- 戦い ---
@@ -142,34 +151,46 @@
     return 'あと ' + short.map(function (x) { return (x.k === 'trust' ? '信頼' : D.STATS[x.k].name) + x.need; }).join('・');
   }
 
+  var FORM_LABEL = ['かいぶつ', 'オーラ', 'ほんとうの すがた'];
   function battleScreen() {
-    var b = S.battle, en = b.enemy, it = E.intent(S);
+    var b = S.battle, en = b.enemy, it = E.intent(S), EN = D.ENEMIES[en.id];
     var itText = it.t === 'stress' ? '心の余裕 −' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
     var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
-    var enemy = h('section', { class: 'enemy k-' + en.kind }, [
-      h('div', { class: 'ekind', text: en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題' }),
-      h('h2', { class: 'ename' + (en.revealed ? '' : ' unsure'), text: en.name }),
-      !en.revealed ? h('div', { class: 'unsure-note', text: 'ほんとうに そう？（「見方を 変える」カードで たしかめられる）' }) : null,
+    var steps = h('div', { class: 'forms' }, FORM_LABEL.map(function (l, i) { return h('span', { class: 'fstep' + (i <= en.form ? ' on' : ''), text: l }); }));
+    var bubble = h('section', { class: 'bubble k-' + en.kind }, [
+      h('div', { class: 'ekind', text: (en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
+      h('h2', { class: 'ename', text: en.name }),
       h('div', { class: 'meter hp' }, [
         h('span', { class: 'lbl', text: '問題の大きさ' }),
         h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + hpPct + '%' })]),
         h('b', { text: Math.max(0, en.hp) + '/' + en.maxHp })
       ]),
       h('div', { class: 'intent' }, [h('span', { class: 'lbl', text: 'つぎに 起きそうなこと' }), h('b', { text: it.say + '（' + itText + '）' })]),
-      it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (D.ENEMIES[en.id].pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
-      D.ENEMIES[en.id].anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
+      it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (EN.pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
+      steps,
+      en.form < 2 ? h('div', { class: 'unsure-note', text: '「整理する」カードで、ほんとうの すがたに 近づく（いきおいが 弱まる）' }) : null,
+      EN.anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
     ]);
-    var me = h('section', { class: 'me' }, [
-      h('div', { class: 'chip energy' }, [h('span', { class: 'lbl', text: '元気' }), h('b', { text: b.energy + '/' + D.PLAYER.energy })]),
-      h('div', { class: 'chip guard' }, [h('span', { class: 'lbl', text: 'ゆとり' }), h('b', { text: String(b.guard) })]),
-      h('div', { class: 'piles', text: '山札 ' + b.draw.length + '・すて札 ' + b.discard.length })
+    var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(en.id, en.form), en.form, 'mon')]);
+    var hero = h('div', { class: 'hero' }, [
+      sprite('hero', 2, 'me'),
+      h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: 'ゆとり' }), h('b', { text: String(b.guard) })])
     ]);
-    var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.slice(-4).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
+    var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, monster, bubble]);
+    var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.slice(-3).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
+    var energy = h('div', { class: 'orb', title: '元気' }, [h('b', { text: b.energy + '/' + D.PLAYER.energy }), h('small', { text: '元気' })]);
+    var dealKey = S.floor + ':' + b.turn;
+    var deal = dealKey !== lastDealKey; lastDealKey = dealKey;
+    var n = b.hand.length, mid = (n - 1) / 2;
     var hand = h('section', { class: 'hand' }, b.hand.map(function (hc, i) {
       var c = E.card(hc.id), ok = E.canPlay(S, i);
       var el = cardView(c, { preview: c.unplayable ? {} : E.preview(S, i), selected: sel === i, disabled: !ok, temp: hc.temp, lock: lockText(c) });
+      var d = i - mid;
+      el.style.setProperty('--rot', (d * 2.2) + 'deg');
+      el.style.setProperty('--lift', (Math.abs(d) * Math.abs(d) * 1.4) + 'px');
+      if (deal) { el.classList.add('deal'); el.style.animationDelay = (i * 70) + 'ms'; }
       el.addEventListener('click', function () {
-        selSup = -1;
+        selSup = null;
         if (!ok) { sel = i; render(); return; }
         if (sel === i) act(function () { E.playCard(S, i); });
         else { sel = i; render(); }
@@ -178,7 +199,9 @@
     }));
     var help = h('p', { class: 'hint', text: sel >= 0 && E.canPlay(S, sel) ? 'もう一度 タップで 使う' : sel >= 0 ? (E.card(b.hand[sel].id).unplayable ? 'モヤモヤは 使えない' : '元気が たりない／条件が たりない') : 'カードを タップして えらぶ' });
     var end = h('button', { class: 'primary endturn', onclick: function () { act(function () { E.endTurn(S); }); }, text: 'ターンを おわる' });
-    return h('main', { class: 'battle' }, [enemy, msgs, h('div', { class: 'row' }, [me, supportsRow(true), help, end]), hand]);
+    var piles = h('div', { class: 'pile draw', text: '山札 ' + b.draw.length });
+    var disc = h('div', { class: 'pile disc', text: 'すて札 ' + b.discard.length });
+    return h('main', { class: 'battle' }, [stage, h('div', { class: 'row' }, [energy, msgs, help, end]), h('div', { class: 'handrow' }, [piles, hand, disc])]);
   }
 
   // --- 報酬 ---
@@ -189,11 +212,11 @@
       r.passed ? h('p', { class: 'story', text: r.passed + (r.leave ? '（モヤモヤが デッキに 入った）' : '') }) : null,
       h('p', { class: 'other', text: r.other }),
       r.support ? h('div', { class: 'supoffer' }, [
-        h('b', { text: '支えが 見つかった：「' + D.SUPPORTS[r.support].name + '」' }),
+        sprite(r.support, 2, 'offer'),
+        h('b', { text: 'アイテムが 見つかった：「' + D.SUPPORTS[r.support].name + '」' }),
         h('small', { text: D.SUPPORTS[r.support].note }),
-        S.supports.length < D.SUPPORT_RULES.slots
-          ? h('button', { class: 'secondary', onclick: function () { act(function () { E.takeSupport(S); }); }, text: '受け取る' })
-          : h('small', { text: '支えが いっぱいで 持てない（' + D.SUPPORT_RULES.slots + 'つまで）' })
+        h('button', { class: 'secondary', onclick: function () { act(function () { E.takeSupport(S); }); }, text: '受け取る' }),
+        S.equip.length >= D.SUPPORT_RULES.slots ? h('small', { text: 'いまは 3つ つけているので、持ち物に 入る（ひと休みで 入れかえられる）' }) : null
       ]) : null,
       r.choices.length ? h('p', { class: 'hint', text: 'これから 使える 選択肢を 1つ えらぼう' }) : null,
       h('div', { class: 'choices' }, r.choices.map(function (id) {
@@ -218,8 +241,22 @@
         h('button', { class: 'secondary', onclick: function () { removing = false; render(); }, text: 'もどる' })
       ]);
     }
+    var equipPanel = S.items.length > 1 ? h('div', { class: 'equip' }, [
+      h('h3', { text: 'アイテムを 入れかえる（' + D.SUPPORT_RULES.slots + 'つまで つけられる）' }),
+      h('div', { class: 'equiplist' }, S.items.map(function (id) {
+        var on = S.equip.indexOf(id) >= 0, full = S.equip.length >= D.SUPPORT_RULES.slots;
+        return h('button', {
+          class: 'eq' + (on ? ' on' : ''), disabled: !on && full, 'aria-pressed': on ? 'true' : 'false',
+          onclick: function () {
+            var next = on ? S.equip.filter(function (x) { return x !== id; }) : S.equip.concat([id]);
+            act(function () { E.setEquip(S, next); });
+          }
+        }, [sprite(id, 2), h('b', { text: D.SUPPORTS[id].name }), h('small', { text: on ? 'つけている' : (full ? 'いっぱい' : 'つける') })]);
+      }))
+    ]) : null;
     return h('main', { class: 'rest' }, [
       h('h2', { text: 'ひと休み' }),
+      equipPanel,
       h('div', { class: 'two' }, [
         h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['休む', h('small', { text: '心の余裕を ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' 回ふく' })]),
         h('button', { class: 'secondary big', onclick: function () { removing = true; render(); } }, ['手放す', h('small', { text: 'いらない くせを 1つ 卒業する' })])

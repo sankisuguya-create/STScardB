@@ -1,0 +1,41 @@
+// 自動生成（scripts/sprites.py）。直接編集しない
+// ドット絵の描画。課題は form 0=かいぶつ／1=現実の姿＋ぶきみなオーラ／2=ふつうの現実
+(function (root) {
+  'use strict';
+  var PAL = {"k": "#12172a", "w": "#ffffff", "p": "#8e6ad8", "P": "#b79cf0", "y": "#ffd23f", "r": "#e5484d", "g": "#5c6b8a", "G": "#a7b2c8", "o": "#f08c3a", "s": "#f4c9a0", "b": "#3b5bdb", "n": "#7a4b2a", "e": "#2b8a3e", "c": "#7fd3e0", "d": "#3d2f63"};
+  var ART = {"dunno_m": ["......kkkk......", ".....kyyyyk.....", "....kyykkyyk....", ".........kyk....", ".......kyyk.....", ".......kyk......", ".......kkk......", "....kkkkkkkkk...", "...kdddddddddk..", "..kdkkddddkkddk.", "..kdrrkdddkrrdk.", "..kdddddddddddk.", "..kdkwkwkwkwkdk.", "..kdkrrrrrrrkdk.", "..kddkkkkkkkddk.", "...kkkkkkkkkkk.."], "bumped_m": [".......k........", "......kok....k..", "..k..kooo..kok..", "..kokooooookok..", "...koooooooook..", "..kkkkoooookkkk.", ".koookrooookrok.", ".kooorrooookrrk.", ".koooooooooooook", "..kokwkwkwkwkok.", "..kokrrrrrrrkok.", "...kokwkwkwkok..", "....koooooook...", ".....kkkkkkk....", "....kk.....kk...", "................"], "left_out_m": ["................", ".....kkkkkk.....", "....kgggggggk...", "...kgGGgggGggk..", "...kgkkkgkkkgk..", "...kgkrkgkrkgk..", "...kgkkkgkkkggk.", "...kggggggggggk.", "...kgggkkkkgggk.", "...kggkgggkggk..", "...kgggggggggk..", "....kgk.kgk.kgk.", ".....k...k...k..", "................", "..........kkk...", ".........kgggk.."], "teased_m": ["...k...k...k....", "..kgk.kgk.kgk...", ".kgggkgggkgggk..", "kgGGgggGgggGggk.", "kgkkgggggggkkgk.", "kggrrkgggkrrggk.", "kggrkkgggkkrggk.", "kgggggggggggggk.", "kggkkkkkkkkkggk.", "kgkwkwkwkwkwkgk.", "kggkrrrrrrrkggk.", "kgkwkwkwkwkwkgk.", ".kggkkkkkkkggk..", "..kggggggggk....", "...kkkkkkkk.....", "................"], "presentation_m": [".....kkkkkk.....", "...kkddddddkk...", "..kddddddddddk..", ".kddwwrwwwwrddk.", ".kdwwwwrwwrwwdk.", "kddwwwkkkkwwwddk", "kdrwwkrrrrkwwrdk", "kddwwkrkkrkwwddk", "kddwwkrrrrkwwddk", "kdrwwwkkkkwwwrdk", ".kdwwrwwwwrwwdk.", ".kddwwwrwwwwddk.", "..kddddddddddk..", "...kkddddddkk...", ".....kkkkkk.....", "................"], "dunno_r": ["................", "..kkkkkkkkkkk...", "..kwwwwwwwwwk...", "..kwGGGGGGwwk...", "..kwwwwwwwwwk...", "..kwGGGGGGwwk...", "..kwwwwwwwwwk...", "..kwGGGGGGwwk...", "..kwwwwwwwwwk...", "..kwGGGwbbbwk...", "..kwwwwwwwbwk...", "..kwGGGwwbwwk...", "..kwwwwwwwwwk...", "..kwwwwwwbwwk...", "..kkkkkkkkkkk...", "................"], "bumped_r": ["................", "................", "................", ".....kkkkk......", "....knnnnnk.....", "....knsssnk.....", "....ksksksk.....", "....ksssssk.....", ".....ksrsk......", "......kkk.......", "..s..keeek..s...", "...skeeeeeks....", "....keeeeek.....", ".....kk.kk......", "................", "................"], "left_out_r": ["................", "................", "................", "................", ".kkkkk....kkkkk.", "knnnnnk..kyyyyyk", "knsssnk..kysssyk", "ksksksk..ksksksk", "ksssssk..ksssssk", ".krrrk....krrrk.", "..kkk......kkk..", ".koook....kbbbk.", "koooookkkkbbbbbk", "koooookrrkbbbbbk", ".kk.kkkrrkkk.kk.", "......kkkk......"], "teased_r": ["................", "................", "................", "................", ".kkkkk....kkkkk.", "knnnnnk..kkkkkkk", "knsssnk..kkssskk", "ksksksk..ksksksk", "ksssssk..ksssssk", ".krrrk....krrrk.", "..kkk......kkk..", ".kgggk....kPPPk.", "kgggggk..kPPPPPk", "kgggggk..kPPPPPk", ".kk.kk....kk.kk.", "................"], "presentation_r": ["................", "................", "................", ".....kkkkk......", "....kkkkkkk.....", ".kkkkkssskkkkkk.", "knnnkskskskyyyyk", "knssksssssksssyk", "kskskksksksksksk", "kssssskkkksssssk", ".kskskeeekksksk.", "..kkkeeeeekkkk..", ".kbbkeeeeekoook.", "kbbbbkk.kkoooook", "kbbbbbk..koooook", ".kk.kk....kk.kk."], "hero": ["................", ".....kkkkkk.....", "....knnnnnnk....", "...knnnnnnnnk...", "...knssssssnk...", "...ksskssksk....", "...kssssssssk...", "....kssrrssk....", ".....kkkkkk.....", "....kbbbbbbk....", "...kbbbbbbbbk...", "..ksbbbbbbbbsk..", "...kbbbbbbbbk...", "....kkkkkkkk....", "....kk....kk....", "................"], "teacher": ["................", "................", "................", ".....kkkkk......", "....kGGGGGk.....", "....kGsssGk.....", "....kkkkkkk.....", "....ksssssk.....", ".....ksksk......", "......kkk.......", ".....keeek......", "....keeeeek.....", "....keeeeek.....", ".....kk.kk......", "................", "................"], "friend": ["................", "................", "................", "................", ".kkkkk....kkkkk.", "kyyyyyk..knnnnnk", "kysssyk..knsssnk", "ksksksk..ksksksk", "ksssssk..ksssssk", ".krrrk....krrrk.", "..kkk......kkk..", ".koook....kbbbk.", "koooook..kbbbbbk", "koooook..kbbbbbk", ".kk.kk....kk.kk.", "................"], "family": ["................", "................", ".kkkkk..........", "kkkkkkk.........", "kkssskk.........", "ksksksk...kkkkk.", "ksssssk..knnnnnk", ".ksksk...knsssnk", "..kkk....ksksksk", ".kPPPk...ksssssk", "kPPPPPk...ksksk.", "kPPPPPk....kkk..", ".kk.kk....kbbbk.", ".........kbbbbbk", ".........kbbbbbk", "..........kk.kk."], "book": ["................", "................", "..kkkkkk.kkkkk..", ".krrrrrrkrrrrrk.", ".krwwwwrkrwwwrk.", ".krrrrrrkrrrrrk.", ".krwwwwrkrwwwrk.", ".krrrrrrkrrrrrk.", ".krwwwwrkrwwwrk.", ".krrrrrrkrrrrrk.", ".kkkkkkkkkkkkkk.", "..kyyyyyyyyyyk..", "...kkkkkkkkkk...", "................", "................", "................"]};
+  var N = 16, M = 2, SIZE = N + M * 2;
+  function grid(key) {
+    var art = ART[key], g = [];
+    for (var y = 0; y < SIZE; y++) { g.push([]); for (var x = 0; x < SIZE; x++) g[y].push(null); }
+    for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) { var ch = art[r][c]; if (ch !== '.') g[r + M][c + M] = PAL[ch]; }
+    return g;
+  }
+  function aura(g) {
+    var ring = function (src, color) {
+      var out = [];
+      for (var y = 0; y < SIZE; y++) for (var x = 0; x < SIZE; x++) {
+        if (src[y][x]) continue;
+        if ((y > 0 && src[y - 1][x]) || (y < SIZE - 1 && src[y + 1][x]) || (x > 0 && src[y][x - 1]) || (x < SIZE - 1 && src[y][x + 1])) out.push([x, y]);
+      }
+      out.forEach(function (p) { src[p[1]][p[0]] = color; });
+    };
+    ring(g, '#5a1e8c'); ring(g, 'rgba(120,50,190,0.45)');
+    return g;
+  }
+  function draw(cv, key, form) {
+    cv.width = SIZE; cv.height = SIZE;
+    var x = cv.getContext('2d');
+    x.clearRect(0, 0, SIZE, SIZE);
+    var g = grid(key);
+    if (form === 1) g = aura(g);
+    for (var yy = 0; yy < SIZE; yy++) for (var xx = 0; xx < SIZE; xx++) if (g[yy][xx]) { x.fillStyle = g[yy][xx]; x.fillRect(xx, yy, 1, 1); }
+    if (form === 1) {
+      x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(70,20,110,0.28)'; x.fillRect(0, 0, SIZE, SIZE);
+      x.globalCompositeOperation = 'source-over';
+    }
+  }
+  // 課題の id と form から、使う絵を決める
+  function enemyKey(id, form) { return id + (form === 0 ? '_m' : '_r'); }
+  root.SST_SPRITES = { draw: draw, enemyKey: enemyKey, has: function (k) { return !!ART[k]; } };
+})(this);
