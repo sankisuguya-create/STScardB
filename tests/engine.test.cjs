@@ -122,3 +122,19 @@ test('支えは上限をこえて持てない', () => {
   E.chooseNode(s, 1);
   if (s.phase === 'event' && s.event.id === 'forgot') { E.chooseEvent(s, 0); assert.strictEqual(s.supports.length, 3); }
 });
+
+test('時間で過ぎ去る課題：ターン数を乗りこえると終わり、報酬はない。からかいは過ぎ去らない', () => {
+  assert.ok(!D.ENEMIES.teased.pass && !D.ENEMIES.presentation.pass);
+  for (let seed = 1; seed < 300; seed++) {
+    const s = E.newRun(seed, 1);
+    E.chooseNode(s, 0);
+    if (s.battle.enemy.id !== 'bumped') continue;
+    s.yoyu = 999; s.maxYoyu = 999;
+    for (let i = 0; i < 3 && s.phase === 'battle'; i++) E.endTurn(s);
+    assert.strictEqual(s.phase, 'reward');
+    assert.strictEqual(s.reward.choices.length, 0);
+    assert.ok(s.reward.passed);
+    return;
+  }
+  assert.fail('bumped が出なかった');
+});

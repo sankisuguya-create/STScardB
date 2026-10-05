@@ -307,6 +307,7 @@
     var o = { t: mv.t, say: mv.say };
     if (mv.t === 'stress') o.n = Math.round((mv.n * D.RULES.stressScale + en.str) * en.stressMul);
     if (mv.t === 'grow') o.n = mv.n;
+    if (E.pass) o.passIn = E.pass.turns - b.turn + 1;
     return o;
   }
 
@@ -326,13 +327,16 @@
     b.hand = [];
     enemyAct(s);
     if (s.yoyu <= 0) { endRun(s, false); return s; }
+    var ps = D.ENEMIES[b.enemy.id].pass;
+    if (ps && b.turn >= ps.turns) { winBattle(s, true); return s; }
     startTurn(s, false);
     return s;
   }
 
-  function winBattle(s) {
+  function winBattle(s, passed) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
-    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed });
+    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, passed: !!passed });
+    if (passed && E.pass.leave) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'pass:' + en.id }); }
     var statsBefore = { think: s.stats.think, act: s.stats.act, relate: s.stats.relate };
     Object.keys(D.STATS).forEach(function (st) {
       if (b.usage[st] >= D.RULES.growthUses && s.stats[st] < D.PLAYER.statMax) {
@@ -350,6 +354,10 @@
     noteUnlocks(s, s.trust, statsBefore);
     if (en.kind === 'boss') { endRun(s, true); return; }
     s.phase = 'reward';
+    if (passed) {
+      s.reward = { choices: [], other: E.other, support: null, passed: E.pass.say, leave: !!E.pass.leave };
+      return;
+    }
     var sup = null;
     if (en.kind === 'elite' || rand(s) < D.SUPPORT_RULES.rewardChance) sup = pick(s, Object.keys(D.SUPPORTS));
     s.reward = { choices: rewardChoices(s), other: E.other, support: sup };

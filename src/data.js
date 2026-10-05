@@ -99,17 +99,21 @@
   var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'endure', 'breathe', 'talk', 'snap_back'];
   var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling'];
 
+  // pass: そのターン数を乗りこえると、課題は時間とともに過ぎ去る（報酬なし。leave なら モヤモヤが のこる）。
+  //   からかい・発表には付けない：放っておいても過ぎ去らない問題があることを残すため
   // moves: stress=心の余裕を n へらす／grow=問題が大きくなる（以後の stress に +n）／worry=モヤモヤを1まい まぜる
   // view: 最初は「見え方」の名前で出る。reveal カードで「ほんとう」がわかる
   var ENEMIES = {
     dunno: {
       ctx: 'study', scene: 'わからない問題', name: 'わからない問題', kind: 'normal', hp: 24,
+      pass: { turns: 5, say: 'じゅぎょうが おわった。でも、わからないままだ。', leave: true },
       moves: [{ t: 'stress', n: 6, say: 'あせってくる' }, { t: 'grow', n: 2, say: 'どんどん むずかしく見えてくる' }, { t: 'stress', n: 7, say: 'まわりが すすんでいく' }],
       weak: ['relate', 'think'], resist: [], situ: ['say_dunno', 'ask_next', 'skip_it'],
       other: 'となりの子：「聞いてくれたら、すぐ 教えたのに」'
     },
     bumped: {
       ctx: 'conflict', scene: 'ろうかで ぶつかられた', name: 'わざと ぶつかられた？', kind: 'normal', hp: 20,
+      pass: { turns: 3, say: '時間がたって、気にならなくなった。' },
       moves: [{ t: 'stress', n: 7, say: 'むかむかしてくる' }, { t: 'stress', n: 8, say: '「わざとだ」と思えてくる' }],
       weak: [], resist: ['relate'], backfire: [], situ: ['ask_ok', 'watch_them', 'hit_back'],
       view: { truth: 'benign', name: 'よそ見して ぶつかっただけ', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.5 },
@@ -117,6 +121,7 @@
     },
     left_out: {
       ctx: 'join', scene: '遊びに 入れない', name: '遊びに 入れない', kind: 'normal', hp: 28,
+      pass: { turns: 4, say: '休み時間が おわった。さびしさは 少し のこった。', leave: true },
       moves: [{ t: 'stress', n: 6, say: 'さびしくなる' }, { t: 'worry', say: '「きらわれてる？」と考えてしまう' }, { t: 'stress', n: 8, say: '休み時間が おわっていく' }],
       weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['let_me_in', 'invite_other', 'sulk'],
       other: '遊んでいた子：「人数が ちょうどだったから、気づかなかった」'

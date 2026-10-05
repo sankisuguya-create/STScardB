@@ -138,6 +138,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .sup.selected { background: var(--relate); color: #fff; }
 .sup.empty { border: 2px dashed var(--line); color: var(--sub); border-radius: var(--radius); padding: 10px; font-size: .85rem; }
 .supoffer { display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--panel); border: 2px solid var(--relate); border-radius: var(--radius); padding: 8px 14px; }
+.passin { font-size: .9rem; color: var(--calm); font-weight: 700; }
+.passin.no { color: var(--sub); font-weight: 400; }
 
 </style>
 </head>
@@ -245,17 +247,21 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'endure', 'breathe', 'talk', 'snap_back'];
   var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling'];
 
+  // pass: そのターン数を乗りこえると、課題は時間とともに過ぎ去る（報酬なし。leave なら モヤモヤが のこる）。
+  //   からかい・発表には付けない：放っておいても過ぎ去らない問題があることを残すため
   // moves: stress=心の余裕を n へらす／grow=問題が大きくなる（以後の stress に +n）／worry=モヤモヤを1まい まぜる
   // view: 最初は「見え方」の名前で出る。reveal カードで「ほんとう」がわかる
   var ENEMIES = {
     dunno: {
       ctx: 'study', scene: 'わからない問題', name: 'わからない問題', kind: 'normal', hp: 24,
+      pass: { turns: 5, say: 'じゅぎょうが おわった。でも、わからないままだ。', leave: true },
       moves: [{ t: 'stress', n: 6, say: 'あせってくる' }, { t: 'grow', n: 2, say: 'どんどん むずかしく見えてくる' }, { t: 'stress', n: 7, say: 'まわりが すすんでいく' }],
       weak: ['relate', 'think'], resist: [], situ: ['say_dunno', 'ask_next', 'skip_it'],
       other: 'となりの子：「聞いてくれたら、すぐ 教えたのに」'
     },
     bumped: {
       ctx: 'conflict', scene: 'ろうかで ぶつかられた', name: 'わざと ぶつかられた？', kind: 'normal', hp: 20,
+      pass: { turns: 3, say: '時間がたって、気にならなくなった。' },
       moves: [{ t: 'stress', n: 7, say: 'むかむかしてくる' }, { t: 'stress', n: 8, say: '「わざとだ」と思えてくる' }],
       weak: [], resist: ['relate'], backfire: [], situ: ['ask_ok', 'watch_them', 'hit_back'],
       view: { truth: 'benign', name: 'よそ見して ぶつかっただけ', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.5 },
@@ -263,6 +269,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     },
     left_out: {
       ctx: 'join', scene: '遊びに 入れない', name: '遊びに 入れない', kind: 'normal', hp: 28,
+      pass: { turns: 4, say: '休み時間が おわった。さびしさは 少し のこった。', leave: true },
       moves: [{ t: 'stress', n: 6, say: 'さびしくなる' }, { t: 'worry', say: '「きらわれてる？」と考えてしまう' }, { t: 'stress', n: 8, say: '休み時間が おわっていく' }],
       weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['let_me_in', 'invite_other', 'sulk'],
       other: '遊んでいた子：「人数が ちょうどだったから、気づかなかった」'
@@ -646,6 +653,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var o = { t: mv.t, say: mv.say };
     if (mv.t === 'stress') o.n = Math.round((mv.n * D.RULES.stressScale + en.str) * en.stressMul);
     if (mv.t === 'grow') o.n = mv.n;
+    if (E.pass) o.passIn = E.pass.turns - b.turn + 1;
     return o;
   }
 
@@ -665,13 +673,16 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     b.hand = [];
     enemyAct(s);
     if (s.yoyu <= 0) { endRun(s, false); return s; }
+    var ps = D.ENEMIES[b.enemy.id].pass;
+    if (ps && b.turn >= ps.turns) { winBattle(s, true); return s; }
     startTurn(s, false);
     return s;
   }
 
-  function winBattle(s) {
+  function winBattle(s, passed) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
-    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed });
+    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, passed: !!passed });
+    if (passed && E.pass.leave) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'pass:' + en.id }); }
     var statsBefore = { think: s.stats.think, act: s.stats.act, relate: s.stats.relate };
     Object.keys(D.STATS).forEach(function (st) {
       if (b.usage[st] >= D.RULES.growthUses && s.stats[st] < D.PLAYER.statMax) {
@@ -689,6 +700,10 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     noteUnlocks(s, s.trust, statsBefore);
     if (en.kind === 'boss') { endRun(s, true); return; }
     s.phase = 'reward';
+    if (passed) {
+      s.reward = { choices: [], other: E.other, support: null, passed: E.pass.say, leave: !!E.pass.leave };
+      return;
+    }
     var sup = null;
     if (en.kind === 'elite' || rand(s) < D.SUPPORT_RULES.rewardChance) sup = pick(s, Object.keys(D.SUPPORTS));
     s.reward = { choices: rewardChoices(s), other: E.other, support: sup };
@@ -1072,6 +1087,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
         h('b', { text: Math.max(0, en.hp) + '/' + en.maxHp })
       ]),
       h('div', { class: 'intent' }, [h('span', { class: 'lbl', text: 'つぎに 起きそうなこと' }), h('b', { text: it.say + '（' + itText + '）' })]),
+      it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (D.ENEMIES[en.id].pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
       D.ENEMIES[en.id].anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
     ]);
     var me = h('section', { class: 'me' }, [
@@ -1100,7 +1116,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   function rewardScreen() {
     var r = S.reward;
     return h('main', { class: 'reward' }, [
-      h('h2', { text: '乗りこえた！' }),
+      h('h2', { text: r.passed ? '時間が たった' : '乗りこえた！' }),
+      r.passed ? h('p', { class: 'story', text: r.passed + (r.leave ? '（モヤモヤが デッキに 入った）' : '') }) : null,
       h('p', { class: 'other', text: r.other }),
       r.support ? h('div', { class: 'supoffer' }, [
         h('b', { text: '支えが 見つかった：「' + D.SUPPORTS[r.support].name + '」' }),
@@ -1109,13 +1126,13 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
           ? h('button', { class: 'secondary', onclick: function () { act(function () { E.takeSupport(S); }); }, text: '受け取る' })
           : h('small', { text: '支えが いっぱいで 持てない（' + D.SUPPORT_RULES.slots + 'つまで）' })
       ]) : null,
-      h('p', { class: 'hint', text: 'これから 使える 選択肢を 1つ えらぼう' }),
+      r.choices.length ? h('p', { class: 'hint', text: 'これから 使える 選択肢を 1つ えらぼう' }) : null,
       h('div', { class: 'choices' }, r.choices.map(function (id) {
         var el = cardView(E.card(id), { lock: lockText(E.card(id)), showCtx: true });
         el.addEventListener('click', function () { act(function () { E.pickReward(S, id); }); });
         return el;
       })),
-      h('button', { class: 'secondary', onclick: function () { act(function () { E.pickReward(S, null); }); }, text: '今回は えらばない' })
+      h('button', { class: 'secondary', onclick: function () { act(function () { E.pickReward(S, null); }); }, text: r.choices.length ? '今回は えらばない' : '次へ' })
     ]);
   }
 

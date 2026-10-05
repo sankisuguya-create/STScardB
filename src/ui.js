@@ -156,6 +156,7 @@
         h('b', { text: Math.max(0, en.hp) + '/' + en.maxHp })
       ]),
       h('div', { class: 'intent' }, [h('span', { class: 'lbl', text: 'つぎに 起きそうなこと' }), h('b', { text: it.say + '（' + itText + '）' })]),
+      it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (D.ENEMIES[en.id].pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
       D.ENEMIES[en.id].anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
     ]);
     var me = h('section', { class: 'me' }, [
@@ -184,7 +185,8 @@
   function rewardScreen() {
     var r = S.reward;
     return h('main', { class: 'reward' }, [
-      h('h2', { text: '乗りこえた！' }),
+      h('h2', { text: r.passed ? '時間が たった' : '乗りこえた！' }),
+      r.passed ? h('p', { class: 'story', text: r.passed + (r.leave ? '（モヤモヤが デッキに 入った）' : '') }) : null,
       h('p', { class: 'other', text: r.other }),
       r.support ? h('div', { class: 'supoffer' }, [
         h('b', { text: '支えが 見つかった：「' + D.SUPPORTS[r.support].name + '」' }),
@@ -193,13 +195,13 @@
           ? h('button', { class: 'secondary', onclick: function () { act(function () { E.takeSupport(S); }); }, text: '受け取る' })
           : h('small', { text: '支えが いっぱいで 持てない（' + D.SUPPORT_RULES.slots + 'つまで）' })
       ]) : null,
-      h('p', { class: 'hint', text: 'これから 使える 選択肢を 1つ えらぼう' }),
+      r.choices.length ? h('p', { class: 'hint', text: 'これから 使える 選択肢を 1つ えらぼう' }) : null,
       h('div', { class: 'choices' }, r.choices.map(function (id) {
         var el = cardView(E.card(id), { lock: lockText(E.card(id)), showCtx: true });
         el.addEventListener('click', function () { act(function () { E.pickReward(S, id); }); });
         return el;
       })),
-      h('button', { class: 'secondary', onclick: function () { act(function () { E.pickReward(S, null); }); }, text: '今回は えらばない' })
+      h('button', { class: 'secondary', onclick: function () { act(function () { E.pickReward(S, null); }); }, text: r.choices.length ? '今回は えらばない' : '次へ' })
     ]);
   }
 
