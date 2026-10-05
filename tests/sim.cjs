@@ -1,0 +1,121 @@
+// バランス・シミュレータ。3つの方針で通しプレイさせ、合格基準を確かめる。
+// node tests/sim.cjs [回数]
+'use strict';
+const E = require('../src/engine.js');
+const D = E.data;
+
+const POLICIES = {
+  // 向社会的：よい選択を先に、衝動は使わない
+  prosocial: { order: ['good', 'neutral'], reward: (c) => c.judge === 'good', rest: 'remove-impulse', event: 0 },
+  // 衝動：衝動を先に、あとは手当たりしだい
+  impulse: { order: ['impulse', 'neutral', 'good'], reward: (c) => c.type === 'act', rest: 'rest', event: 2 },
+  // がまん：がまん・受け身を先に。関わるカードは使わない
+  passive: { order: ['passive', 'neutral'], reward: (c) => c.type === 'calm', rest: 'rest', event: 2 }
+};
+
+function rank(c, pol, s) {
+  const kind = c.style === 'passive' && c.judge !== 'good' ? 'passive' : c.judge;
+  let r = pol.order.indexOf(kind);
+  if (pol === POLICIES.passive && c.type === 'relate') r = -1;
+  if (r < 0) return -1;
+  // 同じ順位の中では、見方を変えるカード・効く種類を先に
+  let bonus = 0;
+  const p = E.preview(s, s.battle.hand.findIndex((h) => E.card(h.id) === c));
+  if (c.reveal && !s.battle.enemy.revealed) bonus += 3;
+  if (p.weak) bonus += 2;
+  if (p.backfire && pol !== POLICIES.impulse) bonus -= 5;
+  if (c.type === 'calm' && D.ENEMIES[s.battle.enemy.id].anxiety && !s.battle.calm) bonus += 4;
+  return (10 - r) * 10 + bonus;
+}
+
+function playTurn(s, pol) {
+  for (let guard = 0; guard < 30 && s.phase === 'battle'; guard++) {
+    let best = -1, bestScore = -1;
+    s.battle.hand.forEach((h, i) => {
+      if (!E.canPlay(s, i)) return;
+      const sc = rank(E.card(h.id), pol, s);
+      if (sc > bestScore) { bestScore = sc; best = i; }
+    });
+    if (best < 0) break;
+    E.playCard(s, best);
+    const errs = E.checkInvariants(s);
+    if (errs.length) throw new Error('invariant: ' + errs.join(','));
+  }
+  if (s.phase === 'battle') E.endTurn(s);
+}
+
+function runOne(seed, polName) {
+  const pol = POLICIES[polName];
+  const s = E.newRun(seed, 1);
+  let steps = 0;
+  while (s.phase !== 'end' && steps++ < 2000) {
+    if (s.phase === 'map') {
+      const row = s.map[s.row];
+      // 向社会的は休み・できごとも使う。ほかは戦い優先
+      let col = 0;
+      if (row.length > 1) col = Math.floor((seed + s.row) % row.length);
+      E.chooseNode(s, col);
+    } else if (s.phase === 'battle') playTurn(s, pol);
+    else if (s.phase === 'reward') {
+      const c = s.reward.choices.find((id) => pol.reward(E.card(id)));
+      E.pickReward(s, c || null);
+    } else if (s.phase === 'rest') {
+      const idx = s.deck.findIndex((id) => E.card(id).judge === 'impulse' || id === 'moyamoya');
+      if (pol.rest === 'remove-impulse' && idx >= 0 && s.yoyu > s.maxYoyu * 0.4) E.rest(s, 'remove', idx);
+      else E.rest(s, 'rest');
+    } else if (s.phase === 'event') {
+      const opts = D.EVENTS[s.event.id].options;
+      let i = Math.min(pol.event, opts.length - 1);
+      while (i > 0 && !E.optionOpen(s, opts[i])) i--;
+      E.chooseEvent(s, i); E.leaveEvent(s);
+    }
+  }
+  return s;
+}
+
+function stats(n) {
+  const out = {};
+  for (const name of Object.keys(POLICIES)) {
+    let wins = 0, goodTry = 0, goodFail = 0, impTry = 0, impOk = 0, floors = 0, grows = 0, trust = 0;
+    for (let i = 0; i < n; i++) {
+      const s = runOne(1000 + i * 7919, name);
+      if (s.result && s.result.won) wins++;
+      floors += s.floor;
+      trust += s.trust;
+      for (const e of s.log) {
+        if (e.k === 'play' && e.judge === 'good' && E.card(e.card).chance) { goodTry++; if (!e.ok) goodFail++; }
+        if (e.k === 'play' && e.judge === 'impulse') { impTry++; if (e.ok) impOk++; }
+        if (e.k === 'grow') grows++;
+      }
+    }
+    out[name] = {
+      win: wins / n, avgFloor: floors / n, avgTrust: trust / n, growsPerRun: grows / n,
+      goodFailRate: goodTry ? goodFail / goodTry : null,
+      impulseOkRate: impTry ? impOk / impTry : null
+    };
+  }
+  return out;
+}
+
+// 合格基準（docs/design.md §5）
+function verdict(r) {
+  const checks = [
+    ['勝率 向社会的 > 衝動', r.prosocial.win > r.impulse.win],
+    ['勝率 衝動 > がまん', r.impulse.win > r.passive.win],
+    ['向社会的でも 勝率 < 95%', r.prosocial.win < 0.95],
+    ['よい選択の失敗率 20〜35%', r.prosocial.goodFailRate >= 0.2 && r.prosocial.goodFailRate <= 0.35],
+    ['衝動の その場の成功率 ≥ 60%', r.impulse.impulseOkRate >= 0.6]
+  ];
+  return checks;
+}
+
+module.exports = { runOne, stats, verdict, POLICIES };
+
+if (require.main === module) {
+  const n = Number(process.argv[2] || 1000);
+  const r = stats(n);
+  console.table(r);
+  let fail = 0;
+  for (const [name, ok] of verdict(r)) { console.log((ok ? 'OK  ' : 'NG  ') + name); if (!ok) fail++; }
+  process.exit(fail ? 1 : 0);
+}
