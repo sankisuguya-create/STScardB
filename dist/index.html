@@ -71,7 +71,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 
 /* 戦い：舞台 */
 .battle { display: flex; flex-direction: column; gap: 6px; padding: 0; overflow: hidden; }
-.stage { position: relative; height: 340px; flex: none; background: linear-gradient(var(--stage-top) 0 74%, var(--floor) 74%); border-bottom: 4px solid var(--line); display: grid; grid-template-columns: 250px 300px 1fr; align-items: end; padding: 0 22px 16px; gap: 10px; }
+.stage { position: relative; height: 340px; flex: none; background: linear-gradient(var(--stage-top) 0 74%, var(--floor) 74%); border-bottom: 4px solid var(--line); display: grid; grid-template-columns: 220px 1fr 300px; align-items: end; padding: 0 22px 16px; gap: 10px; }
 .items { position: absolute; left: 16px; top: 12px; display: flex; gap: 8px; align-items: flex-start; z-index: 2; }
 .item { width: 64px; height: 64px; min-height: 0; padding: 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--paper); }
 .item canvas { width: 40px; height: 40px; }
@@ -83,13 +83,13 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .hero { grid-column: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .hero canvas.me { width: 140px; height: 140px; }
 .chip.guard.on { background: #cfe6ff; }
-.monster { grid-column: 2; justify-self: center; }
+.monster { grid-column: 3; justify-self: center; }
 .monster canvas.mon { width: 260px; height: 260px; animation: bob 1.6s steps(2) infinite; }
 .monster.f1 canvas.mon { animation: bob 1.6s steps(2) infinite, flick 1.2s steps(2) infinite; }
 .monster.f2 canvas.mon { animation: none; }
-.bubble { grid-column: 3; align-self: center; position: relative; background: var(--paper); border: 3px solid var(--line); border-radius: 14px; padding: 10px 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 4px; }
-.bubble::before { content: ""; position: absolute; left: -22px; top: 46%; border: 11px solid transparent; border-right: 11px solid var(--line); }
-.bubble::after { content: ""; position: absolute; left: -15px; top: calc(46% + 2px); border: 9px solid transparent; border-right: 9px solid var(--paper); }
+.bubble { grid-column: 2; align-self: center; justify-self: center; width: 100%; max-width: 640px; position: relative; background: var(--paper); border: 3px solid var(--line); border-radius: 14px; padding: 10px 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 4px; }
+.bubble::before { content: ""; position: absolute; right: -22px; top: 46%; border: 11px solid transparent; border-left: 11px solid var(--line); }
+.bubble::after { content: ""; position: absolute; right: -15px; top: calc(46% + 2px); border: 9px solid transparent; border-left: 9px solid var(--paper); }
 .bubble.k-elite { box-shadow: 0 4px 0 var(--impulse); } .bubble.k-boss { box-shadow: 0 4px 0 var(--curse); }
 .ekind { font-size: .82rem; color: var(--sub); }
 .ename { font-size: 1.6rem; margin: 0; }
@@ -219,11 +219,11 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     impulse: 'しょうどう', basic: 'きほん', curse: 'モヤモヤ'
   };
 
-  // うまくいきやすさ（3段階）。％は児童に見せない
+  // うまくいきやすさ（3段階）。児童には段階を見せず「失敗するかも」とだけ出す（段階の言い分けが分かりにくかったため）
   var CHANCE = {
-    high: { p: 0.8, label: 'たいてい うまくいく' },
-    mid: { p: 0.6, label: 'ときどき うまくいく' },
-    low: { p: 0.35, label: 'うまくいくのは むずかしい' }
+    high: { p: 0.8, label: '失敗するかも' },
+    mid: { p: 0.6, label: '失敗するかも' },
+    low: { p: 0.35, label: '失敗するかも' }
   };
 
   var PLAYER = { maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
@@ -1225,12 +1225,10 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     return 'あと ' + short.map(function (x) { return (x.k === 'trust' ? '信頼' : D.STATS[x.k].name) + x.need; }).join('・');
   }
 
-  var FORM_LABEL = ['かいぶつ', 'オーラ', 'ほんとうの すがた'];
   function battleScreen() {
     var b = S.battle, en = b.enemy, it = E.intent(S), EN = D.ENEMIES[en.id];
     var itText = it.t === 'stress' ? '心の余裕 −' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
     var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
-    var steps = h('div', { class: 'forms' }, FORM_LABEL.map(function (l, i) { return h('span', { class: 'fstep' + (i <= en.form ? ' on' : ''), text: l }); }));
     var bubble = h('section', { class: 'bubble k-' + en.kind }, [
       h('div', { class: 'ekind', text: (en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
       h('h2', { class: 'ename', text: en.name }),
@@ -1241,8 +1239,6 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       ]),
       h('div', { class: 'intent' }, [h('span', { class: 'lbl', text: 'つぎに 起きそうなこと' }), h('b', { text: it.say + '（' + itText + '）' })]),
       it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (EN.pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
-      steps,
-      en.form < 2 ? h('div', { class: 'unsure-note', text: '「整理する」カードで、ほんとうの すがたに 近づく（いきおいが 弱まる）' }) : null,
       EN.anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
     ]);
     var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(en.id, en.form), en.form, 'mon')]);
@@ -1250,7 +1246,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       sprite('hero', 2, 'me'),
       h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: 'ゆとり' }), h('b', { text: String(b.guard) })])
     ]);
-    var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, monster, bubble]);
+    var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, bubble, monster]);
     var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.slice(-3).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
     var energy = h('div', { class: 'orb', title: '元気' }, [h('b', { text: b.energy + '/' + D.PLAYER.energy }), h('small', { text: '元気' })]);
     var dealKey = S.floor + ':' + b.turn;

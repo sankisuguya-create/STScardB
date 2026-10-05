@@ -151,12 +151,10 @@
     return 'あと ' + short.map(function (x) { return (x.k === 'trust' ? '信頼' : D.STATS[x.k].name) + x.need; }).join('・');
   }
 
-  var FORM_LABEL = ['かいぶつ', 'オーラ', 'ほんとうの すがた'];
   function battleScreen() {
     var b = S.battle, en = b.enemy, it = E.intent(S), EN = D.ENEMIES[en.id];
     var itText = it.t === 'stress' ? '心の余裕 −' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
     var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
-    var steps = h('div', { class: 'forms' }, FORM_LABEL.map(function (l, i) { return h('span', { class: 'fstep' + (i <= en.form ? ' on' : ''), text: l }); }));
     var bubble = h('section', { class: 'bubble k-' + en.kind }, [
       h('div', { class: 'ekind', text: (en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
       h('h2', { class: 'ename', text: en.name }),
@@ -167,8 +165,6 @@
       ]),
       h('div', { class: 'intent' }, [h('span', { class: 'lbl', text: 'つぎに 起きそうなこと' }), h('b', { text: it.say + '（' + itText + '）' })]),
       it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (EN.pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
-      steps,
-      en.form < 2 ? h('div', { class: 'unsure-note', text: '「整理する」カードで、ほんとうの すがたに 近づく（いきおいが 弱まる）' }) : null,
       EN.anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
     ]);
     var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(en.id, en.form), en.form, 'mon')]);
@@ -176,7 +172,7 @@
       sprite('hero', 2, 'me'),
       h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: 'ゆとり' }), h('b', { text: String(b.guard) })])
     ]);
-    var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, monster, bubble]);
+    var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, bubble, monster]);
     var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.slice(-3).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
     var energy = h('div', { class: 'orb', title: '元気' }, [h('b', { text: b.energy + '/' + D.PLAYER.energy }), h('small', { text: '元気' })]);
     var dealKey = S.floor + ':' + b.turn;

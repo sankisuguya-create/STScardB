@@ -16,11 +16,11 @@
     impulse: 'しょうどう', basic: 'きほん', curse: 'モヤモヤ'
   };
 
-  // うまくいきやすさ（3段階）。％は児童に見せない
+  // うまくいきやすさ（3段階）。児童には段階を見せず「失敗するかも」とだけ出す（段階の言い分けが分かりにくかったため）
   var CHANCE = {
-    high: { p: 0.8, label: 'たいてい うまくいく' },
-    mid: { p: 0.6, label: 'ときどき うまくいく' },
-    low: { p: 0.35, label: 'うまくいくのは むずかしい' }
+    high: { p: 0.8, label: '失敗するかも' },
+    mid: { p: 0.6, label: '失敗するかも' },
+    low: { p: 0.35, label: '失敗するかも' }
   };
 
   var PLAYER = { maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
