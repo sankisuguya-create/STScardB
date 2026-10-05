@@ -1,0 +1,285 @@
+<title>こころの冒険 画面案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
+<style>
+/* 2案を 1366×768 の実寸で描き、幅に合わせて縮める。課題はドット絵（16×16 を canvas で拡大） */
+:root {
+  --bg: #eef1f5; --fg: #1c2230; --sub: #5b6578; --line: #cfd6e2; --panel: #ffffff;
+  --stage: #2b3350; --stage2: #3b4670; --floor: #4a5683;
+  --accent: #2f6fe4; --yoyu: #27a35a; --hp: #e8692a; --trust: #d9a400;
+  --think: #3b5bdb; --act: #e0661b; --relate: #2b8a3e; --calm: #0c8599; --impulse: #c92a2a;
+  --display: "DotGothic16", "BIZ UDPGothic", monospace;
+  --body: "M PLUS Rounded 1c", "Hiragino Sans", "BIZ UDPGothic", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #12151c; --fg: #e7ebf3; --sub: #9aa4b8; --line: #2c3342; --panel: #1b202b; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #12151c; --fg: #e7ebf3; --sub: #9aa4b8; --line: #2c3342; --panel: #1b202b; color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); margin: 0; padding: 24px 16px 48px; }
+.wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 28px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 1.9rem; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 400; font-size: 1.4rem; margin: 0; }
+p { margin: 0; line-height: 1.7; max-width: 68ch; }
+.lead { color: var(--sub); }
+.proposal { display: grid; gap: 12px; }
+.meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.meta div { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.meta b { display: block; font-size: .78rem; letter-spacing: .08em; color: var(--sub); margin-bottom: 4px; }
+.frame { width: 100%; aspect-ratio: 1366 / 768; max-width: 100%; position: relative; overflow: hidden; border-radius: 12px; border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(20,30,60,.15); }
+.screen { width: 1366px; height: 768px; position: absolute; top: 0; left: 0; transform-origin: 0 0; font-family: var(--body); color: #1c2230; }
+.replay { justify-self: start; font: inherit; font-weight: 700; padding: 10px 18px; border-radius: 10px; border: 2px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; min-height: 44px; }
+.replay:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* --- 共通部品（画面内） --- */
+.px { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+.bar { height: 16px; border-radius: 3px; background: rgba(0,0,0,.25); overflow: hidden; border: 2px solid #12172a; }
+.bar i { display: block; height: 100%; }
+.card { position: absolute; width: 150px; height: 208px; background: #fffdf7; border: 3px solid #12172a; border-radius: 10px; padding: 8px 9px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 4px 0 #12172a; transition: transform .45s cubic-bezier(.2,.9,.3,1.2), opacity .3s; }
+.card .cost { position: absolute; top: -14px; left: -12px; width: 34px; height: 34px; border-radius: 50%; background: #ffd23f; border: 3px solid #12172a; display: grid; place-items: center; font-family: var(--display); font-size: 18px; }
+.card .band { height: 8px; border-radius: 3px; margin: 2px 0 2px; }
+.card .ty { font-size: 11px; color: #5b6578; text-align: right; }
+.card .nm { font-weight: 800; font-size: 16px; line-height: 1.25; }
+.card .ln { font-size: 12px; color: #4b5568; line-height: 1.4; }
+.card .fx { margin-top: auto; display: flex; gap: 4px; flex-wrap: wrap; }
+.card .fx span { font-size: 12px; font-weight: 700; padding: 1px 6px; border-radius: 5px; border: 2px solid #12172a; background: #fff; }
+.card .ok { font-size: 11px; color: #9a6700; }
+.card.temp { border-style: dashed; }
+.chipx { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: #fff; border: 2px solid #12172a; font-weight: 800; font-size: 15px; }
+.chipx small { font-weight: 500; font-size: 11px; color: #5b6578; }
+.btn { font-family: var(--display); font-size: 20px; background: #2f6fe4; color: #fff; border: 3px solid #12172a; border-radius: 10px; box-shadow: 0 4px 0 #12172a; padding: 12px 22px; }
+.pile { position: absolute; width: 70px; height: 96px; border: 3px solid #12172a; border-radius: 8px; background: repeating-linear-gradient(45deg, #5b6fb5 0 6px, #4a5ea3 6px 12px); display: grid; place-items: end center; color: #fff; font-family: var(--display); font-size: 14px; padding-bottom: 4px; box-shadow: 0 3px 0 #12172a; }
+.bubble { position: absolute; background: #fff; border: 3px solid #12172a; border-radius: 10px; padding: 6px 12px; font-weight: 700; font-size: 15px; }
+.bubble::after { content: ""; position: absolute; left: 28px; bottom: -12px; border: 10px solid transparent; border-top-color: #12172a; border-bottom: 0; }
+.passclock { display: inline-flex; gap: 4px; align-items: center; font-size: 13px; font-weight: 700; color: #0c8599; }
+.passclock i { width: 12px; height: 12px; border-radius: 3px; border: 2px solid #0c8599; }
+.passclock i.on { background: #0c8599; }
+
+/* --- 案A 舞台型 --- */
+.A { background: linear-gradient(#2b3350 0 62%, #4a5683 62%); }
+.A .top { position: absolute; inset: 0 0 auto 0; height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 18px; background: rgba(10,14,30,.55); color: #fff; }
+.A .top .bar { width: 220px; }
+.A .stage-floor { position: absolute; left: 0; right: 0; top: 400px; height: 4px; background: #12172a; opacity: .5; }
+.A .mon { position: absolute; left: 760px; top: 110px; }
+.A .mon canvas { width: 288px; height: 288px; animation: bob 1.6s steps(2) infinite; }
+.A .mname { position: absolute; left: 760px; top: 408px; width: 288px; color: #fff; text-align: center; }
+.A .mname b { font-family: var(--display); font-size: 26px; font-weight: 400; display: block; }
+.A .mname .bar { margin-top: 6px; }
+.A .bubble { left: 1010px; top: 92px; }
+.A .me { position: absolute; left: 150px; top: 230px; }
+.A .me canvas { width: 160px; height: 160px; }
+.A .mestat { position: absolute; left: 120px; top: 400px; color: #fff; display: flex; gap: 8px; }
+.A .sups { position: absolute; left: 40px; top: 80px; display: flex; gap: 8px; }
+.A .sup { width: 56px; height: 56px; border: 3px solid #12172a; border-radius: 10px; background: #fff; display: grid; place-items: center; box-shadow: 0 3px 0 #12172a; }
+.A .sup canvas { width: 40px; height: 40px; }
+.A .sup.empty { background: rgba(255,255,255,.15); border-style: dashed; border-color: #9aa4c8; box-shadow: none; }
+.A .end { position: absolute; right: 26px; top: 478px; }
+.A .energy { position: absolute; left: 30px; top: 470px; width: 74px; height: 74px; border-radius: 50%; background: #ffd23f; border: 4px solid #12172a; display: grid; place-items: center; font-family: var(--display); font-size: 28px; box-shadow: 0 4px 0 #12172a; }
+.A .log { position: absolute; left: 380px; top: 470px; width: 600px; color: #fff; font-size: 14px; background: rgba(10,14,30,.45); border-radius: 8px; padding: 6px 12px; }
+
+/* --- 案B 机の上型 --- */
+.B { background: #f3efe6; }
+.B .top { position: absolute; inset: 0 0 auto 0; height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 18px; background: #fff; border-bottom: 3px solid #12172a; }
+.B .top .bar { width: 200px; }
+.B .left { position: absolute; left: 18px; top: 70px; width: 520px; height: 420px; background: #2b3350; border: 3px solid #12172a; border-radius: 14px; box-shadow: 0 5px 0 #12172a; color: #fff; padding: 14px 18px; }
+.B .left canvas { width: 224px; height: 224px; margin: 10px auto 0; animation: bob 1.6s steps(2) infinite; }
+.B .left b.nm { font-family: var(--display); font-weight: 400; font-size: 26px; }
+.B .right { position: absolute; left: 556px; top: 70px; right: 18px; height: 420px; display: grid; grid-template-rows: auto 1fr auto; gap: 10px; }
+.B .box { background: #fff; border: 3px solid #12172a; border-radius: 12px; padding: 10px 14px; box-shadow: 0 4px 0 #12172a; }
+.B .box h4 { margin: 0 0 6px; font-family: var(--display); font-weight: 400; font-size: 17px; }
+.B .box p { font-size: 14px; }
+.B .supr { display: flex; gap: 8px; }
+.B .supr span { flex: 1; text-align: center; padding: 8px; border: 3px solid #2b8a3e; border-radius: 10px; font-weight: 800; font-size: 14px; }
+.B .supr span.empty { border: 3px dashed #b9c0cc; color: #9aa4b8; font-weight: 500; }
+.B .bottom { position: absolute; left: 0; right: 0; top: 504px; bottom: 0; }
+.B .end { position: absolute; right: 22px; top: 512px; }
+.B .energy { position: absolute; left: 22px; top: 516px; display: flex; gap: 6px; align-items: center; font-weight: 800; }
+.B .energy i { width: 22px; height: 22px; border-radius: 50%; background: #ffd23f; border: 3px solid #12172a; }
+
+@keyframes bob { 50% { transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .A .mon canvas, .B .left canvas { animation: none; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <h1>こころの冒険　画面構成案</h1>
+    <p class="lead">見た目のレベル3（モック1・製品5）を想定した2案です。どちらも1366×768（児童のChromebookと同じ）の実寸で描いて縮小しています。課題は16×16ドットのモンスター、カードは山札から手札へ配るアニメーションつきです。</p>
+  </header>
+
+  <section class="proposal">
+    <h2>案A　舞台型</h2>
+    <div class="meta">
+      <div><b>構成</b>上6割が舞台。左に自分、右に課題のモンスター。手札は下に扇状に並ぶ。StS に最も近い。</div>
+      <div><b>よい点</b>「立ち向かう」感じが強く、モンスターが大きいので課題が一目でわかる。カードを配る・使う動きが映える。</div>
+      <div><b>気になる点</b>文字情報（つぎに起きそうなこと・過ぎ去るまで）が吹き出しに収まる量に限られる。情報が多い戦いでは読み落としが出やすい。</div>
+    </div>
+    <div class="frame" id="frameA"><div class="screen A" id="screenA">
+      <div class="top">
+        <span class="chipx"><small>心の余裕</small></span><div class="bar"><i style="width:72%;background:#27a35a"></i></div><b>36/50</b>
+        <span class="chipx"><small>信頼</small>6</span>
+        <span class="chipx" style="border-color:#3b5bdb"><small>かしこさ</small>1</span>
+        <span class="chipx" style="border-color:#e0661b"><small>行動</small>0</span>
+        <span class="chipx" style="border-color:#2b8a3e"><small>なかま力</small>2</span>
+        <span style="margin-left:auto;font-family:var(--display)">2 / 5 だん</span>
+      </div>
+      <div class="sups">
+        <div class="sup" title="先生に そうだん"><canvas class="px" data-sprite="teacher" width="16" height="16"></canvas></div>
+        <div class="sup" title="お気に入りの本"><canvas class="px" data-sprite="book" width="16" height="16"></canvas></div>
+        <div class="sup empty"></div>
+      </div>
+      <div class="me"><canvas class="px" data-sprite="hero" width="16" height="16"></canvas></div>
+      <div class="mestat"><span class="chipx"><small>ゆとり</small>5</span></div>
+      <div class="mon"><canvas class="px" data-sprite="dunno" width="16" height="16"></canvas></div>
+      <div class="bubble">あせってくる（心の余裕 −8）</div>
+      <div class="mname"><b>わからない問題</b><div class="bar"><i style="width:64%;background:#e8692a"></i></div>
+        <div class="passclock" style="color:#7fe0ea;margin-top:6px">過ぎ去るまで <i class="on"></i><i class="on"></i><i></i><i></i><i></i></div></div>
+      <div class="stage-floor"></div>
+      <div class="energy">3/3</div>
+      <div class="log">「わからない」と言う → 問題を 12 小さくした。</div>
+      <div class="end"><span class="btn">ターンを おわる</span></div>
+      <div class="pile" style="left:30px;top:600px">山札 6</div>
+      <div class="pile" style="left:1266px;top:600px;background:repeating-linear-gradient(45deg,#7a6aa8 0 6px,#6b5b99 6px 12px)">すて札</div>
+      <div class="hand" data-layout="fan"></div>
+    </div></div>
+    <button class="replay" data-target="screenA">カードを配る（アニメーション）</button>
+  </section>
+
+  <section class="proposal">
+    <h2>案B　机の上型</h2>
+    <div class="meta">
+      <div><b>構成</b>左に課題のモンスター、右に「つぎに起きそうなこと」「ほんとう？」「支え」の情報板。手札は下に横一列。</div>
+      <div><b>よい点</b>読む情報が定位置にあり、3年生が「どこを見ればいいか」で迷いにくい。見方の書き換え（見え方→ほんとう）を大きく見せられる。</div>
+      <div><b>気になる点</b>ゲームらしい迫力は案Aより弱い。モンスターが小さめ。</div>
+    </div>
+    <div class="frame" id="frameB"><div class="screen B" id="screenB">
+      <div class="top">
+        <span class="chipx"><small>心の余裕</small></span><div class="bar"><i style="width:72%;background:#27a35a"></i></div><b>36/50</b>
+        <span class="chipx"><small>信頼</small>6</span>
+        <span class="chipx" style="border-color:#3b5bdb"><small>かしこさ</small>1</span>
+        <span class="chipx" style="border-color:#e0661b"><small>行動</small>0</span>
+        <span class="chipx" style="border-color:#2b8a3e"><small>なかま力</small>2</span>
+        <span style="margin-left:auto;font-family:var(--display)">3 / 5 だん</span>
+      </div>
+      <div class="left">
+        <div style="font-size:13px;opacity:.8">大きなかべ</div>
+        <b class="nm">からかわれた</b>
+        <canvas class="px" data-sprite="teased" width="16" height="16"></canvas>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:8px"><span style="font-size:13px">問題の大きさ</span><div class="bar" style="flex:1"><i style="width:80%;background:#e8692a"></i></div><b>48/60</b></div>
+        <div class="passclock" style="color:#c9d1e8;margin-top:6px">これは 時間がたっても 過ぎ去らない</div>
+      </div>
+      <div class="right">
+        <div class="box"><h4>つぎに 起きそうなこと</h4><p style="font-size:18px;font-weight:800">まわりも わらいはじめる（問題の いきおい +3）</p></div>
+        <div class="box"><h4>ほんとうに そう？</h4><p>「見方を 変える」カードで たしかめられる。たしかめると、効くカードが 変わる。</p><p style="margin-top:6px;color:#2b8a3e;font-weight:700">ゆとり 5　／　元気 2/3</p></div>
+        <div class="box"><h4>支え（いつでも 使える）</h4><div class="supr"><span>先生に そうだん</span><span>友だちに そうだん</span><span class="empty">あき</span></div></div>
+      </div>
+      <div class="energy"><i></i><i></i><i style="opacity:.25"></i><span style="margin-left:4px">元気</span></div>
+      <div class="end"><span class="btn">ターンを おわる</span></div>
+      <div class="pile" style="left:22px;top:660px;width:58px;height:80px">山札</div>
+      <div class="hand" data-layout="row"></div>
+    </div></div>
+    <button class="replay" data-target="screenB">カードを配る（アニメーション）</button>
+  </section>
+
+  <section class="proposal">
+    <h2>ドット絵の課題（16×16）</h2>
+    <p class="lead">人ではなく「状況」をモンスターにしています。顔は困らせる表情にとどめ、怖さは出しすぎない方針です。</p>
+    <div class="meta" id="gallery" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"></div>
+  </section>
+</div>
+
+<script>
+// --- ドット絵：16×16 の文字列。'.' は透明 ---
+var PAL = { k: '#12172a', w: '#ffffff', p: '#8e6ad8', P: '#b79cf0', y: '#ffd23f', r: '#e5484d', g: '#5c6b8a', G: '#8796b5', o: '#f08c3a', s: '#f4c9a0', b: '#3b5bdb', n: '#7a4b2a', e: '#2b8a3e', c: '#7fd3e0', d: '#3d2f63' };
+var SPRITES = {
+  dunno: { name: 'わからない問題', art: [
+    '......kkkk......', '.....kyyyyk.....', '.....kykkyk.....', '........kyk.....', '.......kyk......', '.......kyk......', '................', '.......kyk......',
+    '....kkkkkkkk....', '...kPPPPPPPPk...', '..kPpwkPPwkpPk..', '..kppwkppwkppk..', '..kpppppppppPk..', '..kpppkkkkpppk..', '...kpppppppppk..', '....kkkkkkkkk...'] },
+  bumped: { name: 'ろうかで ぶつかられた', art: [
+    '.......k........', '......kok.......', '.....kooo.k.....', '..k.koooook.....', '...koooooook.k..', '..koooooooooko..', '.kooowkoowkook..', '.kooowkoowkoook.',
+    '.koooooooooook..', '..kookkkkkook...', '..kookrrrrkok...', '...koookkoook...', '....koooooook...', '.....kkkkkkk....', '................', '................'] },
+  left_out: { name: '遊びに 入れない', art: [
+    '................', '.....kkkkkk.....', '....kccccccck...', '...kccccccccck..', '...kcwkcccwkck..', '...kcwkcccwkck..', '...kcccccccccck.', '...kccckkkcccck.',
+    '...kcckcccckcck.', '...kcccccccccck.', '...kcckccckcck..', '....kk.kk.kk.k..', '................', '..........kkk...', '.........kccck..', '..........kkk...'] },
+  teased: { name: 'からかわれた', art: [
+    '...k...k...k....', '..kgk.kgk.kgk...', '.kgggkgggkgggk..', 'kgGGgggGgggGggk.', 'kgggggggggggggk.', 'kggwwkgggwwkggk.', 'kggwkkgggwkkggk.', 'kgggggggggggggk.',
+    'kggkkkkkkkkkggk.', 'kgkwkwkwkwkwkgk.', 'kggkrrrrrrrkggk.', '.kggkkkkkkkggk..', '..kggggggggk....', '...kkkkkkkk.....', '................', '................'] },
+  presentation: { name: 'みんなの前で 発表', art: [
+    '.....kkkkkk.....', '...kkddddddkk...', '..kddddddddddk..', '.kddwwwwwwwwddk.', '.kddwwwwwwwwddk.', 'kddwwwkkkkwwwddk', 'kddwwkbbbbkwwddk', 'kddwwkbkkbkwwddk',
+    'kddwwkbbbbkwwddk', 'kddwwwkkkkwwwddk', '.kddwwwwwwwwddk.', '.kddwwwwwwwwddk.', '..kddddddddddk..', '...kkddddddkk...', '.....kkkkkk.....', '................'] },
+  hero: { art: [
+    '................', '.....kkkkkk.....', '....knnnnnnk....', '...knnnnnnnnk...', '...knssssssnk...', '...ksskssksk....', '...kssssssssk...', '....kssrrssk....',
+    '.....kkkkkk.....', '....kbbbbbbk....', '...kbbbbbbbbk...', '..ksbbbbbbbbsk..', '...kbbbbbbbbk...', '....kkkkkkkk....', '....kk....kk....', '................'] },
+  teacher: { art: [
+    '................', '.....kkkkkk.....', '....kGGGGGGk....', '....kGssssGk....', '...kkkwkkwkkk...', '....kssssssk....', '....kssrrssk....', '.....kkkkkk.....',
+    '....keeeeeek....', '...keeeeeeeek...', '...keeewweeek...', '...keeeeeeeek...', '....kkkkkkkk....', '................', '................', '................'] },
+  book: { art: [
+    '................', '................', '..kkkkkk.kkkkk..', '.krrrrrrkrrrrrk.', '.krwwwwrkrwwwrk.', '.krrrrrrkrrrrrk.', '.krwwwwrkrwwwrk.', '.krrrrrrkrrrrrk.',
+    '.krwwwwrkrwwwrk.', '.krrrrrrkrrrrrk.', '.kkkkkkkkkkkkkk.', '..kyyyyyyyyyyk..', '...kkkkkkkkkk...', '................', '................', '................'] }
+};
+function paint(cv, key) {
+  var art = SPRITES[key].art, x = cv.getContext('2d');
+  x.clearRect(0, 0, 16, 16);
+  for (var r = 0; r < 16; r++) for (var c = 0; c < 16; c++) {
+    var ch = (art[r] || '')[c];
+    if (ch && ch !== '.') { x.fillStyle = PAL[ch]; x.fillRect(c, r, 1, 1); }
+  }
+}
+document.querySelectorAll('canvas[data-sprite]').forEach(function (cv) { paint(cv, cv.dataset.sprite); });
+
+var gal = document.getElementById('gallery');
+['dunno', 'bumped', 'left_out', 'teased', 'presentation'].forEach(function (k) {
+  var d = document.createElement('div');
+  d.style.display = 'grid'; d.style.justifyItems = 'center'; d.style.gap = '6px';
+  var cv = document.createElement('canvas'); cv.width = 16; cv.height = 16; cv.className = 'px'; cv.style.width = '128px'; cv.style.height = '128px';
+  paint(cv, k);
+  var t = document.createElement('span'); t.textContent = SPRITES[k].name; t.style.fontWeight = '700';
+  d.appendChild(cv); d.appendChild(t); gal.appendChild(d);
+});
+
+// --- 手札と配るアニメーション ---
+var HAND = [
+  { c: 1, n: '「わからない」と言う', l: '「ここが わかりません」', t: '関わる・この場', col: '#2b8a3e', fx: ['解決 12'], ok: 'たいてい うまくいく', temp: true },
+  { c: 1, n: 'となりの人に 聞く', l: '「ここ、どうやった？」', t: '関わる・この場', col: '#2b8a3e', fx: ['解決 7'], ok: 'ときどき うまくいく', temp: true },
+  { c: 1, n: 'トライする', l: 'とにかく 一度 やってみる。', t: '動く', col: '#e0661b', fx: ['解決 5'] },
+  { c: 1, n: '深こきゅう', l: 'ゆっくり 3回 いきをすう。', t: '整える', col: '#0c8599', fx: ['ゆとり 4', '1まい 引く'] },
+  { c: 1, n: 'がまんする', l: 'ぐっと こらえる。', t: 'きほん', col: '#6e7781', fx: ['ゆとり 5'] },
+  { c: 0, n: '言い返す', l: '「そっちこそ！」', t: 'しょうどう', col: '#c92a2a', fx: ['解決 9', 'モヤモヤ'] }
+];
+function buildHand(screen) {
+  var hand = screen.querySelector('.hand'), fan = hand.dataset.layout === 'fan';
+  hand.innerHTML = '';
+  var pile = screen.querySelector('.pile'), px = pile.offsetLeft, py = pile.offsetTop;
+  var n = HAND.length, cards = [];
+  HAND.forEach(function (h, i) {
+    var el = document.createElement('div');
+    el.className = 'card' + (h.temp ? ' temp' : '');
+    el.innerHTML = '<div class="cost">' + h.c + '</div><div class="ty">' + h.t + '</div><div class="band" style="background:' + h.col + '"></div><div class="nm"></div><div class="ln"></div><div class="fx"></div>' + (h.ok ? '<div class="ok">' + h.ok + '</div>' : '');
+    el.querySelector('.nm').textContent = h.n; el.querySelector('.ln').textContent = h.l;
+    el.querySelector('.fx').innerHTML = h.fx.map(function (f) { return '<span>' + f + '</span>'; }).join('');
+    var x, y, rot;
+    if (fan) { var mid = (n - 1) / 2; x = 683 - 75 + (i - mid) * 138; y = 530 + Math.abs(i - mid) * Math.abs(i - mid) * 5; rot = (i - mid) * 4; }
+    else { x = 110 + i * 168; y = 548; rot = 0; }
+    el.dataset.to = 'translate(' + x + 'px,' + y + 'px) rotate(' + rot + 'deg)';
+    el.style.transform = 'translate(' + px + 'px,' + py + 'px) scale(.45) rotate(-12deg)';
+    el.style.opacity = '0';
+    hand.appendChild(el); cards.push(el);
+  });
+  return cards;
+}
+function deal(screen) {
+  var cards = buildHand(screen);
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  cards.forEach(function (el, i) {
+    setTimeout(function () { el.style.opacity = '1'; el.style.transform = el.dataset.to; }, reduce ? 0 : 120 + i * 110);
+  });
+}
+function fit() {
+  ['A', 'B'].forEach(function (k) {
+    var f = document.getElementById('frame' + k), s = document.getElementById('screen' + k);
+    s.style.transform = 'scale(' + (f.clientWidth / 1366) + ')';
+  });
+}
+window.addEventListener('resize', fit);
+fit();
+document.querySelectorAll('.replay').forEach(function (b) { b.addEventListener('click', function () { deal(document.getElementById(b.dataset.target)); }); });
+deal(document.getElementById('screenA'));
+deal(document.getElementById('screenB'));
+</script>
