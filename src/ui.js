@@ -168,6 +168,7 @@
       EN.anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
     ]);
     var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(en.id, en.form), en.form, 'mon')]);
+    if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(en.id)) { monster.innerHTML = SST_ILLUST.svg(en.id); }
     var hero = h('div', { class: 'hero' }, [
       sprite('hero', 2, 'me'),
       h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: 'ゆとり' }), h('b', { text: String(b.guard) })])
