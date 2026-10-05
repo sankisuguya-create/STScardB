@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 2;
+  var ENGINE_VER = 3;
 
   // --- 乱数 ---
   function rand(s) {
@@ -37,7 +37,7 @@
       yoyu: D.PLAYER.maxYoyu, maxYoyu: D.PLAYER.maxYoyu,
       trust: D.PLAYER.trustStart,
       stats: { think: 0, act: 0, relate: 0 },
-      deck: D.STARTER.slice(), items: D.SUPPORT_RULES.start.slice(), equip: D.SUPPORT_RULES.start.slice(),
+      deck: D.STARTER.slice(), nigate: {}, items: D.SUPPORT_RULES.start.slice(), equip: D.SUPPORT_RULES.start.slice(),
       usedNormals: [], usedEvents: [],
       map: null, battle: null, reward: null, event: null,
       log: [], result: null
@@ -87,7 +87,9 @@
     if (!kind) throw new Error('bad node');
     s.floor++;
     var act = D.ACTS[s.act];
-    if (kind === 'battle') {
+    if (kind === 'battle' && act.dangers && rand(s) < D.RULES.dangerChance) {
+      startBattle(s, pick(s, act.dangers));
+    } else if (kind === 'battle') {
       var pool = act.normals.filter(function (e) { return s.usedNormals.indexOf(e) < 0; });
       if (!pool.length) pool = act.normals.slice();
       var eid = pick(s, pool); s.usedNormals.push(eid);
@@ -151,6 +153,13 @@
     }
     if (first) {
       D.ENEMIES[b.enemy.id].situ.forEach(function (id) { b.hand.push({ id: id, temp: true }); });
+    }
+    if (b.frozen) {
+      b.hand.forEach(function (h) { b.discard.push(h); });
+      b.hand = [{ id: 'ugokenai', temp: true }];
+      b.energy = 0;
+      msg(s, '心の余裕が なくなって、動けない…（このまま 時間が すぎるのを まつ）', 'stress');
+      return;
     }
     drawCards(s, D.PLAYER.hand);
     if (s.yoyu < s.maxYoyu * D.RULES.stressThreshold) {
@@ -257,6 +266,10 @@
 
     if (ok) {
       if (c.organize) organize(s);
+      if (c.distance && !b.distanced) {
+        b.distanced = true; en.str = 0; en.stressMul *= D.RULES.distanceMul;
+        msg(s, 'きょりを おいた。問題の いきおいが おさまり、ストレスも 弱まった。', 'reveal');
+      }
       if (c.solve) {
         var n = solveAmount(s, c);
         en.hp -= n; entry.solve = n;
@@ -288,8 +301,28 @@
     log(s, entry);
 
     if (h.temp || c.exhaust) b.exhaust.push(h); else b.discard.push(h);
+    if (ok && c.escape) { escapeBattle(s); return s; }
     if (en.hp <= 0) winBattle(s);
     return s;
+  }
+
+  // 苦手意識：その場面では ストレスが ふえる
+  function stressOf(s, mv) {
+    var en = s.battle.enemy, ctx = D.ENEMIES[en.id].ctx;
+    var ng = (s.nigate[ctx] || 0) * D.RULES.nigateStress;
+    return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul);
+  }
+  // 心の余裕は0より下がらない。下がった分は「動けない」中の つらさとして数える
+  function hurt(s, dmg) {
+    var b = s.battle;
+    if (dmg > s.yoyu) {
+      if (b) b.deficit = (b.deficit || 0) + (dmg - s.yoyu);
+      s.yoyu = 0;
+    } else s.yoyu -= dmg;
+    if (s.yoyu <= 0 && b && !b.frozen) {
+      b.frozen = true; b.frozenLeft = D.RULES.frozenTurns;
+      log(s, { k: 'frozen', enemy: b.enemy.id });
+    }
   }
 
   function enemyAct(s) {
@@ -297,10 +330,10 @@
     var mv = E.moves[en.mi % E.moves.length];
     en.mi++;
     if (mv.t === 'stress') {
-      var n = Math.round((mv.n * D.RULES.stressScale + en.str) * en.stressMul);
+      var n = stressOf(s, mv);
       var blocked = Math.min(b.guard, n);
       var dmg = n - blocked;
-      s.yoyu = Math.max(0, s.yoyu - dmg);
+      hurt(s, dmg);
       msg(s, mv.say + '（心の余裕 −' + dmg + (blocked ? '、ゆとりで ' + blocked + ' うけとめた' : '') + '）', 'hit');
     } else if (mv.t === 'grow') {
       en.str += mv.n;
@@ -316,7 +349,7 @@
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
     var mv = E.moves[en.mi % E.moves.length];
     var o = { t: mv.t, say: mv.say };
-    if (mv.t === 'stress') o.n = Math.round((mv.n * D.RULES.stressScale + en.str) * en.stressMul);
+    if (mv.t === 'stress') o.n = stressOf(s, mv);
     if (mv.t === 'grow') o.n = mv.n;
     if (E.pass) o.passIn = E.pass.turns - b.turn + 1;
     return o;
@@ -332,21 +365,54 @@
       if (h.id === 'kattonaru') b.exhaust.push(h); else b.discard.push(h);
     });
     if (moya) {
-      s.yoyu = Math.max(0, s.yoyu - moya * D.RULES.moyaDrain);
+      hurt(s, moya * D.RULES.moyaDrain);
       msg(s, 'モヤモヤが 気になって 心の余裕 −' + moya * D.RULES.moyaDrain, 'curse');
     }
     b.hand = [];
+    var wasFrozen = b.frozen;
     enemyAct(s);
-    if (s.yoyu <= 0) { endRun(s, false); return s; }
+    if (wasFrozen) {
+      b.frozenLeft--;
+      if (b.frozenLeft <= 0) { endFrozen(s); return s; }
+    }
     var ps = D.ENEMIES[b.enemy.id].pass;
-    if (ps && b.turn >= ps.turns) { winBattle(s, true); return s; }
+    if (ps && b.turn >= ps.turns) { if (b.frozen) endFrozen(s); else winBattle(s, true); return s; }
     startTurn(s, false);
     return s;
   }
 
-  function winBattle(s, passed) {
+  // 動けないまま 時間が すぎた：苦手意識が つき、心の余裕は 1割まで もどる
+  function endFrozen(s) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
-    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, passed: !!passed });
+    var lv = Math.max(1, Math.ceil((b.deficit || 0) / D.RULES.nigatePer));
+    s.nigate[E.ctx] = (s.nigate[E.ctx] || 0) + lv;
+    s.yoyu = Math.max(1, Math.round(s.maxYoyu * D.RULES.frozenRecover));
+    log(s, { k: 'nigate', ctx: E.ctx, add: lv, to: s.nigate[E.ctx], enemy: en.id });
+    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, frozen: true });
+    if (en.kind === 'boss') { endRun(s, false); return; }
+    s.phase = 'reward';
+    s.reward = { choices: [], other: E.other, support: null, frozen: { ctx: E.ctx, add: lv, to: s.nigate[E.ctx] } };
+  }
+
+  // にげる：あぶない場面なら 正解（ふつうに 乗りこえた あつかい）。ふつうの課題では 問題が のこる
+  function escapeBattle(s) {
+    var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    log(s, { k: 'escape', enemy: en.id, ok: !!E.escapeOk });
+    if (E.escapeOk) {
+      addTrust(s, 1, 'escape', false);
+      winBattle(s, false, true);
+      return;
+    }
+    s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'flee:' + en.id });
+    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, fled: true });
+    if (en.kind === 'boss') { endRun(s, false); return; }
+    s.phase = 'reward';
+    s.reward = { choices: [], other: E.other, support: null, fled: true };
+  }
+
+  function winBattle(s, passed, escaped) {
+    var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, passed: !!passed, escaped: !!escaped });
     if (passed && E.pass.leave) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'pass:' + en.id }); }
     var statsBefore = { think: s.stats.think, act: s.stats.act, relate: s.stats.relate };
     Object.keys(D.STATS).forEach(function (st) {
@@ -372,7 +438,7 @@
     var sup = null;
     var unowned = Object.keys(D.SUPPORTS).filter(function (k) { return s.items.indexOf(k) < 0; });
     if (unowned.length && (en.kind === 'elite' || rand(s) < D.SUPPORT_RULES.rewardChance)) sup = pick(s, unowned);
-    s.reward = { choices: rewardChoices(s), other: E.other, support: sup };
+    s.reward = { choices: rewardChoices(s), other: E.other, support: sup, escaped: !!escaped };
   }
 
   function rewardChoices(s) {
@@ -558,6 +624,8 @@
       discovered: discovered,
       reveals: L.filter(function (e) { return e.k === 'reveal'; }),
       supportUses: L.filter(function (e) { return e.k === 'useSupport'; }),
+      escapes: L.filter(function (e) { return e.k === 'escape'; }),
+      nigate: L.filter(function (e) { return e.k === 'nigate'; }),
       others: L.filter(function (e) { return e.k === 'win'; }),
       grid: grid,
       goodCount: plays.filter(function (p) { return p.judge === 'good'; }).length,

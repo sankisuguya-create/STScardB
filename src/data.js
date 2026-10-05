@@ -9,7 +9,7 @@
     relate: { name: 'なかま力', verb: '関わる' }
   };
 
-  var CTX_LABEL = { study: 'べんきょう', conflict: 'ぶつかり合い', join: '遊び・なかま', tease: 'からかい', stage: '発表' };
+  var CTX_LABEL = { study: 'べんきょう', conflict: 'ぶつかり合い', join: '遊び・なかま', tease: 'からかい', stage: '発表', danger: 'あぶない場面' };
 
   var TYPE_LABEL = {
     think: '考える', act: '動く', relate: '関わる', calm: '整える',
@@ -30,7 +30,7 @@
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 1.5, resist: 0.5, anxiety: 0.6,
-    restHeal: 0.3, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 1.85, stressScale: 1.45,
+    restHeal: 0.3, dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 1.7, stressScale: 1.45,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -43,6 +43,8 @@
     endure: { name: 'がまんする', line: 'ぐっと こらえる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 5 },
     breathe: { name: '深こきゅう', line: 'ゆっくり 3回 いきをすう。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 4, draw: 1 },
     talk: { name: '話してみる', line: '「ねえ、ちょっといい？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 4 },
+    keep_distance: { name: 'きょりを おく', line: '「ちょっと はなれて、頭を ひやそう」', type: 'calm', judge: 'good', style: 'distance', cost: 1, guard: 6, distance: true },
+    run_away: { name: 'その場を はなれる（にげる）', line: 'あぶないと 思ったら、すぐに その場を はなれる。', type: 'act', judge: 'good', style: 'distance', cost: 1, escape: true },
     okoru: { name: '怒る', line: '「もう、なんなの！」と どなる。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 9, chance: 'high', trust: -1, curse: true },
 
     // --- 報酬で手に入るカード ---
@@ -82,6 +84,10 @@
     read_memo: { name: 'メモを見ながら 話す', line: '書いておいたことを 読む。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 9, chance: 'high' },
     breathe_first: { name: '深こきゅうして 始める', line: 'すって、はいて、「はじめます」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 6 },
     friend_face: { name: '友だちの顔を見る', line: 'うなずいてくれる子を さがす。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 5, solve: 5, req: { trust: 6 } },
+    call_adult: { name: '近くの 大人を よぶ', line: '「たすけてください！」と 大きな声で 言う。', type: 'relate', judge: 'good', style: 'distance', cost: 0, escape: true, trust: 1 },
+    run_now: { name: 'すぐに にげる', line: '安全な ところまで 走る。', type: 'act', judge: 'good', style: 'distance', cost: 0, escape: true },
+    say_no_stranger: { name: '「行きません」と ことわる', line: '知らない人には ついて行かない。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 8 },
+    ugokenai: { name: '動けない', line: '心の余裕が なくなって、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     wameku: { name: 'わめく', line: 'ぎゃーっと 大声で わめく。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -2, curse: true },
     junk_advice: { name: '「気にしなきゃ いいじゃん」', line: '友だちの アドバイス。でも、気になるものは 気になる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 1 },
     give_up: { name: '「やっぱり やめる」', line: 'だまって すわってしまう。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 12, chance: 'high', trust: -1, curse: true },
@@ -100,7 +106,7 @@
     book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', note: '心の余裕 +4、手札の モヤモヤを すてる', heal: 4, clearMoya: true }
   };
   // 先生がすすめるカード（場面ごと）、友だちのアドバイス（junk はハズレ）
-  var TEACHER_CARDS = { study: 'ask_teacher', conflict: 'consult', join: 'consult', tease: 'tell_teacher', stage: 'breathe_first' };
+  var TEACHER_CARDS = { study: 'ask_teacher', conflict: 'consult', join: 'consult', tease: 'tell_teacher', stage: 'breathe_first', danger: 'call_adult' };
   var FRIEND_CARDS = ['together', 'thanks', 'invite_other', 'name_feeling', 'firm_reply', 'sort_out'];
   var SUPPORT_RULES = { slots: 3, start: ['teacher'], rewardChance: 0.3, junkChance: 0.3 };
 
@@ -108,7 +114,7 @@
   // 整理するカード（organize）で1つずつ現実に近づき、いきおいが弱まる。かしこさが organizeStat 以上なら 1 から始まる
   var FORMS = { stressMul: [1, 0.8, 0.6], organizeStat: 2 };
 
-  var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'endure', 'breathe', 'talk', 'okoru'];
+  var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'keep_distance', 'breathe', 'talk', 'okoru', 'run_away'];
   var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply'];
 
   // pass: そのターン数を乗りこえると、課題は時間とともに過ぎ去る（報酬なし。leave なら モヤモヤが のこる）。
@@ -158,6 +164,22 @@
     }
   };
 
+  // あぶない場面（ときどき 課題の代わりに出る）。戦って勝つのは ほぼ無理で、はなれる・にげる・大人をよぶ が正解
+  ENEMIES.fight_near = {
+    forms: ['あばれる 大あらし', 'もめている 上級生たち', 'ケンカ中の 上級生'],
+    ctx: 'danger', scene: '上級生の ケンカに まきこまれそう', kind: 'danger', hp: 80, escapeOk: true,
+    moves: [{ t: 'stress', n: 11, say: 'どなり声が 近づいてくる' }, { t: 'grow', n: 4, say: 'まわりも さわぎはじめる' }, { t: 'stress', n: 13, say: 'おされて ころびそう' }],
+    weak: [], resist: ['relate', 'think', 'act'], backfire: ['impulse'], situ: ['call_adult', 'run_now'],
+    other: '先生：「はなれて 知らせてくれて ありがとう。あぶない ところに 入らなかったのは 正しい」'
+  };
+  ENEMIES.stranger = {
+    forms: ['あまい声の かげ', '知らない 大人？', '帰り道で 声をかけてきた 知らない人'],
+    ctx: 'danger', scene: '知らない人に さそわれた', kind: 'danger', hp: 80, escapeOk: true,
+    moves: [{ t: 'stress', n: 10, say: '「いいもの あげるよ」と 近づいてくる' }, { t: 'grow', n: 4, say: 'うでを つかまれそう' }, { t: 'stress', n: 12, say: 'まわりに だれも いない' }],
+    weak: [], resist: ['relate', 'think', 'act'], backfire: ['impulse'], situ: ['say_no_stranger', 'run_now', 'call_adult'],
+    other: 'お家の人：「にげて すぐ 話してくれて、本当に よかった」'
+  };
+
   // effects: trust / yoyu / addCard / curse / growth(stat)
   var EVENTS = {
     forgot: {
@@ -194,7 +216,7 @@
     {
       name: '教室',
       rows: [['battle', 'battle'], ['battle', 'event'], ['elite', 'event'], ['rest', 'battle']],
-      normals: ['dunno', 'bumped', 'left_out'], elites: ['teased'], boss: 'presentation',
+      normals: ['dunno', 'bumped', 'left_out'], dangers: ['fight_near', 'stranger'], elites: ['teased'], boss: 'presentation',
       events: ['forgot', 'friend_trouble']
     }
   ];

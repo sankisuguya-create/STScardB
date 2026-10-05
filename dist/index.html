@@ -197,6 +197,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 .monster.f2 svg { width: 280px; height: 266px; display: block; animation: appear .35s ease-out both; }
 @keyframes appear { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+.nigates { display: flex; gap: 6px; }
+.chip.nigate { box-shadow: inset 0 -4px 0 var(--curse); }
 
 </style>
 </head>
@@ -214,7 +216,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     relate: { name: 'なかま力', verb: '関わる' }
   };
 
-  var CTX_LABEL = { study: 'べんきょう', conflict: 'ぶつかり合い', join: '遊び・なかま', tease: 'からかい', stage: '発表' };
+  var CTX_LABEL = { study: 'べんきょう', conflict: 'ぶつかり合い', join: '遊び・なかま', tease: 'からかい', stage: '発表', danger: 'あぶない場面' };
 
   var TYPE_LABEL = {
     think: '考える', act: '動く', relate: '関わる', calm: '整える',
@@ -235,7 +237,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 1.5, resist: 0.5, anxiety: 0.6,
-    restHeal: 0.3, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 1.85, stressScale: 1.45,
+    restHeal: 0.3, dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 1.7, stressScale: 1.45,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -248,6 +250,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     endure: { name: 'がまんする', line: 'ぐっと こらえる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 5 },
     breathe: { name: '深こきゅう', line: 'ゆっくり 3回 いきをすう。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 4, draw: 1 },
     talk: { name: '話してみる', line: '「ねえ、ちょっといい？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 4 },
+    keep_distance: { name: 'きょりを おく', line: '「ちょっと はなれて、頭を ひやそう」', type: 'calm', judge: 'good', style: 'distance', cost: 1, guard: 6, distance: true },
+    run_away: { name: 'その場を はなれる（にげる）', line: 'あぶないと 思ったら、すぐに その場を はなれる。', type: 'act', judge: 'good', style: 'distance', cost: 1, escape: true },
     okoru: { name: '怒る', line: '「もう、なんなの！」と どなる。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 9, chance: 'high', trust: -1, curse: true },
 
     // --- 報酬で手に入るカード ---
@@ -287,6 +291,10 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     read_memo: { name: 'メモを見ながら 話す', line: '書いておいたことを 読む。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 9, chance: 'high' },
     breathe_first: { name: '深こきゅうして 始める', line: 'すって、はいて、「はじめます」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 6 },
     friend_face: { name: '友だちの顔を見る', line: 'うなずいてくれる子を さがす。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 5, solve: 5, req: { trust: 6 } },
+    call_adult: { name: '近くの 大人を よぶ', line: '「たすけてください！」と 大きな声で 言う。', type: 'relate', judge: 'good', style: 'distance', cost: 0, escape: true, trust: 1 },
+    run_now: { name: 'すぐに にげる', line: '安全な ところまで 走る。', type: 'act', judge: 'good', style: 'distance', cost: 0, escape: true },
+    say_no_stranger: { name: '「行きません」と ことわる', line: '知らない人には ついて行かない。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 8 },
+    ugokenai: { name: '動けない', line: '心の余裕が なくなって、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     wameku: { name: 'わめく', line: 'ぎゃーっと 大声で わめく。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -2, curse: true },
     junk_advice: { name: '「気にしなきゃ いいじゃん」', line: '友だちの アドバイス。でも、気になるものは 気になる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 1 },
     give_up: { name: '「やっぱり やめる」', line: 'だまって すわってしまう。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 12, chance: 'high', trust: -1, curse: true },
@@ -305,7 +313,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', note: '心の余裕 +4、手札の モヤモヤを すてる', heal: 4, clearMoya: true }
   };
   // 先生がすすめるカード（場面ごと）、友だちのアドバイス（junk はハズレ）
-  var TEACHER_CARDS = { study: 'ask_teacher', conflict: 'consult', join: 'consult', tease: 'tell_teacher', stage: 'breathe_first' };
+  var TEACHER_CARDS = { study: 'ask_teacher', conflict: 'consult', join: 'consult', tease: 'tell_teacher', stage: 'breathe_first', danger: 'call_adult' };
   var FRIEND_CARDS = ['together', 'thanks', 'invite_other', 'name_feeling', 'firm_reply', 'sort_out'];
   var SUPPORT_RULES = { slots: 3, start: ['teacher'], rewardChance: 0.3, junkChance: 0.3 };
 
@@ -313,7 +321,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   // 整理するカード（organize）で1つずつ現実に近づき、いきおいが弱まる。かしこさが organizeStat 以上なら 1 から始まる
   var FORMS = { stressMul: [1, 0.8, 0.6], organizeStat: 2 };
 
-  var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'endure', 'breathe', 'talk', 'okoru'];
+  var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'keep_distance', 'breathe', 'talk', 'okoru', 'run_away'];
   var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply'];
 
   // pass: そのターン数を乗りこえると、課題は時間とともに過ぎ去る（報酬なし。leave なら モヤモヤが のこる）。
@@ -363,6 +371,22 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     }
   };
 
+  // あぶない場面（ときどき 課題の代わりに出る）。戦って勝つのは ほぼ無理で、はなれる・にげる・大人をよぶ が正解
+  ENEMIES.fight_near = {
+    forms: ['あばれる 大あらし', 'もめている 上級生たち', 'ケンカ中の 上級生'],
+    ctx: 'danger', scene: '上級生の ケンカに まきこまれそう', kind: 'danger', hp: 80, escapeOk: true,
+    moves: [{ t: 'stress', n: 11, say: 'どなり声が 近づいてくる' }, { t: 'grow', n: 4, say: 'まわりも さわぎはじめる' }, { t: 'stress', n: 13, say: 'おされて ころびそう' }],
+    weak: [], resist: ['relate', 'think', 'act'], backfire: ['impulse'], situ: ['call_adult', 'run_now'],
+    other: '先生：「はなれて 知らせてくれて ありがとう。あぶない ところに 入らなかったのは 正しい」'
+  };
+  ENEMIES.stranger = {
+    forms: ['あまい声の かげ', '知らない 大人？', '帰り道で 声をかけてきた 知らない人'],
+    ctx: 'danger', scene: '知らない人に さそわれた', kind: 'danger', hp: 80, escapeOk: true,
+    moves: [{ t: 'stress', n: 10, say: '「いいもの あげるよ」と 近づいてくる' }, { t: 'grow', n: 4, say: 'うでを つかまれそう' }, { t: 'stress', n: 12, say: 'まわりに だれも いない' }],
+    weak: [], resist: ['relate', 'think', 'act'], backfire: ['impulse'], situ: ['say_no_stranger', 'run_now', 'call_adult'],
+    other: 'お家の人：「にげて すぐ 話してくれて、本当に よかった」'
+  };
+
   // effects: trust / yoyu / addCard / curse / growth(stat)
   var EVENTS = {
     forgot: {
@@ -399,7 +423,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     {
       name: '教室',
       rows: [['battle', 'battle'], ['battle', 'event'], ['elite', 'event'], ['rest', 'battle']],
-      normals: ['dunno', 'bumped', 'left_out'], elites: ['teased'], boss: 'presentation',
+      normals: ['dunno', 'bumped', 'left_out'], dangers: ['fight_near', 'stranger'], elites: ['teased'], boss: 'presentation',
       events: ['forgot', 'friend_trouble']
     }
   ];
@@ -424,7 +448,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 2;
+  var ENGINE_VER = 3;
 
   // --- 乱数 ---
   function rand(s) {
@@ -457,7 +481,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       yoyu: D.PLAYER.maxYoyu, maxYoyu: D.PLAYER.maxYoyu,
       trust: D.PLAYER.trustStart,
       stats: { think: 0, act: 0, relate: 0 },
-      deck: D.STARTER.slice(), items: D.SUPPORT_RULES.start.slice(), equip: D.SUPPORT_RULES.start.slice(),
+      deck: D.STARTER.slice(), nigate: {}, items: D.SUPPORT_RULES.start.slice(), equip: D.SUPPORT_RULES.start.slice(),
       usedNormals: [], usedEvents: [],
       map: null, battle: null, reward: null, event: null,
       log: [], result: null
@@ -507,7 +531,9 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     if (!kind) throw new Error('bad node');
     s.floor++;
     var act = D.ACTS[s.act];
-    if (kind === 'battle') {
+    if (kind === 'battle' && act.dangers && rand(s) < D.RULES.dangerChance) {
+      startBattle(s, pick(s, act.dangers));
+    } else if (kind === 'battle') {
       var pool = act.normals.filter(function (e) { return s.usedNormals.indexOf(e) < 0; });
       if (!pool.length) pool = act.normals.slice();
       var eid = pick(s, pool); s.usedNormals.push(eid);
@@ -571,6 +597,13 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     }
     if (first) {
       D.ENEMIES[b.enemy.id].situ.forEach(function (id) { b.hand.push({ id: id, temp: true }); });
+    }
+    if (b.frozen) {
+      b.hand.forEach(function (h) { b.discard.push(h); });
+      b.hand = [{ id: 'ugokenai', temp: true }];
+      b.energy = 0;
+      msg(s, '心の余裕が なくなって、動けない…（このまま 時間が すぎるのを まつ）', 'stress');
+      return;
     }
     drawCards(s, D.PLAYER.hand);
     if (s.yoyu < s.maxYoyu * D.RULES.stressThreshold) {
@@ -677,6 +710,10 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 
     if (ok) {
       if (c.organize) organize(s);
+      if (c.distance && !b.distanced) {
+        b.distanced = true; en.str = 0; en.stressMul *= D.RULES.distanceMul;
+        msg(s, 'きょりを おいた。問題の いきおいが おさまり、ストレスも 弱まった。', 'reveal');
+      }
       if (c.solve) {
         var n = solveAmount(s, c);
         en.hp -= n; entry.solve = n;
@@ -708,8 +745,28 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     log(s, entry);
 
     if (h.temp || c.exhaust) b.exhaust.push(h); else b.discard.push(h);
+    if (ok && c.escape) { escapeBattle(s); return s; }
     if (en.hp <= 0) winBattle(s);
     return s;
+  }
+
+  // 苦手意識：その場面では ストレスが ふえる
+  function stressOf(s, mv) {
+    var en = s.battle.enemy, ctx = D.ENEMIES[en.id].ctx;
+    var ng = (s.nigate[ctx] || 0) * D.RULES.nigateStress;
+    return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul);
+  }
+  // 心の余裕は0より下がらない。下がった分は「動けない」中の つらさとして数える
+  function hurt(s, dmg) {
+    var b = s.battle;
+    if (dmg > s.yoyu) {
+      if (b) b.deficit = (b.deficit || 0) + (dmg - s.yoyu);
+      s.yoyu = 0;
+    } else s.yoyu -= dmg;
+    if (s.yoyu <= 0 && b && !b.frozen) {
+      b.frozen = true; b.frozenLeft = D.RULES.frozenTurns;
+      log(s, { k: 'frozen', enemy: b.enemy.id });
+    }
   }
 
   function enemyAct(s) {
@@ -717,10 +774,10 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var mv = E.moves[en.mi % E.moves.length];
     en.mi++;
     if (mv.t === 'stress') {
-      var n = Math.round((mv.n * D.RULES.stressScale + en.str) * en.stressMul);
+      var n = stressOf(s, mv);
       var blocked = Math.min(b.guard, n);
       var dmg = n - blocked;
-      s.yoyu = Math.max(0, s.yoyu - dmg);
+      hurt(s, dmg);
       msg(s, mv.say + '（心の余裕 −' + dmg + (blocked ? '、ゆとりで ' + blocked + ' うけとめた' : '') + '）', 'hit');
     } else if (mv.t === 'grow') {
       en.str += mv.n;
@@ -736,7 +793,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
     var mv = E.moves[en.mi % E.moves.length];
     var o = { t: mv.t, say: mv.say };
-    if (mv.t === 'stress') o.n = Math.round((mv.n * D.RULES.stressScale + en.str) * en.stressMul);
+    if (mv.t === 'stress') o.n = stressOf(s, mv);
     if (mv.t === 'grow') o.n = mv.n;
     if (E.pass) o.passIn = E.pass.turns - b.turn + 1;
     return o;
@@ -752,21 +809,54 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       if (h.id === 'kattonaru') b.exhaust.push(h); else b.discard.push(h);
     });
     if (moya) {
-      s.yoyu = Math.max(0, s.yoyu - moya * D.RULES.moyaDrain);
+      hurt(s, moya * D.RULES.moyaDrain);
       msg(s, 'モヤモヤが 気になって 心の余裕 −' + moya * D.RULES.moyaDrain, 'curse');
     }
     b.hand = [];
+    var wasFrozen = b.frozen;
     enemyAct(s);
-    if (s.yoyu <= 0) { endRun(s, false); return s; }
+    if (wasFrozen) {
+      b.frozenLeft--;
+      if (b.frozenLeft <= 0) { endFrozen(s); return s; }
+    }
     var ps = D.ENEMIES[b.enemy.id].pass;
-    if (ps && b.turn >= ps.turns) { winBattle(s, true); return s; }
+    if (ps && b.turn >= ps.turns) { if (b.frozen) endFrozen(s); else winBattle(s, true); return s; }
     startTurn(s, false);
     return s;
   }
 
-  function winBattle(s, passed) {
+  // 動けないまま 時間が すぎた：苦手意識が つき、心の余裕は 1割まで もどる
+  function endFrozen(s) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
-    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, passed: !!passed });
+    var lv = Math.max(1, Math.ceil((b.deficit || 0) / D.RULES.nigatePer));
+    s.nigate[E.ctx] = (s.nigate[E.ctx] || 0) + lv;
+    s.yoyu = Math.max(1, Math.round(s.maxYoyu * D.RULES.frozenRecover));
+    log(s, { k: 'nigate', ctx: E.ctx, add: lv, to: s.nigate[E.ctx], enemy: en.id });
+    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, frozen: true });
+    if (en.kind === 'boss') { endRun(s, false); return; }
+    s.phase = 'reward';
+    s.reward = { choices: [], other: E.other, support: null, frozen: { ctx: E.ctx, add: lv, to: s.nigate[E.ctx] } };
+  }
+
+  // にげる：あぶない場面なら 正解（ふつうに 乗りこえた あつかい）。ふつうの課題では 問題が のこる
+  function escapeBattle(s) {
+    var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    log(s, { k: 'escape', enemy: en.id, ok: !!E.escapeOk });
+    if (E.escapeOk) {
+      addTrust(s, 1, 'escape', false);
+      winBattle(s, false, true);
+      return;
+    }
+    s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'flee:' + en.id });
+    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, fled: true });
+    if (en.kind === 'boss') { endRun(s, false); return; }
+    s.phase = 'reward';
+    s.reward = { choices: [], other: E.other, support: null, fled: true };
+  }
+
+  function winBattle(s, passed, escaped) {
+    var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, passed: !!passed, escaped: !!escaped });
     if (passed && E.pass.leave) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'pass:' + en.id }); }
     var statsBefore = { think: s.stats.think, act: s.stats.act, relate: s.stats.relate };
     Object.keys(D.STATS).forEach(function (st) {
@@ -792,7 +882,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var sup = null;
     var unowned = Object.keys(D.SUPPORTS).filter(function (k) { return s.items.indexOf(k) < 0; });
     if (unowned.length && (en.kind === 'elite' || rand(s) < D.SUPPORT_RULES.rewardChance)) sup = pick(s, unowned);
-    s.reward = { choices: rewardChoices(s), other: E.other, support: sup };
+    s.reward = { choices: rewardChoices(s), other: E.other, support: sup, escaped: !!escaped };
   }
 
   function rewardChoices(s) {
@@ -978,6 +1068,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       discovered: discovered,
       reveals: L.filter(function (e) { return e.k === 'reveal'; }),
       supportUses: L.filter(function (e) { return e.k === 'useSupport'; }),
+      escapes: L.filter(function (e) { return e.k === 'escape'; }),
+      nigate: L.filter(function (e) { return e.k === 'nigate'; }),
       others: L.filter(function (e) { return e.k === 'win'; }),
       grid: grid,
       goodCount: plays.filter(function (p) { return p.judge === 'good'; }).length,
@@ -1037,7 +1129,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 (function (root) {
   'use strict';
   var PAL = {"k": "#12172a", "w": "#ffffff", "p": "#8e6ad8", "P": "#b79cf0", "y": "#ffd23f", "r": "#e5484d", "g": "#5c6b8a", "G": "#a7b2c8", "o": "#f08c3a", "s": "#f4c9a0", "b": "#3b5bdb", "n": "#7a4b2a", "e": "#2b8a3e", "c": "#7fd3e0", "d": "#3d2f63"};
-  var ART = {"dunno_m": ["......kkkk......", ".....kyyyyk.....", "....kyykkyyk....", ".........kyk....", ".......kyyk.....", ".......kyk......", ".......kkk......", "....kkkkkkkkk...", "...kdddddddddk..", "..kdkkddddkkddk.", "..kdrrkdddkrrdk.", "..kdddddddddddk.", "..kdkwkwkwkwkdk.", "..kdkrrrrrrrkdk.", "..kddkkkkkkkddk.", "...kkkkkkkkkkk.."], "bumped_m": [".......k........", "......kok....k..", "..k..kooo..kok..", "..kokooooookok..", "...koooooooook..", "..kkkkoooookkkk.", ".koookrooookrok.", ".kooorrooookrrk.", ".koooooooooooook", "..kokwkwkwkwkok.", "..kokrrrrrrrkok.", "...kokwkwkwkok..", "....koooooook...", ".....kkkkkkk....", "....kk.....kk...", "................"], "left_out_m": ["................", ".....kkkkkk.....", "....kgggggggk...", "...kgGGgggGggk..", "...kgkkkgkkkgk..", "...kgkrkgkrkgk..", "...kgkkkgkkkggk.", "...kggggggggggk.", "...kgggkkkkgggk.", "...kggkgggkggk..", "...kgggggggggk..", "....kgk.kgk.kgk.", ".....k...k...k..", "................", "..........kkk...", ".........kgggk.."], "teased_m": ["...k...k...k....", "..kgk.kgk.kgk...", ".kgggkgggkgggk..", "kgGGgggGgggGggk.", "kgkkgggggggkkgk.", "kggrrkgggkrrggk.", "kggrkkgggkkrggk.", "kgggggggggggggk.", "kggkkkkkkkkkggk.", "kgkwkwkwkwkwkgk.", "kggkrrrrrrrkggk.", "kgkwkwkwkwkwkgk.", ".kggkkkkkkkggk..", "..kggggggggk....", "...kkkkkkkk.....", "................"], "presentation_m": [".....kkkkkk.....", "...kkddddddkk...", "..kddddddddddk..", ".kddwwrwwwwrddk.", ".kdwwwwrwwrwwdk.", "kddwwwkkkkwwwddk", "kdrwwkrrrrkwwrdk", "kddwwkrkkrkwwddk", "kddwwkrrrrkwwddk", "kdrwwwkkkkwwwrdk", ".kdwwrwwwwrwwdk.", ".kddwwwrwwwwddk.", "..kddddddddddk..", "...kkddddddkk...", ".....kkkkkk.....", "................"], "dunno_r": ["................", "..kkkkkkkkkkk...", "..kwwwwwwwwwk...", "..kwGGGGGGwwk...", "..kwwwwwwwwwk...", "..kwGGGGGGwwk...", "..kwwwwwwwwwk...", "..kwGGGGGGwwk...", "..kwwwwwwwwwk...", "..kwGGGwbbbwk...", "..kwwwwwwwbwk...", "..kwGGGwwbwwk...", "..kwwwwwwwwwk...", "..kwwwwwwbwwk...", "..kkkkkkkkkkk...", "................"], "bumped_r": ["................", "................", "................", ".....kkkkk......", "....knnnnnk.....", "....knsssnk.....", "....ksksksk.....", "....ksssssk.....", ".....ksrsk......", "......kkk.......", "..s..keeek..s...", "...skeeeeeks....", "....keeeeek.....", ".....kk.kk......", "................", "................"], "left_out_r": ["................", "................", "................", "................", ".kkkkk....kkkkk.", "knnnnnk..kyyyyyk", "knsssnk..kysssyk", "ksksksk..ksksksk", "ksssssk..ksssssk", ".krrrk....krrrk.", "..kkk......kkk..", ".koook....kbbbk.", "koooookkkkbbbbbk", "koooookrrkbbbbbk", ".kk.kkkrrkkk.kk.", "......kkkk......"], "teased_r": ["................", "................", "................", "................", ".kkkkk....kkkkk.", "knnnnnk..kkkkkkk", "knsssnk..kkssskk", "ksksksk..ksksksk", "ksssssk..ksssssk", ".krrrk....krrrk.", "..kkk......kkk..", ".kgggk....kPPPk.", "kgggggk..kPPPPPk", "kgggggk..kPPPPPk", ".kk.kk....kk.kk.", "................"], "presentation_r": ["................", "................", "................", ".....kkkkk......", "....kkkkkkk.....", ".kkkkkssskkkkkk.", "knnnkskskskyyyyk", "knssksssssksssyk", "kskskksksksksksk", "kssssskkkksssssk", ".kskskeeekksksk.", "..kkkeeeeekkkk..", ".kbbkeeeeekoook.", "kbbbbkk.kkoooook", "kbbbbbk..koooook", ".kk.kk....kk.kk."], "hero": ["................", ".....kkkkkk.....", "....knnnnnnk....", "...knnnnnnnnk...", "...knssssssnk...", "...ksskssksk....", "...kssssssssk...", "....kssrrssk....", ".....kkkkkk.....", "....kbbbbbbk....", "...kbbbbbbbbk...", "..ksbbbbbbbbsk..", "...kbbbbbbbbk...", "....kkkkkkkk....", "....kk....kk....", "................"], "teacher": ["................", "................", "................", ".....kkkkk......", "....kGGGGGk.....", "....kGsssGk.....", "....kkkkkkk.....", "....ksssssk.....", ".....ksksk......", "......kkk.......", ".....keeek......", "....keeeeek.....", "....keeeeek.....", ".....kk.kk......", "................", "................"], "friend": ["................", "................", "................", "................", ".kkkkk....kkkkk.", "kyyyyyk..knnnnnk", "kysssyk..knsssnk", "ksksksk..ksksksk", "ksssssk..ksssssk", ".krrrk....krrrk.", "..kkk......kkk..", ".koook....kbbbk.", "koooook..kbbbbbk", "koooook..kbbbbbk", ".kk.kk....kk.kk.", "................"], "family": ["................", "................", ".kkkkk..........", "kkkkkkk.........", "kkssskk.........", "ksksksk...kkkkk.", "ksssssk..knnnnnk", ".ksksk...knsssnk", "..kkk....ksksksk", ".kPPPk...ksssssk", "kPPPPPk...ksksk.", "kPPPPPk....kkk..", ".kk.kk....kbbbk.", ".........kbbbbbk", ".........kbbbbbk", "..........kk.kk."], "book": ["................", "................", "..kkkkkk.kkkkk..", ".krrrrrrkrrrrrk.", ".krwwwwrkrwwwrk.", ".krrrrrrkrrrrrk.", ".krwwwwrkrwwwrk.", ".krrrrrrkrrrrrk.", ".krwwwwrkrwwwrk.", ".krrrrrrkrrrrrk.", ".kkkkkkkkkkkkkk.", "..kyyyyyyyyyyk..", "...kkkkkkkkkk...", "................", "................", "................"]};
+  var ART = {"dunno_m": ["......kkkk......", ".....kyyyyk.....", "....kyykkyyk....", ".........kyk....", ".......kyyk.....", ".......kyk......", ".......kkk......", "....kkkkkkkkk...", "...kdddddddddk..", "..kdkkddddkkddk.", "..kdrrkdddkrrdk.", "..kdddddddddddk.", "..kdkwkwkwkwkdk.", "..kdkrrrrrrrkdk.", "..kddkkkkkkkddk.", "...kkkkkkkkkkk.."], "bumped_m": [".......k........", "......kok....k..", "..k..kooo..kok..", "..kokooooookok..", "...koooooooook..", "..kkkkoooookkkk.", ".koookrooookrok.", ".kooorrooookrrk.", ".koooooooooooook", "..kokwkwkwkwkok.", "..kokrrrrrrrkok.", "...kokwkwkwkok..", "....koooooook...", ".....kkkkkkk....", "....kk.....kk...", "................"], "left_out_m": ["................", ".....kkkkkk.....", "....kgggggggk...", "...kgGGgggGggk..", "...kgkkkgkkkgk..", "...kgkrkgkrkgk..", "...kgkkkgkkkggk.", "...kggggggggggk.", "...kgggkkkkgggk.", "...kggkgggkggk..", "...kgggggggggk..", "....kgk.kgk.kgk.", ".....k...k...k..", "................", "..........kkk...", ".........kgggk.."], "teased_m": ["...k...k...k....", "..kgk.kgk.kgk...", ".kgggkgggkgggk..", "kgGGgggGgggGggk.", "kgkkgggggggkkgk.", "kggrrkgggkrrggk.", "kggrkkgggkkrggk.", "kgggggggggggggk.", "kggkkkkkkkkkggk.", "kgkwkwkwkwkwkgk.", "kggkrrrrrrrkggk.", "kgkwkwkwkwkwkgk.", ".kggkkkkkkkggk..", "..kggggggggk....", "...kkkkkkkk.....", "................"], "presentation_m": [".....kkkkkk.....", "...kkddddddkk...", "..kddddddddddk..", ".kddwwrwwwwrddk.", ".kdwwwwrwwrwwdk.", "kddwwwkkkkwwwddk", "kdrwwkrrrrkwwrdk", "kddwwkrkkrkwwddk", "kddwwkrrrrkwwddk", "kdrwwwkkkkwwwrdk", ".kdwwrwwwwrwwdk.", ".kddwwwrwwwwddk.", "..kddddddddddk..", "...kkddddddkk...", ".....kkkkkk.....", "................"], "dunno_r": ["................", "..kkkkkkkkkkk...", "..kwwwwwwwwwk...", "..kwGGGGGGwwk...", "..kwwwwwwwwwk...", "..kwGGGGGGwwk...", "..kwwwwwwwwwk...", "..kwGGGGGGwwk...", "..kwwwwwwwwwk...", "..kwGGGwbbbwk...", "..kwwwwwwwbwk...", "..kwGGGwwbwwk...", "..kwwwwwwwwwk...", "..kwwwwwwbwwk...", "..kkkkkkkkkkk...", "................"], "bumped_r": ["................", "................", "................", ".....kkkkk......", "....knnnnnk.....", "....knsssnk.....", "....ksksksk.....", "....ksssssk.....", ".....ksrsk......", "......kkk.......", "..s..keeek..s...", "...skeeeeeks....", "....keeeeek.....", ".....kk.kk......", "................", "................"], "left_out_r": ["................", "................", "................", "................", ".kkkkk....kkkkk.", "knnnnnk..kyyyyyk", "knsssnk..kysssyk", "ksksksk..ksksksk", "ksssssk..ksssssk", ".krrrk....krrrk.", "..kkk......kkk..", ".koook....kbbbk.", "koooookkkkbbbbbk", "koooookrrkbbbbbk", ".kk.kkkrrkkk.kk.", "......kkkk......"], "teased_r": ["................", "................", "................", "................", ".kkkkk....kkkkk.", "knnnnnk..kkkkkkk", "knsssnk..kkssskk", "ksksksk..ksksksk", "ksssssk..ksssssk", ".krrrk....krrrk.", "..kkk......kkk..", ".kgggk....kPPPk.", "kgggggk..kPPPPPk", "kgggggk..kPPPPPk", ".kk.kk....kk.kk.", "................"], "presentation_r": ["................", "................", "................", ".....kkkkk......", "....kkkkkkk.....", ".kkkkkssskkkkkk.", "knnnkskskskyyyyk", "knssksssssksssyk", "kskskksksksksksk", "kssssskkkksssssk", ".kskskeeekksksk.", "..kkkeeeeekkkk..", ".kbbkeeeeekoook.", "kbbbbkk.kkoooook", "kbbbbbk..koooook", ".kk.kk....kk.kk."], "fight_near_m": ["....kkkkkkk.....", "..kkgggggggkk...", ".kgggGGggGGggk..", "kggggggggggggk..", "kgkkkggggkkkgk..", "kgrrkggggkrrgk..", "kggggggggggggk..", ".kgkwkwkwkwkgk..", "..kkkkkkkkkkk...", ".....kyk..kyk...", "....kyk..kyk....", "...kyyyk.kyk....", "....kyk...kyyk..", "...kyk.....kyk..", "...kk.......kk..", "................"], "stranger_m": [".....kkkkkk.....", "....kddddddk....", "...kddddddddk...", "...kdrrddrrdk...", "...kdrrddrrdk...", "...kddddddddk...", "....kdkkkkdk....", "...kddddddddk...", "..kddddddddddk..", ".kddddddddddddk.", ".kdkddddddddkdk.", ".kdkddddddddkdk.", "..k.kddddddk.k..", "....kddkkddk....", "....kdk..kdk....", "....kk....kk...."], "fight_near_r": ["................", "................", "................", ".kkkkk....kkkkk.", "kkkkkkk..knnnnnk", "kkssskk..knsssnk", "kskskskyyksksksk", "ksssssky.ksssssk", ".krrrk..y.krrrk.", "..kkk......kkk..", ".krrrk....kgggk.", "krrrrrk..kgggggk", "krrrrrk..kgggggk", ".kk.kk....kk.kk.", "................", "................"], "stranger_r": ["....gggggggg....", "....gggggggg....", "...kkkkkkkkkk...", "....kgggggk.....", "....kgsssgk.....", "....kkkkkkk.....", "....ksssssk.....", ".....ksksk......", "......kkk.......", ".....kdddk......", "....kdddddk.....", "....ddddddd.....", "....ddddddd.....", "....ddddddd.....", "....ddddddd.....", "....ddddddd....."], "hero": ["................", ".....kkkkkk.....", "....knnnnnnk....", "...knnnnnnnnk...", "...knssssssnk...", "...ksskssksk....", "...kssssssssk...", "....kssrrssk....", ".....kkkkkk.....", "....kbbbbbbk....", "...kbbbbbbbbk...", "..ksbbbbbbbbsk..", "...kbbbbbbbbk...", "....kkkkkkkk....", "....kk....kk....", "................"], "teacher": ["................", "................", "................", ".....kkkkk......", "....kGGGGGk.....", "....kGsssGk.....", "....kkkkkkk.....", "....ksssssk.....", ".....ksksk......", "......kkk.......", ".....keeek......", "....keeeeek.....", "....keeeeek.....", ".....kk.kk......", "................", "................"], "friend": ["................", "................", "................", "................", ".kkkkk....kkkkk.", "kyyyyyk..knnnnnk", "kysssyk..knsssnk", "ksksksk..ksksksk", "ksssssk..ksssssk", ".krrrk....krrrk.", "..kkk......kkk..", ".koook....kbbbk.", "koooook..kbbbbbk", "koooook..kbbbbbk", ".kk.kk....kk.kk.", "................"], "family": ["................", "................", ".kkkkk..........", "kkkkkkk.........", "kkssskk.........", "ksksksk...kkkkk.", "ksssssk..knnnnnk", ".ksksk...knsssnk", "..kkk....ksksksk", ".kPPPk...ksssssk", "kPPPPPk...ksksk.", "kPPPPPk....kkk..", ".kk.kk....kbbbk.", ".........kbbbbbk", ".........kbbbbbk", "..........kk.kk."], "book": ["................", "................", "..kkkkkk.kkkkk..", ".krrrrrrkrrrrrk.", ".krwwwwrkrwwwrk.", ".krrrrrrkrrrrrk.", ".krwwwwrkrwwwrk.", ".krrrrrrkrrrrrk.", ".krwwwwrkrwwwrk.", ".krrrrrrkrrrrrk.", ".kkkkkkkkkkkkkk.", "..kyyyyyyyyyyk..", "...kkkkkkkkkk...", "................", "................", "................"]};
   var N = 16, M = 2, SIZE = N + M * 2;
   function grid(key) {
     var art = ART[key], g = [];
@@ -1087,7 +1179,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       smile: '<path d="M-8 6 Q0 13 8 6" fill="none" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/>',
       laugh: '<path d="M-10 4 Q0 18 10 4 Z" fill="#e5484d" stroke="' + LINE + '" stroke-width="3" stroke-linejoin="round"/>',
       o: '<ellipse cx="0" cy="8" rx="4" ry="5" fill="#e5484d" stroke="' + LINE + '" stroke-width="3"/>',
-      flat: '<path d="M-6 8 H6" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/>'
+      flat: '<path d="M-6 8 H6" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/>',
+      angry: '<path d="M-8 10 Q0 2 8 10" fill="none" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/><path d="M-16 -14 L-5 -9 M16 -14 L5 -9" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round" transform="translate(0 -2)"/>'
     }[mouth];
     var arms = o.armsUp
       ? '<path d="M-26 -50 L-42 -82 M26 -50 L42 -82" stroke="' + LINE + '" stroke-width="15" stroke-linecap="round"/><path d="M-26 -50 L-42 -82 M26 -50 L42 -82" stroke="' + SKIN + '" stroke-width="8" stroke-linecap="round"/>'
@@ -1122,6 +1215,12 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     presentation: kid(48, 182, .72, { mouth: 'smile', shirt: '#3b6fd8' }) + kid(152, 182, .72, { mouth: 'smile', shirt: '#f08c3a', hair: '#d9a400' }) +
       kid(100, 168, .8, { mouth: 'smile', shirt: '#2b8a3e', hair: '#2a2a2a' })
   };
+
+  ART.fight_near = kid(60, 184, 1.0, { mouth: 'angry', shirt: '#c92a2a', hair: '#2a2a2a' }) + kid(140, 184, 1.0, { mouth: 'angry', shirt: '#5c6b8a' }) +
+    '<path d="M96 40 l8 14 -10 2 8 14" fill="none" stroke="#e0a800" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>';
+  // 知らない大人：こわい顔にはしない（見た目では わからない、を残す）
+  ART.stranger = kid(100, 186, 1.25, { mouth: 'smile', shirt: '#4a4f63', hair: '#6e7781', glasses: true }) +
+    '<path d="M62 52 Q100 24 138 52 Z" fill="#3d2f63" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/><rect x="56" y="50" width="88" height="8" rx="4" fill="#3d2f63" stroke="' + LINE + '" stroke-width="4"/>';
 
   function svg(id) {
     if (!ART[id]) return null;
@@ -1175,6 +1274,9 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       h('div', { class: 'chip trust', title: '信頼' }, [h('span', { class: 'lbl', text: '信頼' }), h('b', { text: String(S.trust) })]),
       h('div', { class: 'stats' }, Object.keys(D.STATS).map(function (k) {
         return h('div', { class: 'chip st-' + k }, [h('span', { class: 'lbl', text: D.STATS[k].name }), h('b', { text: String(S.stats[k]) })]);
+      })),
+      h('div', { class: 'nigates' }, Object.keys(S.nigate || {}).map(function (k) {
+        return h('div', { class: 'chip nigate', title: '苦手意識' }, [h('span', { class: 'lbl', text: '苦手：' + D.CTX_LABEL[k] }), h('b', { text: String(S.nigate[k]) })]);
       })),
       h('div', { class: 'floor', text: (S.row + 1) + ' / ' + S.map.length + ' だん' })
     ]);
@@ -1256,7 +1358,9 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     if (c.guard) effects.push(h('span', { class: 'fx guard' }, ['ゆとり ' + (p.guard != null ? p.guard : c.guard)]));
     if (c.heal) effects.push(h('span', { class: 'fx heal' }, ['余裕 +' + c.heal]));
     if (c.draw) effects.push(h('span', { class: 'fx' }, ['1まい 引く']));
-    if (c.reveal) effects.push(h('span', { class: 'fx reveal' }, ['見方を 変える']));
+    if (c.organize) effects.push(h('span', { class: 'fx reveal' }, ['整理する']));
+    if (c.escape) effects.push(h('span', { class: 'fx reveal' }, ['その場を はなれる']));
+    if (c.distance) effects.push(h('span', { class: 'fx reveal' }, ['いきおいを おさめる']));
     if (c.trust > 0) effects.push(h('span', { class: 'fx trust' }, ['信頼 +' + c.trust]));
     if (c.trust < 0) effects.push(h('span', { class: 'fx bad' }, ['信頼 ' + c.trust]));
     if (c.curse) effects.push(h('span', { class: 'fx bad' }, ['モヤモヤが 入る']));
@@ -1338,7 +1442,10 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   function rewardScreen() {
     var r = S.reward;
     return h('main', { class: 'reward' }, [
-      h('h2', { text: r.passed ? '時間が たった' : '乗りこえた！' }),
+      h('h2', { text: r.frozen ? '時間が すぎた…' : r.fled ? 'その場を はなれた' : r.escaped ? '安全な ところへ はなれた！' : r.passed ? '時間が たった' : '乗りこえた！' }),
+      r.frozen ? h('p', { class: 'story', text: '動けないまま、時間が すぎた。「' + D.CTX_LABEL[r.frozen.ctx] + '」に 苦手意識が ついた（' + r.frozen.to + '）。この場面では ストレスが 少し ふえる。心の余裕は 1割まで もどった。' }) : null,
+      r.fled ? h('p', { class: 'story', text: 'にげたので、問題は そのまま のこった（モヤモヤが デッキに 入った）。にげるのが いい場面と、そうでない場面が ある。' }) : null,
+      r.escaped ? h('p', { class: 'praise', text: 'あぶない場面では、はなれる・にげる・大人を よぶ が いちばん。自分の 安全を 守れた。' }) : null,
       r.passed ? h('p', { class: 'story', text: r.passed + (r.leave ? '（モヤモヤが デッキに 入った）' : '') }) : null,
       h('p', { class: 'other', text: r.other }),
       r.support ? h('div', { class: 'supoffer' }, [
@@ -1451,6 +1558,12 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
         h('b', { text: D.STATS[g.stat].name + ' ' + (g.to - 1) + ' → ' + g.to }),
         h('span', { text: g.why === 'elite' ? '大きなかべを 乗りこえて、いちばん 使った力が のびた。' : (used || D.STATS[g.stat].verb + 'カードを ' + g.uses + '回') + ' 使ったから。' })
       ]));
+    });
+    sm.escapes.filter(function (e) { return e.ok; }).forEach(function (e) {
+      items.push(h('li', { class: 'unlock' }, [h('b', { text: '「' + D.ENEMIES[e.enemy].scene + '」から はなれて、安全を 守れた' }), h('span', { text: 'たたかうだけが 正解じゃない。場面に 合わせて えらべるのが 大事な力。' })]));
+    });
+    sm.nigate.forEach(function (e) {
+      items.push(h('li', {}, [h('b', { text: '「' + D.CTX_LABEL[e.ctx] + '」が 苦手に なった（' + e.to + '）' }), h('span', { text: '心の余裕が なくなる前に、休む・きょりを おく・だれかに そうだん しよう。' })]));
     });
     if (sm.supportUses.length) {
       var names = {};

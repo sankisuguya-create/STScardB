@@ -11,7 +11,8 @@
       smile: '<path d="M-8 6 Q0 13 8 6" fill="none" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/>',
       laugh: '<path d="M-10 4 Q0 18 10 4 Z" fill="#e5484d" stroke="' + LINE + '" stroke-width="3" stroke-linejoin="round"/>',
       o: '<ellipse cx="0" cy="8" rx="4" ry="5" fill="#e5484d" stroke="' + LINE + '" stroke-width="3"/>',
-      flat: '<path d="M-6 8 H6" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/>'
+      flat: '<path d="M-6 8 H6" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/>',
+      angry: '<path d="M-8 10 Q0 2 8 10" fill="none" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/><path d="M-16 -14 L-5 -9 M16 -14 L5 -9" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round" transform="translate(0 -2)"/>'
     }[mouth];
     var arms = o.armsUp
       ? '<path d="M-26 -50 L-42 -82 M26 -50 L42 -82" stroke="' + LINE + '" stroke-width="15" stroke-linecap="round"/><path d="M-26 -50 L-42 -82 M26 -50 L42 -82" stroke="' + SKIN + '" stroke-width="8" stroke-linecap="round"/>'
@@ -46,6 +47,12 @@
     presentation: kid(48, 182, .72, { mouth: 'smile', shirt: '#3b6fd8' }) + kid(152, 182, .72, { mouth: 'smile', shirt: '#f08c3a', hair: '#d9a400' }) +
       kid(100, 168, .8, { mouth: 'smile', shirt: '#2b8a3e', hair: '#2a2a2a' })
   };
+
+  ART.fight_near = kid(60, 184, 1.0, { mouth: 'angry', shirt: '#c92a2a', hair: '#2a2a2a' }) + kid(140, 184, 1.0, { mouth: 'angry', shirt: '#5c6b8a' }) +
+    '<path d="M96 40 l8 14 -10 2 8 14" fill="none" stroke="#e0a800" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>';
+  // 知らない大人：こわい顔にはしない（見た目では わからない、を残す）
+  ART.stranger = kid(100, 186, 1.25, { mouth: 'smile', shirt: '#4a4f63', hair: '#6e7781', glasses: true }) +
+    '<path d="M62 52 Q100 24 138 52 Z" fill="#3d2f63" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/><rect x="56" y="50" width="88" height="8" rx="4" fill="#3d2f63" stroke="' + LINE + '" stroke-width="4"/>';
 
   function svg(id) {
     if (!ART[id]) return null;

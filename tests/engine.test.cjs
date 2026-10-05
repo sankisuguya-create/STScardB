@@ -160,3 +160,70 @@ test('時間で過ぎ去る課題：ターン数を乗りこえると終わり�
   }
   assert.fail('bumped が出なかった');
 });
+
+
+test('あぶない場面：にげると 乗りこえた あつかい（報酬あり・信頼+1）', () => {
+  for (let seed = 1; seed < 400; seed++) {
+    const s = E.newRun(seed, 1);
+    E.chooseNode(s, 0);
+    if (D.ENEMIES[s.battle.enemy.id].kind !== 'danger') continue;
+    const t0 = s.trust;
+    const i = s.battle.hand.findIndex((h) => h.id === 'run_now');
+    E.playCard(s, i);
+    if (s.phase !== 'reward') continue;
+    assert.ok(s.reward.escaped);
+    assert.ok(s.reward.choices.length > 0);
+    assert.ok(s.trust >= t0 + 1);
+    return;
+  }
+  assert.fail('あぶない場面が出なかった');
+});
+
+test('ふつうの課題で にげると 問題が のこる（モヤモヤ・報酬なし）', () => {
+  for (let seed = 1; seed < 400; seed++) {
+    const s = E.newRun(seed, 1);
+    E.chooseNode(s, 0);
+    if (D.ENEMIES[s.battle.enemy.id].kind === 'danger') continue;
+    s.battle.hand.push({ id: 'run_now', temp: true });
+    const n = s.deck.filter((x) => x === 'moyamoya').length;
+    E.playCard(s, s.battle.hand.length - 1);
+    if (s.phase !== 'reward') continue;
+    assert.ok(s.reward.fled);
+    assert.strictEqual(s.reward.choices.length, 0);
+    assert.strictEqual(s.deck.filter((x) => x === 'moyamoya').length, n + 1);
+    return;
+  }
+  assert.fail();
+});
+
+test('心の余裕が0：ゲームは終わらず「動けない」になり、終わると 苦手意識がつき 余裕は1割', () => {
+  for (let seed = 1; seed < 400; seed++) {
+    const s = E.newRun(seed, 1);
+    E.chooseNode(s, 0);
+    const E0 = D.ENEMIES[s.battle.enemy.id];
+    if (E0.kind !== 'danger') continue;
+    s.yoyu = 1;
+    E.endTurn(s);
+    assert.notStrictEqual(s.phase, 'end');
+    assert.ok(s.battle.frozen);
+    assert.deepStrictEqual(s.battle.hand.map((h) => h.id), ['ugokenai']);
+    for (let k = 0; k < 5 && s.phase === 'battle'; k++) E.endTurn(s);
+    assert.strictEqual(s.phase, 'reward');
+    assert.ok(s.reward.frozen);
+    assert.ok(s.nigate[E0.ctx] >= 1);
+    assert.strictEqual(s.yoyu, Math.round(s.maxYoyu * D.RULES.frozenRecover));
+    return;
+  }
+  assert.fail();
+});
+
+test('きょりを おく：いきおいを0にし、ストレスを弱める', () => {
+  const s = E.newRun(21, 1);
+  E.chooseNode(s, 0);
+  s.battle.enemy.str = 5;
+  const before = s.battle.enemy.stressMul;
+  s.battle.hand.push({ id: 'keep_distance', temp: true }); s.battle.energy = 3;
+  E.playCard(s, s.battle.hand.length - 1);
+  assert.strictEqual(s.battle.enemy.str, 0);
+  assert.ok(s.battle.enemy.stressMul < before);
+});

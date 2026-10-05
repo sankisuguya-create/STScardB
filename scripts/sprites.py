@@ -60,6 +60,16 @@ S['teased_r'] = out(g)
 g = blank(); kid(g, 0, 5, hair='n', shirt='b'); kid(g, 9, 5, hair='y', shirt='o'); kid(g, 4, 3, hair='k', shirt='e')
 S['presentation_r'] = out(g)
 
+S['fight_near_m'] = ['....kkkkkkk.....', '..kkgggggggkk...', '.kgggGGggGGggk..', 'kggggggggggggk..', 'kgkkkggggkkkgk..', 'kgrrkggggkrrgk..', 'kggggggggggggk..', '.kgkwkwkwkwkgk..',
+  '..kkkkkkkkkkk...', '.....kyk..kyk...', '....kyk..kyk....', '...kyyyk.kyk....', '....kyk...kyyk..', '...kyk.....kyk..', '...kk.......kk..', '................']
+S['stranger_m'] = ['.....kkkkkk.....', '....kddddddk....', '...kddddddddk...', '...kdrrddrrdk...', '...kdrrddrrdk...', '...kddddddddk...', '....kdkkkkdk....', '...kddddddddk...',
+  '..kddddddddddk..', '.kddddddddddddk.', '.kdkddddddddkdk.', '.kdkddddddddkdk.', '..k.kddddddk.k..', '....kddkkddk....', '....kdk..kdk....', '....kk....kk....']
+g = blank(); kid(g, 0, 3, hair='k', shirt='r', mouth='laugh'); kid(g, 9, 3, hair='n', shirt='g', mouth='laugh')
+px(g, [(7, 6), (8, 6), (7, 7), (8, 8)], 'y')
+S['fight_near_r'] = out(g)
+g = blank(); rect(g, 4, 0, 8, 2, 'g'); rect(g, 3, 2, 10, 1, 'k'); kid(g, 4, 2, hair='g', shirt='d'); rect(g, 4, 11, 7, 5, 'd'); rect(g, 5, 5, 5, 1, 'k')
+S['stranger_r'] = out(g)
+
 # --- 自分・アイテム ---
 S['hero'] = ['................', '.....kkkkkk.....', '....knnnnnnk....', '...knnnnnnnnk...', '...knssssssnk...', '...ksskssksk....', '...kssssssssk...', '....kssrrssk....',
   '.....kkkkkk.....', '....kbbbbbbk....', '...kbbbbbbbbk...', '..ksbbbbbbbbsk..', '...kbbbbbbbbk...', '....kkkkkkkk....', '....kk....kk....', '................']

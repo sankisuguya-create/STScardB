@@ -10,13 +10,19 @@ const POLICIES = {
   // 衝動：衝動を先に、あとは手当たりしだい
   impulse: { order: ['impulse', 'neutral', 'good'], reward: (c) => c.type === 'act', rest: 'rest', event: 2 },
   // がまん：がまん・受け身を先に。関わるカードは使わない
-  passive: { order: ['passive', 'neutral'], reward: (c) => c.type === 'calm', rest: 'rest', event: 2 }
+  passive: { order: ['passive', 'neutral'], reward: (c) => c.type === 'calm', rest: 'rest', event: 2 },
+  // 適応：ふだんは向社会的、あぶない場面では はなれる・にげる、からかいでは きっぱり／先生
+  adaptive: { order: ['good', 'neutral'], reward: (c) => c.judge === 'good', rest: 'remove-impulse', event: 0, adaptive: true }
 };
 
 function rank(c, pol, s) {
   const kind = c.style === 'passive' && c.judge !== 'good' ? 'passive' : c.judge;
   let r = pol.order.indexOf(kind);
   if (pol === POLICIES.passive && c.type === 'relate') r = -1;
+  const danger = D.ENEMIES[s.battle.enemy.id].kind === 'danger';
+  if (c.escape && !(pol.adaptive && danger)) r = -1;
+  if (c.escape && pol.adaptive && danger) return 1000;
+  if (c.distance && !pol.adaptive) r = -1;
   if (r < 0) return -1;
   // 同じ順位の中では、見方を変えるカード・効く種類を先に
   let bonus = 0;
@@ -116,9 +122,10 @@ function stats(n) {
 // 合格基準（docs/design.md §5）
 function verdict(r) {
   const checks = [
+    ['勝率 適応 > 向社会的', r.adaptive.win > r.prosocial.win],
     ['勝率 向社会的 > 衝動', r.prosocial.win > r.impulse.win],
     ['勝率 衝動 > がまん', r.impulse.win > r.passive.win],
-    ['向社会的でも 勝率 < 95%', r.prosocial.win < 0.95],
+    ['適応でも 勝率 < 95%', r.adaptive.win < 0.95],
     ['よい選択の失敗率 20〜35%', r.prosocial.goodFailRate >= 0.2 && r.prosocial.goodFailRate <= 0.35],
     ['衝動の その場の成功率 ≥ 60%', r.impulse.impulseOkRate >= 0.6]
   ];

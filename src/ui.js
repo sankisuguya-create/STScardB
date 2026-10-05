@@ -43,6 +43,9 @@
       h('div', { class: 'stats' }, Object.keys(D.STATS).map(function (k) {
         return h('div', { class: 'chip st-' + k }, [h('span', { class: 'lbl', text: D.STATS[k].name }), h('b', { text: String(S.stats[k]) })]);
       })),
+      h('div', { class: 'nigates' }, Object.keys(S.nigate || {}).map(function (k) {
+        return h('div', { class: 'chip nigate', title: '苦手意識' }, [h('span', { class: 'lbl', text: '苦手：' + D.CTX_LABEL[k] }), h('b', { text: String(S.nigate[k]) })]);
+      })),
       h('div', { class: 'floor', text: (S.row + 1) + ' / ' + S.map.length + ' だん' })
     ]);
   }
@@ -123,7 +126,9 @@
     if (c.guard) effects.push(h('span', { class: 'fx guard' }, ['ゆとり ' + (p.guard != null ? p.guard : c.guard)]));
     if (c.heal) effects.push(h('span', { class: 'fx heal' }, ['余裕 +' + c.heal]));
     if (c.draw) effects.push(h('span', { class: 'fx' }, ['1まい 引く']));
-    if (c.reveal) effects.push(h('span', { class: 'fx reveal' }, ['見方を 変える']));
+    if (c.organize) effects.push(h('span', { class: 'fx reveal' }, ['整理する']));
+    if (c.escape) effects.push(h('span', { class: 'fx reveal' }, ['その場を はなれる']));
+    if (c.distance) effects.push(h('span', { class: 'fx reveal' }, ['いきおいを おさめる']));
     if (c.trust > 0) effects.push(h('span', { class: 'fx trust' }, ['信頼 +' + c.trust]));
     if (c.trust < 0) effects.push(h('span', { class: 'fx bad' }, ['信頼 ' + c.trust]));
     if (c.curse) effects.push(h('span', { class: 'fx bad' }, ['モヤモヤが 入る']));
@@ -205,7 +210,10 @@
   function rewardScreen() {
     var r = S.reward;
     return h('main', { class: 'reward' }, [
-      h('h2', { text: r.passed ? '時間が たった' : '乗りこえた！' }),
+      h('h2', { text: r.frozen ? '時間が すぎた…' : r.fled ? 'その場を はなれた' : r.escaped ? '安全な ところへ はなれた！' : r.passed ? '時間が たった' : '乗りこえた！' }),
+      r.frozen ? h('p', { class: 'story', text: '動けないまま、時間が すぎた。「' + D.CTX_LABEL[r.frozen.ctx] + '」に 苦手意識が ついた（' + r.frozen.to + '）。この場面では ストレスが 少し ふえる。心の余裕は 1割まで もどった。' }) : null,
+      r.fled ? h('p', { class: 'story', text: 'にげたので、問題は そのまま のこった（モヤモヤが デッキに 入った）。にげるのが いい場面と、そうでない場面が ある。' }) : null,
+      r.escaped ? h('p', { class: 'praise', text: 'あぶない場面では、はなれる・にげる・大人を よぶ が いちばん。自分の 安全を 守れた。' }) : null,
       r.passed ? h('p', { class: 'story', text: r.passed + (r.leave ? '（モヤモヤが デッキに 入った）' : '') }) : null,
       h('p', { class: 'other', text: r.other }),
       r.support ? h('div', { class: 'supoffer' }, [
@@ -318,6 +326,12 @@
         h('b', { text: D.STATS[g.stat].name + ' ' + (g.to - 1) + ' → ' + g.to }),
         h('span', { text: g.why === 'elite' ? '大きなかべを 乗りこえて、いちばん 使った力が のびた。' : (used || D.STATS[g.stat].verb + 'カードを ' + g.uses + '回') + ' 使ったから。' })
       ]));
+    });
+    sm.escapes.filter(function (e) { return e.ok; }).forEach(function (e) {
+      items.push(h('li', { class: 'unlock' }, [h('b', { text: '「' + D.ENEMIES[e.enemy].scene + '」から はなれて、安全を 守れた' }), h('span', { text: 'たたかうだけが 正解じゃない。場面に 合わせて えらべるのが 大事な力。' })]));
+    });
+    sm.nigate.forEach(function (e) {
+      items.push(h('li', {}, [h('b', { text: '「' + D.CTX_LABEL[e.ctx] + '」が 苦手に なった（' + e.to + '）' }), h('span', { text: '心の余裕が なくなる前に、休む・きょりを おく・だれかに そうだん しよう。' })]));
     });
     if (sm.supportUses.length) {
       var names = {};
