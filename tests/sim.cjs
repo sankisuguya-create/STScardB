@@ -96,20 +96,21 @@ function runOne(seed, polName, mode) {
 function stats(n) {
   const out = {};
   for (const name of Object.keys(POLICIES)) {
-    let wins = 0, goodTry = 0, goodFail = 0, impTry = 0, impOk = 0, floors = 0, grows = 0, trust = 0;
+    let turns = 0, battles = 0, wins = 0, goodTry = 0, goodFail = 0, impTry = 0, impOk = 0, floors = 0, grows = 0, trust = 0;
     for (let i = 0; i < n; i++) {
       const s = runOne(1000 + i * 7919, name);
       if (s.result && s.result.won) wins++;
       floors += s.floor;
       trust += s.trust;
       for (const e of s.log) {
+        if (e.k === 'win' && e.turns) { battles++; turns += e.turns; }
         if (e.k === 'play' && e.judge === 'good' && E.card(e.card).chance) { goodTry++; if (!e.ok) goodFail++; }
         if (e.k === 'play' && e.judge === 'impulse') { impTry++; if (e.ok) impOk++; }
         if (e.k === 'grow') grows++;
       }
     }
     out[name] = {
-      win: wins / n, avgFloor: floors / n, avgTrust: trust / n, growsPerRun: grows / n,
+      win: wins / n, turns: +(turns / Math.max(1, battles)).toFixed(2), avgFloor: floors / n, avgTrust: trust / n, growsPerRun: grows / n,
       goodFailRate: goodTry ? goodFail / goodTry : null,
       impulseOkRate: impTry ? impOk / impTry : null
     };
@@ -123,7 +124,9 @@ function verdict(r) {
     ['勝率 適応 > 向社会的', r.adaptive.win > r.prosocial.win],
     ['勝率 向社会的 > 衝動', r.prosocial.win > r.impulse.win],
     ['勝率 衝動 > がまん', r.impulse.win > r.passive.win],
-    ['適応でも 勝率 < 95%', r.adaptive.win < 0.95],
+    ['向社会的なら 勝てる（勝率 ≥ 85%）', r.prosocial.win >= 0.85],
+    ['衝動は 勝ちにくい（向社会的より 30点以上 低い）', r.prosocial.win - r.impulse.win >= 0.3],
+    ['1バトルが短い（平均 3ターン以下）', r.prosocial.turns <= 3 && r.adaptive.turns <= 3],
     ['よい選択の失敗率 20〜35%', r.prosocial.goodFailRate >= 0.2 && r.prosocial.goodFailRate <= 0.35],
     ['衝動の その場の成功率 ≥ 60%', r.impulse.impulseOkRate >= 0.6]
   ];
