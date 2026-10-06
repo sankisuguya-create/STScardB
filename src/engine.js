@@ -185,6 +185,16 @@
     startTurn(s, true);
   }
 
+  // 手札は 5まい＋かしこさ まで。あふれた カードは すて札へ（カッとなる は 消える）
+  function handLimit(s) { return D.PLAYER.hand + s.stats.think; }
+  function addToHand(s, h) {
+    var b = s.battle;
+    if (b.hand.length < handLimit(s)) { b.hand.push(h); return true; }
+    if (h.id === 'kattonaru') b.exhaust.push(h); else b.discard.push(h);
+    msg(s, '手札が いっぱいで「' + card(h.id).name + '」は すて札へ。', 'bench');
+    return false;
+  }
+
   function drawCards(s, n) {
     var b = s.battle;
     for (var i = 0; i < n; i++) {
@@ -192,7 +202,7 @@
         if (!b.discard.length) return;
         b.draw = shuffle(s, b.discard); b.discard = [];
       }
-      b.hand.push(b.draw.pop());
+      addToHand(s, b.draw.pop());
     }
   }
 
@@ -205,7 +215,7 @@
       log(s, { k: 'ally' });
     }
     if (first) {
-      D.ENEMIES[b.enemy.id].situ.forEach(function (id) { b.hand.push({ id: id, temp: true }); });
+      D.ENEMIES[b.enemy.id].situ.forEach(function (id) { addToHand(s, { id: id, temp: true }); });
     }
     if (b.frozen) {
       b.hand.forEach(function (h) { b.discard.push(h); });
@@ -214,9 +224,9 @@
       msg(s, '心の余裕が なくなって、動けない…（このまま 時間が すぎるのを まつ）', 'stress');
       return;
     }
-    drawCards(s, D.PLAYER.hand);
+    drawCards(s, Math.max(0, handLimit(s) - b.hand.length));
     if (s.yoyu < s.maxYoyu * D.RULES.stressThreshold) {
-      b.hand.push({ id: 'kattonaru', temp: true });
+      addToHand(s, { id: 'kattonaru', temp: true });
       msg(s, D.TEXT.stressIntrude, 'stress');
       log(s, { k: 'intrude' });
     }
@@ -341,7 +351,7 @@
       var cause = D.TEXT.failCause[Math.floor(rand(s) * D.TEXT.failCause.length)];
       msg(s, '「' + c.name + '」は うまくいかなかった。' + cause + (st ? '（' + D.STATS[st].name + 'の けいけんには なった）' : ''), 'fail');
       if (c.fail) {
-        b.hand.push({ id: c.fail, temp: true });
+        addToHand(s, { id: c.fail, temp: true });
         msg(s, '次の手：「' + card(c.fail).name + '」が 手札に 入った。', 'next');
         entry.next = c.fail;
       }
@@ -534,13 +544,13 @@
     if (u.heal) s.yoyu = Math.min(s.maxYoyu, s.yoyu + u.heal);
     if (id === 'teacher') {
       var tc = D.TEACHER_CARDS[E.ctx];
-      b.hand.push({ id: tc, temp: true }); b.teacherCard = tc;
+      addToHand(s, { id: tc, temp: true }); b.teacherCard = tc;
       msg(s, '先生の すすめ：「' + card(tc).name + '」が 手札に 入った。', 'next');
       organize(s);
     }
     if (id === 'friend') {
       var fc = rand(s) < D.SUPPORT_RULES.junkChance ? 'junk_advice' : pick(s, D.FRIEND_CARDS);
-      s.deck.push(fc); b.hand.push({ id: fc });
+      s.deck.push(fc); addToHand(s, { id: fc });
       log(s, { k: 'gain', card: fc, why: 'friend' });
       msg(s, '友だちの アドバイス：「' + card(fc).name + '」' + (fc === 'junk_advice' ? '（あまり 役に立たなかった…）' : ''), fc === 'junk_advice' ? 'fail' : 'next');
     }
@@ -730,7 +740,7 @@
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D

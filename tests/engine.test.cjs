@@ -108,7 +108,7 @@ test('アイテム：戦いごとに1回、なくならない。先生は場面�
     if (s.battle.enemy.id !== 'dunno') continue;
     E.useSupport(s, 'teacher');
     assert.ok(!E.canUseSupport(s, 'teacher'));
-    assert.ok(s.battle.hand.some((h) => h.id === 'ask_teacher'));
+    assert.ok(s.battle.hand.concat(s.battle.discard).some((h) => h.id === 'ask_teacher'));
     assert.strictEqual(s.battle.enemy.form, 1);
     assert.deepStrictEqual(s.equip, ['teacher']);
     s.battle.enemy.hp = 0; s.battle.hand.push({ id: 'try_it', temp: true }); s.battle.energy = 3;
@@ -278,4 +278,23 @@ test('休むと「お家の人に そうだんする」が デッキに 入る',
   const s = E.newRun(3, 1); s.phase = 'rest';
   E.rest(s, 'rest');
   assert.ok(s.deck.includes('consult_family'));
+});
+
+test('手札は 5まい＋かしこさ まで。あふれた カードは すて札へ', () => {
+  for (let seed = 1; seed < 60; seed++) {
+    const s = E.newRun(seed, 1);
+    s.stats.think = seed % 3;
+    E.chooseNode(s, E.reachable(s)[0]);
+    if (s.phase !== 'battle') continue;
+    const lim = 5 + s.stats.think;
+    assert.ok(s.battle.hand.length <= lim);
+    for (let k = 0; k < 4 && s.phase === 'battle'; k++) { E.endTurn(s); if (s.phase === 'battle') assert.ok(s.battle.hand.length <= lim); }
+  }
+  const s = E.newRun(2, 1); E.chooseNode(s, E.reachable(s)[0]);
+  while (s.battle.hand.length < 5) s.battle.hand.push({ id: 'endure', temp: true });
+  const d = s.battle.discard.length;
+  s.battle.energy = 3; s.battle.hand.push({ id: 'write_plan', temp: true });
+  s.battle.hand.splice(0, 1);
+  E.playCard(s, s.battle.hand.length - 1);
+  assert.ok(s.battle.hand.length <= 5);
 });
