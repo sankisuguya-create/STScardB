@@ -113,6 +113,18 @@
     ]);
   }
 
+  // 戦いの前に、状きょうを 語る ページ
+  function introScreen() {
+    var en = S.battle.enemy, EN = D.ENEMIES[en.id];
+    var kind = en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : en.kind === 'danger' ? 'あぶない場面' : '課題';
+    return h('main', { class: 'intro k-' + en.kind }, [
+      h('div', { class: 'intro-kind', text: kind + '：' + EN.scene }),
+      h('div', { class: 'intro-art' }, [sprite(SST_SPRITES.enemyKey(en.id, en.form), en.form, 'mon')]),
+      h('p', { class: 'intro-text', text: EN.intro }),
+      h('button', { class: 'primary big', onclick: function () { act(function () { E.beginBattle(S); }); }, text: '向き合う' })
+    ]);
+  }
+
   // 段が 変わるとき（3層モード）
   function actClearScreen() {
     var A = D.ACTS[S.act];
@@ -516,6 +528,7 @@
     else if (S.phase === 'rest') screen = restScreen();
     else if (S.phase === 'event') screen = eventScreen();
     else if (S.phase === 'actclear') screen = actClearScreen();
+    else if (S.phase === 'intro') screen = introScreen();
     else screen = endScreen();
     app.replaceChildren(topBar(), screen);
     app.setAttribute('data-phase', S.phase);

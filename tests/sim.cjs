@@ -70,7 +70,8 @@ function runOne(seed, polName, mode) {
   const s = E.newRun(seed, mode || 1);
   let steps = 0;
   while (s.phase !== 'end' && steps++ < 6000) {
-    if (s.phase === 'actclear') E.nextAct(s);
+    if (s.phase === 'intro') E.beginBattle(s);
+    else if (s.phase === 'actclear') E.nextAct(s);
     else if (s.phase === 'map') {
       const ok = E.reachable(s);
       E.chooseNode(s, ok[(seed + s.row) % ok.length]);

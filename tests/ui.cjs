@@ -37,6 +37,7 @@ const fs = require('node:fs');
       else await page.tap('.endturn');
     }
     else if (phase === 'reward') { await snap('04-reward'); const c = await page.$('.choices .card'); if (c) await c.tap(); else await page.tap('.reward > button.secondary'); }
+    else if (phase === 'intro') { await snap('01b-intro'); await page.tap('main button.primary'); }
     else if (phase === 'actclear') { await snap('06b-actclear'); await page.tap('main button.primary'); }
     else if (phase === 'rest') { await snap('05-rest'); await page.tap('.two button >> nth=0'); }
     else if (phase === 'event') {

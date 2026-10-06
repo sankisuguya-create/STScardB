@@ -5,6 +5,9 @@ const assert = require('node:assert');
 const E = require('../src/engine.js');
 const D = E.data;
 const { runOne, stats, verdict } = require('./sim.cjs');
+// マスを えらぶと 状きょうの 説明（intro）を はさむ。検査では すぐ 戦いに 入る
+const _choose = E.chooseNode;
+E.chooseNode = (s, i) => { _choose(s, i); if (s.phase === 'intro') E.beginBattle(s); return s; };
 
 test('全カード・全課題の参照が正しい', () => {
   const ids = Object.keys(D.CARDS);
@@ -328,4 +331,13 @@ test('問題行動を えらぶと、次に 道と関係なく トラブルが �
     return;
   }
   assert.fail();
+});
+
+test('すべての課題に 状きょうの 説明が ある。マスを えらぶと 説明の 画面になる', () => {
+  Object.entries(D.ENEMIES).forEach(([k, e]) => assert.ok(e.intro && e.intro.length > 10, k));
+  const s = E.newRun(1, 1);
+  _choose(s, E.reachable(s)[0]);
+  assert.strictEqual(s.phase, 'intro');
+  E.beginBattle(s);
+  assert.strictEqual(s.phase, 'battle');
 });

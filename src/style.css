@@ -291,3 +291,11 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   .grid4 { grid-template-columns: 70px 1fr 1fr; font-size: .9rem; }
   .eq { min-width: 0; flex: 1 1 40%; }
 }
+
+/* 状きょうの 説明 */
+.intro { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: linear-gradient(var(--stage-top), var(--stage-bot)); color: #fff; }
+.intro-kind { font-family: var(--display); font-size: 1.1rem; color: #d6dcf0; }
+.intro-art canvas { width: 200px; height: 200px; animation: bob 1.6s steps(2) infinite; }
+.intro-text { max-width: 640px; background: var(--paper); color: var(--ink); border: 3px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 16px 20px; font-size: 1.2rem; line-height: 1.8; animation: appear .4s ease-out both; }
+.intro.k-danger .intro-text { box-shadow: 0 4px 0 var(--impulse); }
+@media (max-width: 760px) { .intro-art canvas { width: 150px; height: 150px; } .intro-text { font-size: 1.05rem; } }

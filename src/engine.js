@@ -140,7 +140,7 @@
     s.floor++;
     s.pos = n.col;
     s.nodeRelated = !!n.related;
-    if (n.kind === 'battle' || n.kind === 'elite' || n.kind === 'boss') startBattle(s, n.enemy);
+    if (n.kind === 'battle' || n.kind === 'elite' || n.kind === 'boss') { startBattle(s, n.enemy); s.phase = 'intro'; }
     else if (n.kind === 'event') startEvent(s);
     else if (n.kind === 'rest') { s.phase = 'rest'; }
     s.nodeKind = n.kind;
@@ -704,6 +704,12 @@
     }
     endRun(s, true);
   }
+  // 状きょうの 説明を 読んでから 戦いに 入る
+  function beginBattle(s) {
+    if (s.phase !== 'intro') throw new Error('not intro');
+    s.phase = 'battle';
+    return s;
+  }
   function nextAct(s) {
     if (s.phase !== 'actclear') throw new Error('not actclear');
     s.phase = 'map';
@@ -774,7 +780,7 @@
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D

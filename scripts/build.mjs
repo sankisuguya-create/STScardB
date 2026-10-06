@@ -27,7 +27,7 @@ function contentMd(D) {
   for (const u of Object.values(D.SUPPORTS)) L.push(`| ${u.name} | ${u.line} | ${u.note}${u.consult ? '（ひと休みで戻る）' : ''} |`);
   L.push('', '## 課題', '');
   for (const e of Object.values(D.ENEMIES)) {
-    L.push(`### ${e.scene}（${e.kind}）`, '', `- 最初の見え方：${e.name}`);
+    L.push(`### ${e.scene}（${e.kind}）`, '', `- 状きょう：${e.intro}`, `- 3つの姿：${e.forms.join(' → ')}`);
     if (e.view) L.push(`- ほんとう：${e.view.name}（${e.view.truth === 'hostile' ? '本当に いやなこと' : 'わざとではない'}）`);
     L.push(`- つぎに起きそうなこと：${e.moves.map((m) => m.say).join('／')}`, `- 場面カード：${e.situ.map((id) => D.CARDS[id].name).join('、')}`, `- 相手から見ると：${e.other}`, '');
   }
