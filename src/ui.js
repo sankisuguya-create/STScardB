@@ -292,6 +292,8 @@
   function cardName(id) { var n = E.card(id).name; return n.charAt(0) === '「' ? n : '「' + n + '」'; }
   function whyText(why) {
     if (why === 'start') return 'スタート';
+    if (why === 'escape') return 'あぶない場面から はなれた';
+    if (!E.card(why)) return why;
     if (why.indexOf('event:') === 0) return 'できごと「' + D.EVENTS[why.slice(6)].title + '」で えらんだこと';
     return cardName(why) + 'を 使った';
   }

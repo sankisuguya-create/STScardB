@@ -227,3 +227,12 @@ test('きょりを おく：いきおいを0にし、ストレスを弱める', 
   assert.strictEqual(s.battle.enemy.str, 0);
   assert.ok(s.battle.enemy.stressMul < before);
 });
+
+test('信頼の理由（why）は すべて振り返りで 文に できる', () => {
+  for (const pol of ['prosocial', 'impulse', 'adaptive']) for (let i = 0; i < 100; i++) {
+    const s = runOne(i * 13 + 5, pol);
+    s.log.filter((e) => e.k === 'trust').forEach((e) => {
+      assert.ok(e.why === 'start' || e.why === 'escape' || e.why.startsWith('event:') || D.CARDS[e.why], e.why);
+    });
+  }
+});
