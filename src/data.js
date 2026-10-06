@@ -9,6 +9,8 @@
     relate: { name: 'なかま力', verb: '関わる' }
   };
 
+  // term：long＝時間を かけて 効く（相談・計画・練習）。term: 'short' の 課題（テスト・発表など その場で 来るもの）では 控えに 回る／使えない
+  var TERM_LABEL = { short: 'すぐ', long: '時間を かけて' };
   var CTX_LABEL = { study: 'べんきょう', conflict: 'ぶつかり合い', join: '遊び・なかま', tease: 'からかい', stage: '発表', danger: 'あぶない場面' };
 
   var TYPE_LABEL = {
@@ -30,7 +32,7 @@
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 2.0, resist: 0.35, anxiety: 0.6,
-    restHeal: 0.3, rareChance: [0.04, 0.35, 0.45], rareChanceElite: [0.12, 0.8, 0.9], dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 9, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 3.0,
+    restHeal: 0.3, rareChance: [0.04, 0.35, 0.45], rareChanceElite: [0.12, 0.8, 0.9], dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 9, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 2.6,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -74,7 +76,7 @@
     let_me_in: { name: '「入れて」と言う', line: '「ねえ、入れて！」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'mid', fail: 'next_time' },
     next_time: { name: '「次は 入れてね」', line: '「じゃあ、次は 入れてね」', type: 'relate', judge: 'good', style: 'assertive', cost: 0, solve: 5, chance: 'high' },
     invite_other: { name: 'ほかの遊びに さそう', line: '「おにごっこ しない？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, trust: 1, chance: 'high' },
-    consult: { name: '先生に そうだんする', line: '「先生、ちょっと 聞いてほしいことが あります」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high', ctx: ['study', 'conflict', 'join', 'tease', 'stage'], help: true },
+    consult: { name: '先生に そうだんする', line: '「先生、ちょっと 聞いてほしいことが あります」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high', ctx: ['study', 'conflict', 'join', 'tease', 'stage'], help: true, term: 'long' },
     sulk: { name: 'ひとりで すねる', line: 'もういいよ、と はなれる。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 1, guard: 8, chance: 'high', trust: -1, curse: true },
 
     say_stop: { name: '「いやだ」と はっきり言う', line: '「それ、いやだから やめて」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 9, chance: 'mid', fail: 'walk_away' },
@@ -88,7 +90,7 @@
     run_now: { name: 'すぐに にげる', line: '安全な ところまで 走る。', type: 'act', judge: 'good', style: 'distance', cost: 0, escape: true },
     say_no_stranger: { name: '「行きません」と ことわる', line: '知らない人には ついて行かない。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 8 },
     review_notes: { name: '見直しを する', line: '名前・計算・書きわすれを たしかめる。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 9, organize: true, ctx: ['study'] },
-    plan_time: { name: '時間を 決めて やる', line: '「5時から 20分 やる」と 決める。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 6, draw: 1, ctx: ['study'] },
+    plan_time: { name: '時間を 決めて やる', line: '「5時から 20分 やる」と 決める。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 6, draw: 1, ctx: ['study'], term: 'long' },
     put_off: { name: 'あとで やる…', line: 'テレビを 見てから…と 先のばし。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 1, guard: 9, chance: 'high', trust: -1, curse: true },
     say_honest: { name: '正直に 言う', line: '「ノートを わすれました」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 9, trust: 1 },
     borrow: { name: 'となりに かりる', line: '「えんぴつ、かしてくれる？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 8, chance: 'high', req: { trust: 5 } },
@@ -99,13 +101,13 @@
     not_join: { name: '話に のらない', line: '「わたしは いいや」と はなれる。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 7, solve: 4 },
     spread: { name: 'ほかの子に 言いふらす', line: '「ねえ、聞いて！ あの子がね…」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
     practice_again: { name: 'もう一回 れんしゅう', line: '「もう一回 やってみよう」', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 9, chance: 'mid', fail: 'ask_tip' },
-    ask_tip: { name: 'コツを 聞く', line: '「どうやったら うまく できる？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high', help: true },
+    ask_tip: { name: 'コツを 聞く', line: '「どうやったら うまく できる？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high', help: true, term: 'long' },
     quit_it: { name: 'もう やめる', line: '「どうせ できないし」', type: 'impulse', judge: 'impulse', style: 'passive', cost: 1, guard: 9, chance: 'high', trust: -1, curse: true },
     listen_all: { name: 'みんなの 意見を 聞く', line: '「一人ずつ 言ってみよう」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, organize: true },
     vote: { name: '多数決に しよう', line: '「手を あげて 決めよう」', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'mid', fail: 'listen_all' },
     force_own: { name: '自分の 意見を おしつける', line: '「ぜったい こっちが いい！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
-    consult_family: { name: 'お家の人に そうだんする', line: '「今日 こんなことが あってね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, heal: 6, guard: 4, ctx: ['study', 'conflict', 'join', 'tease', 'stage'], help: true },
-    sukkiri: { name: '気もちを 話して すっきり', line: 'もやもやを 言葉にして だれかに 話す。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 3, clearMoya: true, exhaust: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
+    consult_family: { name: 'お家の人に そうだんする', line: '「今日 こんなことが あってね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, heal: 6, guard: 4, ctx: ['study', 'conflict', 'join', 'tease', 'stage'], help: true, term: 'long' },
+    sukkiri: { name: '気もちを 話して すっきり', line: 'もやもやを 言葉にして だれかに 話す。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 3, clearMoya: true, exhaust: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'], term: 'long' },
     panic: { name: 'パニック', line: '頭が ぐるぐるして 何も 考えられない。使えず、手札を ふさぐ。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     tataku: { name: 'たたく', line: 'カッとして 手が 出る。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -3, curse: true },
     warukuchi: { name: '悪口を 言い返す', line: '「そっちだって ○○じゃん！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 9, chance: 'high', trust: -2, curse: true },
@@ -120,12 +122,12 @@
     dash: { name: 'すぐに 動いて 片づける', line: '考えるより 先に 体が 動く。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 14, req: { act: 2 }, adv: true, signature: true, ctx: ['study', 'join', 'stage'] },
     show_by_doing: { name: '行動で 見せる', line: '言葉より 先に、自分から やってみせる。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 10, guard: 8, trust: 1, req: { act: 5 }, adv: true, ctx: ['study', 'conflict', 'join', 'stage'] },
     reframe: { name: '見方を 切りかえる', line: '「ピンチは チャンス かも」と 考えなおす。', type: 'think', judge: 'good', style: 'assertive', cost: 1, guard: 6, formTo2: true, req: { think: 4 }, adv: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
-    prepare: { name: '前の日に 準備する', line: '明日の ことを 考えて、今日の うちに そろえておく。', type: 'think', judge: 'good', style: 'assertive', cost: 2, solve: 20, req: { think: 5 }, adv: true, ctx: ['study', 'stage'] },
-    self_check: { name: 'ふり返って 次に 生かす', line: '「さっきは ここが よくなかった。次は こうしよう」', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 7, draw: 2, req: { think: 4, relate: 2 }, adv: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
+    prepare: { name: '前の日に 準備する', line: '明日の ことを 考えて、今日の うちに そろえておく。', type: 'think', judge: 'good', style: 'assertive', cost: 2, solve: 20, req: { think: 5 }, adv: true, ctx: ['study', 'stage'], term: 'long' },
+    self_check: { name: 'ふり返って 次に 生かす', line: '「さっきは ここが よくなかった。次は こうしよう」', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 7, draw: 2, req: { think: 4, relate: 2 }, adv: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'], term: 'long' },
     ally_up: { name: '味方を つくる', line: '「いっしょに いてくれる？」と たのんで、そばに いてもらう。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 12, trust: 1, req: { relate: 4 }, adv: true, ctx: ['conflict', 'join', 'tease', 'stage'] },
     listen_deep: { name: 'じっくり 話を 聞く', line: '口を はさまずに、さいごまで 聞く。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 12, organize: true, req: { relate: 5 }, adv: true, ctx: ['conflict', 'join', 'tease'] },
     ask_well: { name: '上手に 助けを たのむ', line: '「ここが こまってるから、ここだけ 手伝って」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 8, draw: 2, req: { relate: 4, think: 2 }, adv: true, ctx: ['study', 'join', 'stage', 'conflict'], help: true },
-    routine: { name: '毎日 コツコツ', line: '少しずつ、毎日 つづける。', type: 'act', judge: 'good', style: 'assertive', cost: 0, solve: 7, energy: 1, req: { act: 4 }, adv: true, ctx: ['study', 'stage'] },
+    routine: { name: '毎日 コツコツ', line: '少しずつ、毎日 つづける。', type: 'act', judge: 'good', style: 'assertive', cost: 0, solve: 7, energy: 1, req: { act: 4 }, adv: true, ctx: ['study', 'stage'], term: 'long' },
     brave_step: { name: '勇気を 出して 一歩', line: 'こわいけど、自分から 一歩 前に 出る。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 16, chance: 'mid', growFail: true, req: { act: 5 }, adv: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
     safe_route: { name: '安全な 道を えらぶ', line: '人の 多い 明るい 道を 通って、大人の いる ところへ。', type: 'act', judge: 'good', style: 'distance', cost: 0, escape: true, heal: 6, req: { act: 4 }, adv: true, ctx: ['danger'] },
     ugokenai: { name: '動けない', line: '心の余裕が なくなって、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
@@ -141,11 +143,11 @@
   // アイテム（支え）：つけている（equip）ものは、戦いごとに1回ずつ使える。元気は使わない。なくならない。
   // つけられるのは slots まで。ひと休みで、持っているものと入れかえられる
   var SUPPORTS = {
-    teacher: { name: '先生に そうだん', line: '「先生、聞いてほしいことが あります」', note: 'この場面で 先生に すすめられた カードが 手札に入る（戦いのあと 報酬にも出る）。状きょうも 1つ 整理される' },
+    teacher: { name: '先生に そうだん', line: '「先生、聞いてほしいことが あります」', note: 'この場面で 先生に すすめられた カードが 手札に入る（戦いのあと 報酬にも出る）。状きょうも 1つ 整理される', term: 'long' },
     friend: { name: '友だちに そうだん', line: '「ねえ、どう思う？」', note: '心の余裕 +5。友だちの アドバイスが カードになる（ときどき 役に立たないことも）', heal: 5 },
-    family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', note: '心の余裕 +10', heal: 10 },
-    diary: { name: '日記を 書く', line: '今日の ことを ノートに 書く。', note: 'モヤモヤを 1まい デッキから けす。心の余裕 +3', heal: 3, purgeMoya: true },
-    book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', note: '心の余裕 +4、手札の モヤモヤを すてる', heal: 4, clearMoya: true }
+    family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', note: '心の余裕 +10', heal: 10, term: 'long' },
+    diary: { name: '日記を 書く', line: '今日の ことを ノートに 書く。', note: 'モヤモヤを 1まい デッキから けす。心の余裕 +3', heal: 3, purgeMoya: true, term: 'long' },
+    book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', note: '心の余裕 +4、手札の モヤモヤを すてる', heal: 4, clearMoya: true, term: 'long' }
   };
   // 先生がすすめるカード（場面ごと）、友だちのアドバイス（junk はハズレ）
   var TEACHER_CARDS = { study: 'ask_teacher', conflict: 'consult', join: 'consult', tease: 'tell_teacher', stage: 'breathe_first', danger: 'call_adult' };
@@ -181,7 +183,7 @@
     hayatsu: { name: 'ハヤツ', note: '何でも できるが、一度 つまずくと なかなか 立ち直れない', stats: { think: 2, act: 2, relate: 2 }, maxYoyu: 50, cards: ['sort_out'], look: 'hayatsu',
       ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.0, stage: 1.0, danger: 1.0 }, good: 'どれも とくい', bad: 'ピンチに 弱い（マイナスカードに 弱い）',
       fragile: { pinch: 0.4, healMul: 0.5, frozenRecover: 0.05, nigateMul: 2, moyaMul: 2, panicDrain: 3, stressThreshold: 0.45, slumpBattles: 3, slumpPanic: 2 } },
-    kitori: { name: 'キトリ', note: '何を やっても うまく いかない。でも、まわりを たよる ことは できる', stats: { think: -1, act: -1, relate: -1 }, maxYoyu: 40, cards: ['consult', 'consult_family'], look: 'kitori',
+    kitori: { name: 'キトリ', note: '何を やっても うまく いかない。でも、まわりを たよる ことは できる', stats: { think: -1, act: -1, relate: -1 }, maxYoyu: 40, cards: ['consult', 'consult_family', 'ask_teacher', 'say_dunno'], look: 'kitori',
       ctxMod: { study: 1.5, conflict: 1.5, join: 1.5, tease: 1.5, stage: 1.5, danger: 1.5 }, good: 'まわりを たよる こと（相談カード・アイテムが 強い）', bad: 'ぜんぶの 場面',
       items: ['teacher', 'friend', 'family'], helpBoost: 1.35, helpSafe: true,
       message: 'こういう 人も いる。たよる ことは 弱さじゃない。' }
@@ -197,6 +199,7 @@
   // forms: 3つの姿の名前。view: いちばん現実の姿（2）になった時に わかる ほんとう（相性が変わる）
   var ENEMIES = {
     dunno: {
+      term: 'short',
       intro: '算数の じゅぎょう中。黒板の 問題を 見ても、どうやって とけば いいのか わからない。まわりの 子は どんどん ノートに 書いている…',
       forms: ['ハテナ だいまじん', 'むずかしそうな プリント', 'わからない 1問'],
       ctx: 'study', scene: 'わからない問題', name: 'わからない問題', kind: 'normal', hp: 24,
@@ -206,6 +209,7 @@
       other: 'となりの子：「聞いてくれたら、すぐ 教えたのに」'
     },
     bumped: {
+      term: 'short',
       intro: '休み時間、ろうかを 歩いていたら、うしろから ドンッと ぶつかられた。かたが いたい。「わざと？」と 思った しゅんかん、むかっと した。',
       forms: ['ドンッと ぶつかる かいぶつ', 'わざと ぶつかってきた？ あの子', 'よそ見して ぶつかっただけ'],
       ctx: 'conflict', scene: 'ろうかで ぶつかられた', name: 'わざと ぶつかられた？', kind: 'normal', hp: 20,
@@ -234,6 +238,7 @@
       other: 'あとで 先生：「話してくれて よかった。一人で かかえなくて いいんだよ」'
     },
     presentation: {
+      term: 'short',
       intro: '今日は 学習発表会。ぶたいの そでから 見ると、体育館に 人が いっぱい。次は 自分の 番だ。',
       forms: ['見つめる 大目玉', 'こっちを見る みんな', 'ふつうに 聞いている クラスの みんな'],
       ctx: 'stage', scene: 'みんなの前で 発表', name: 'みんなの前で 発表', kind: 'boss', hp: 42, anxiety: true,
@@ -245,6 +250,7 @@
 
   // ===== 層ごとの ボスと 関連する課題 =====
   ENEMIES.test = {
+      term: 'short',
       intro: '今日は 算数の テスト。つくえの 上に テスト用紙が くばられた。「はじめ」の 声が かかる。',
     forms: ['100点の 大まじん', 'むずかしそうな テスト用紙', 'いつもの 小テスト'],
     ctx: 'study', scene: 'テスト', kind: 'boss', hp: 42,
@@ -261,6 +267,7 @@
     other: 'お家の人：「先に やって えらいね」'
   };
   ENEMIES.forgot_item = {
+      term: 'short',
       intro: '朝、教室に ついて ランドセルを 開けたら…ノートが ない！ 1時間目は その ノートを 使う じゅぎょうだ。',
     forms: ['なくしものの ぬま', '空っぽの ランドセル', 'ノートを わすれた 朝'],
     ctx: 'study', scene: 'わすれもの', kind: 'normal', hp: 18, pass: { turns: 3, say: '一日 なんとか すごした。でも、言えないままだった。', leave: true },
@@ -314,6 +321,7 @@
 
   // あぶない場面（ときどき 課題の代わりに出る）。戦って勝つのは ほぼ無理で、はなれる・にげる・大人をよぶ が正解
   ENEMIES.fight_near = {
+      term: 'short',
       intro: 'げた箱の 近くで、上級生どうしが 大声で 言い合いを している。おしたり おされたり、今にも ケンカに なりそうだ。',
     forms: ['あばれる 大あらし', 'もめている 上級生たち', 'ケンカ中の 上級生'],
     ctx: 'danger', scene: '上級生の ケンカに まきこまれそう', kind: 'danger', hp: 80, escapeOk: true,
@@ -322,6 +330,7 @@
     other: '先生：「はなれて 知らせてくれて ありがとう。あぶない ところに 入らなかったのは 正しい」'
   };
   ENEMIES.stranger = {
+      term: 'short',
       intro: '学校の 帰り道、一人で 歩いていたら、知らない 大人に「いいもの あげるから ついておいで」と 声を かけられた。',
     forms: ['あまい声の かげ', '知らない 大人？', '帰り道で 声をかけてきた 知らない人'],
     ctx: 'danger', scene: '知らない人に さそわれた', kind: 'danger', hp: 80, escapeOk: true,
@@ -418,7 +427,7 @@
     { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['friend_trouble', 'library', 'family_talk'] },
     { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['library', 'family_talk', 'friend_trouble'] }
   ];
-  var MAP = { rows: 10, cols: 4, paths: 4, crossEdge: 0.35, relatedShare: 0.5, hearts: 3, heartHp: 0.22, heartStress: 0.2, bossBase: 1.35, actHeal: 1 };
+  var MAP = { rows: 10, cols: 4, paths: 4, crossEdge: 0, straight: true, relatedShare: 0.5, hearts: 3, heartHp: 0.22, heartStress: 0.2, bossBase: 1.35, actHeal: 1 };
 
   var TEXT = {
     title: 'こころの 冒険',
@@ -438,7 +447,7 @@
     });
   });
 
-  var DATA = { RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
+  var DATA = { TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
   else root.SST_DATA = DATA;
 })(this);

@@ -108,7 +108,7 @@ test('アイテム：戦いごとに1回、なくならない。先生は場面�
   for (let seed = 1; seed < 300; seed++) {
     const s = E.newRun(seed, 1, 'tario');
     E.chooseNode(s, 0);
-    if (s.battle.enemy.id !== 'dunno') continue;
+    if (s.battle.enemy.id !== 'homework') continue;
     E.useSupport(s, 'teacher');
     assert.ok(!E.canUseSupport(s, 'teacher'));
     assert.ok(s.battle.hand.concat(s.battle.discard).some((h) => h.id === 'ask_teacher'));
@@ -120,10 +120,10 @@ test('アイテム：戦いごとに1回、なくならない。先生は場面�
     assert.ok(s.reward.choices.includes('ask_teacher'));
     E.pickReward(s, null);
     E.chooseNode(s, 0);
-    if (s.phase === 'battle') assert.ok(E.canUseSupport(s, 'teacher'));
+    if (s.phase === 'battle' && D.ENEMIES[s.battle.enemy.id].term !== 'short') assert.ok(E.canUseSupport(s, 'teacher'));
     return;
   }
-  assert.fail('dunno が出なかった');
+  assert.fail('homework が出なかった');
 });
 
 test('整理するカードで 姿が3段階 現実に近づき、いきおいが弱まる。かしこさ2なら 1段階目から', () => {
@@ -252,7 +252,7 @@ test('マップ：10段＋ボス、線で つながった マスしか えらべ
     E.chooseNode(s, E.reachable(s)[0]);
     s.phase = 'map'; s.battle = null; s.row = 1;
     const ok = E.reachable(s);
-    assert.ok(ok.length >= 1);
+    assert.strictEqual(ok.length, 1);
     s.map.rows[1].forEach((n, i) => { if (!ok.includes(i)) assert.throws(() => E.chooseNode(s, i)); });
   }
 });
@@ -416,7 +416,7 @@ test('苦手（成長が マイナス）の 種類の カードは 失敗する�
   assert.ok(fails > 10, String(fails));
 });
 
-test('マップの 線は 分かれ道と 合流を ふくむ', () => {
+test('マップの 線は 一本道（分かれ道も 合流も ない）', () => {
   let merges = 0, splits = 0;
   for (let seed = 1; seed < 30; seed++) {
     const s = E.newRun(seed, 1);
@@ -424,7 +424,7 @@ test('マップの 線は 分かれ道と 合流を ふくむ', () => {
     s.map.edges.forEach((e) => { into[(e.r + 1) + ':' + e.to] = (into[(e.r + 1) + ':' + e.to] || 0) + 1; out[e.r + ':' + e.from] = (out[e.r + ':' + e.from] || 0) + 1; });
     merges += Object.values(into).filter((n) => n > 1).length; splits += Object.values(out).filter((n) => n > 1).length;
   }
-  assert.ok(merges > 60 && splits > 60, merges + ' ' + splits);
+  assert.strictEqual(merges, 0); assert.strictEqual(splits, 0);
 });
 
 test('キトリ：全部 苦手。相談カードと アイテムが 強く、相談カードは にがてでも 失敗しない', () => {
@@ -440,4 +440,16 @@ test('キトリ：全部 苦手。相談カードと アイテムが 強く、�
     n++; if (!t.log.filter((e) => e.k === 'play').pop().ok) ng++;
   }
   assert.ok(ng / n < 0.3, String(ng / n));
+});
+
+test('短期の 課題（テストなど）では「時間を かけて」の カードは 控え、相談アイテムは 使えない', () => {
+  for (let seed = 1; seed < 300; seed++) {
+    const s = E.newRun(seed, 1, 'kitori'); E.chooseNode(s, E.reachable(s)[0]);
+    if (s.phase !== 'battle' || D.ENEMIES[s.battle.enemy.id].term !== 'short') continue;
+    s.battle.draw.concat(s.battle.hand).filter((h) => !h.temp).forEach((h) => assert.notStrictEqual(D.CARDS[h.id].term, 'long', h.id));
+    assert.ok(s.battle.bench.some((h) => h.id === 'consult'));
+    assert.ok(!E.canUseSupport(s, 'teacher'));
+    return;
+  }
+  assert.fail();
 });

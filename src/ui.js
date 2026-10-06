@@ -67,7 +67,7 @@
         var u = D.SUPPORTS[id], can = inBattle && E.canUseSupport(S, id);
         var used = inBattle && !can;
         slots.push(h('button', {
-          class: 'item' + (selSup === id ? ' selected' : '') + (used ? ' used' : ''), disabled: !inBattle || used, 'aria-label': u.name,
+          class: 'item' + (selSup === id ? ' selected' : '') + (used ? ' used' : ''), title: used && D.SUPPORTS[id].term === 'long' && D.ENEMIES[S.battle.enemy.id].term === 'short' ? 'すぐに 来る 課題では 使えない' : null, disabled: !inBattle || used, 'aria-label': u.name,
           onclick: function () {
             if (selSup === id) { selSup = null; act(function () { E.useSupport(S, id); }); }
             else { selSup = id; sel = -1; render(); }
@@ -214,6 +214,7 @@
     if (c.organize2) effects.push(h('span', { class: 'fx reveal' }, ['整理 ×2']));
     if (c.clearPanicAll) effects.push(h('span', { class: 'fx reveal' }, ['パニックを ぜんぶ けす']));
     if (c.clearMoya) effects.push(h('span', { class: 'fx reveal' }, ['モヤモヤを けす']));
+    if (c.term === 'long') effects.push(h('span', { class: 'fx term' }, ['時間を かけて']));
     if (c.organize) effects.push(h('span', { class: 'fx reveal' }, ['整理する']));
     if (c.escape) effects.push(h('span', { class: 'fx reveal' }, ['その場を はなれる']));
     if (c.distance) effects.push(h('span', { class: 'fx reveal' }, ['いきおいを おさめる']));
@@ -257,6 +258,7 @@
         h('b', { text: Math.max(0, en.hp) + '/' + en.maxHp })
       ]),
       h('div', { class: 'intent' }, [h('span', { class: 'lbl', text: 'つぎに 起きそうなこと' }), h('b', { text: it.say + '（' + itText + '）' })]),
+      EN.term === 'short' ? h('div', { class: 'termnote', text: 'すぐに 来る 課題：「時間を かけて」の カード・相談アイテムは 使えない' }) : null,
       it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (EN.pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
       EN.anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
     ]);

@@ -24,7 +24,11 @@
   }
 
   function card(id) { return D.CARDS[id]; }
-  function fits(id, ctx) { var c = D.CARDS[id]; return !c.ctx || !ctx || c.ctx.indexOf(ctx) >= 0; }
+  function fits(id, ctx, term) {
+    var c = D.CARDS[id];
+    if (term === 'short' && c.term === 'long') return false;
+    return !c.ctx || !ctx || c.ctx.indexOf(ctx) >= 0;
+  }
   function statOf(c) { return D.STATS[c.type] ? c.type : null; }
 
   function log(s, e) { e.floor = s.floor; s.log.push(e); }
@@ -54,13 +58,13 @@
   function buildMap(s) {
     var M = D.MAP, act = D.ACTS[s.act], nodes = [], edges = {};
     for (var r = 0; r < M.rows; r++) nodes.push({});
-    var starts = shuffle(s, [0, 1, 2, 3]).slice(0, M.paths);
+    var starts = M.straight ? [0, 1, 2, 3].slice(0, M.paths) : shuffle(s, [0, 1, 2, 3]).slice(0, M.paths);
     starts.forEach(function (c0) {
       var c = c0;
       for (var r = 0; r < M.rows; r++) {
         nodes[r][c] = nodes[r][c] || { col: c };
         if (r < M.rows - 1) {
-          var opts = [c - 1, c, c + 1].filter(function (x) { return x >= 0 && x < M.cols; });
+          var opts = M.straight ? [c] : [c - 1, c, c + 1].filter(function (x) { return x >= 0 && x < M.cols; });
           var nc = pick(s, opts);
           edges[r + ':' + c + ':' + nc] = 1;
           c = nc;
@@ -197,7 +201,7 @@
       backfire: (E.backfire || []).slice(), stressMul: 1, heroMul: heroMod(s, E), bossMul: E.kind === 'boss' ? 1 - D.MAP.heartStress * lostHearts(s) : 1
     };
     var bench = [], cards = [];
-    s.deck.forEach(function (id) { (fits(id, E.ctx) ? cards : bench).push({ id: id }); });
+    s.deck.forEach(function (id) { (fits(id, E.ctx, E.term) ? cards : bench).push({ id: id }); });
     var draw = shuffle(s, cards);
     s.battle = {
       enemy: en, draw: draw, hand: [], discard: [], exhaust: [], bench: bench,
@@ -586,14 +590,14 @@
 
   // 報酬：その課題の 場面で 使える カードだけを 出す。レアは 条件を 満たし、運が よい時だけ（大きなかべは 出やすい）
   function rewardChoices(s) {
-    var b = s.battle, ctx = D.ENEMIES[b.enemy.id].ctx;
+    var b = s.battle, ctx = D.ENEMIES[b.enemy.id].ctx, term = D.ENEMIES[b.enemy.id].term;
     var want = s.trust >= D.RULES.highTrust ? D.RULES.rewardChoicesHighTrust : D.RULES.rewardChoices;
     var situ = shuffle(s, Object.keys(b.playedOk)).slice(0, 2);
     if (b.teacherCard && situ.indexOf(b.teacherCard) < 0) situ = [b.teacherCard].concat(situ).slice(0, 2);
-    var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0 && fits(id, ctx); }));
+    var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0 && fits(id, ctx, term); }));
     var out = situ.concat(pool).slice(0, want);
     var chance = (b.enemy.kind === 'elite' ? D.RULES.rareChanceElite : D.RULES.rareChance)[s.act] || 0;
-    var adv = shuffle(s, D.ADVANCED.filter(function (id) { var c = card(id); return !c.signature && meetsReq(s, c) && s.deck.indexOf(id) < 0 && fits(id, ctx); }));
+    var adv = shuffle(s, D.ADVANCED.filter(function (id) { var c = card(id); return !c.signature && meetsReq(s, c) && s.deck.indexOf(id) < 0 && fits(id, ctx, term); }));
     if (adv.length && rand(s) < chance) { if (out.length >= want) out[out.length - 1] = adv[0]; else out.push(adv[0]); }
     return out;
   }
@@ -613,7 +617,9 @@
   }
 
   function canUseSupport(s, id) {
-    return s.phase === 'battle' && s.equip.indexOf(id) >= 0 && !s.battle.usedItems[id];
+    if (s.phase !== 'battle') return false;
+    if (D.SUPPORTS[id].term === 'long' && D.ENEMIES[s.battle.enemy.id].term === 'short') return false;
+    return s.equip.indexOf(id) >= 0 && !s.battle.usedItems[id];
   }
 
   function useSupport(s, id) {
