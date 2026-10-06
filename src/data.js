@@ -25,10 +25,10 @@
     low: { p: 0.35, label: '失敗するかも' }
   };
 
-  var PLAYER = { statMin: -2, weakFail: 0.2, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
+  var PLAYER = { stressStart: 10, statMin: -2, weakFail: 0.2, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
 
   var RULES = {
-    stressThreshold: 0.3,      // 心の余裕がこの割合未満でカッとなるが手札にまざる
+    stressThreshold: 0.3,      // 余裕（＝上限−ストレス）がこの割合未満でカッとなるが手札にまざる
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 2.0, resist: 0.35, anxiety: 0.6,
@@ -130,7 +130,7 @@
     routine: { name: '毎日 コツコツ', line: '少しずつ、毎日 つづける。', type: 'act', judge: 'good', style: 'assertive', cost: 0, solve: 7, energy: 1, req: { act: 4 }, adv: true, ctx: ['study', 'stage'], term: 'long' },
     brave_step: { name: '勇気を 出して 一歩', line: 'こわいけど、自分から 一歩 前に 出る。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 16, chance: 'mid', growFail: true, req: { act: 5 }, adv: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
     safe_route: { name: '安全な 道を えらぶ', line: '人の 多い 明るい 道を 通って、大人の いる ところへ。', type: 'act', judge: 'good', style: 'distance', cost: 0, escape: true, heal: 6, req: { act: 4 }, adv: true, ctx: ['danger'] },
-    ugokenai: { name: '動けない', line: '心の余裕が なくなって、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
+    ugokenai: { name: '動けない', line: 'ストレスが いっぱいで、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     wameku: { name: 'わめく', line: 'ぎゃーっと 大声で わめく。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
     junk_advice: { name: '「気にしなきゃ いいじゃん」', line: '友だちの アドバイス。でも、気になるものは 気になる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 1 },
     give_up: { name: '「やっぱり やめる」', line: 'だまって すわってしまう。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 1, guard: 12, chance: 'high', trust: -1, curse: true },
@@ -144,10 +144,10 @@
   // つけられるのは slots まで。ひと休みで、持っているものと入れかえられる
   var SUPPORTS = {
     teacher: { name: '先生に そうだん', line: '「先生、聞いてほしいことが あります」', note: 'この場面で 先生に すすめられた カードが 手札に入る（戦いのあと 報酬にも出る）。状きょうも 1つ 整理される', term: 'long' },
-    friend: { name: '友だちに そうだん', line: '「ねえ、どう思う？」', note: '心の余裕 +5。友だちの アドバイスが カードになる（ときどき 役に立たないことも）', heal: 5 },
-    family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', note: '心の余裕 +10', heal: 10, term: 'long' },
-    diary: { name: '日記を 書く', line: '今日の ことを ノートに 書く。', note: 'モヤモヤを 1まい デッキから けす。心の余裕 +3', heal: 3, purgeMoya: true, term: 'long' },
-    book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', note: '心の余裕 +4、手札の モヤモヤを すてる', heal: 4, clearMoya: true, term: 'long' }
+    friend: { name: '友だちに そうだん', line: '「ねえ、どう思う？」', note: 'ストレス −5。友だちの アドバイスが カードになる（ときどき 役に立たないことも）', heal: 5 },
+    family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', note: 'ストレス −10', heal: 10, term: 'long' },
+    diary: { name: '日記を 書く', line: '今日の ことを ノートに 書く。', note: 'モヤモヤを 1まい デッキから けす。ストレス −3', heal: 3, purgeMoya: true, term: 'long' },
+    book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', note: 'ストレス −4、手札の モヤモヤを すてる', heal: 4, clearMoya: true, term: 'long' }
   };
   // 先生がすすめるカード（場面ごと）、友だちのアドバイス（junk はハズレ）
   var TEACHER_CARDS = { study: 'ask_teacher', conflict: 'consult', join: 'consult', tease: 'tell_teacher', stage: 'breathe_first', danger: 'call_adult' };
@@ -171,7 +171,7 @@
   // レアカードの 系統（かしこさ系・社交系・実働系）
   var RARE_LINE = { think: 'かしこさ系', relate: '社交系', act: '実働系', calm: 'かしこさ系' };
 
-  // 主人公4人：はじめの成長・心の余裕・とくいカード
+  // 主人公：はじめの成長・maxYoyu（ストレスの上限は これ＋10）・とくいカード
   // ctxMod：その場面の 課題の 問題の大きさ・ストレスに かける（1より小さいと 楽、大きいと きびしい）
   var HEROES = {
     hanoko: { name: 'ハノコ', note: 'かしこいが 運動は にがて', stats: { think: 2, act: -1, relate: 1 }, maxYoyu: 50, cards: ['analyse', 'write_plan'], look: 'hanoko',
@@ -195,7 +195,7 @@
 
   // pass: そのターン数を乗りこえると、課題は時間とともに過ぎ去る（報酬なし。leave なら モヤモヤが のこる）。
   //   からかい・発表には付けない：放っておいても過ぎ去らない問題があることを残すため
-  // moves: stress=心の余裕を n へらす／grow=問題が大きくなる（以後の stress に +n）／worry=モヤモヤを1まい まぜる
+  // moves: stress=ストレスを n ふやす／grow=問題が大きくなる（以後の stress に +n）／worry=モヤモヤを1まい まぜる
   // forms: 3つの姿の名前。view: いちばん現実の姿（2）になった時に わかる ほんとう（相性が変わる）
   var ENEMIES = {
     dunno: {
@@ -435,7 +435,7 @@
     win: 'さいごまで たどりついた！',
     failCause: ['今日は タイミングが 合わなかった。', '相手の じゅんびが まだだった。', 'こういう日も ある。'],
     curseGained: 'モヤモヤが デッキに 入った。',
-    stressIntrude: '心の余裕が へって、「カッとなる」が 手札に まざった。'
+    stressIntrude: 'ストレスが たまって、「カッとなる」が 手札に まざった。'
   };
 
   Object.keys(ENEMIES).forEach(function (k) {

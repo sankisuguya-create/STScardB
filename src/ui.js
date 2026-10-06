@@ -31,13 +31,14 @@
 
   // --- 上の帯 ---
   function topBar() {
-    var pct = Math.round(S.yoyu / S.maxYoyu * 100);
+    var stress = S.maxYoyu - S.yoyu;
+    var pct = Math.round(stress / S.maxYoyu * 100);
     var low = S.yoyu < S.maxYoyu * D.RULES.stressThreshold;
     return h('header', { class: 'top' }, [
       h('div', { class: 'meter' + (low ? ' low' : '') }, [
-        h('span', { class: 'lbl', text: '心の余裕' }),
+        h('span', { class: 'lbl', text: 'ストレス' }),
         h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + pct + '%' })]),
-        h('b', { text: S.yoyu + '/' + S.maxYoyu })
+        h('b', { text: stress + '/' + S.maxYoyu })
       ]),
       h('div', { class: 'chip trust', title: '信頼' }, [h('span', { class: 'lbl', text: '信頼' }), h('b', { text: String(S.trust) })]),
       h('div', { class: 'stats' }, Object.keys(D.STATS).map(function (k) {
@@ -105,7 +106,7 @@
         sprite('hero_' + H.look, 2, 'hpic'),
         h('b', { class: 'hname', text: H.name }),
         h('small', { text: H.note }),
-        h('div', { class: 'hstats' }, ['think', 'act', 'relate'].map(stat).concat([h('span', { class: 'hs' }, ['心の余裕 ', h('b', { text: String(H.maxYoyu) })])])),
+        h('div', { class: 'hstats' }, ['think', 'act', 'relate'].map(stat).concat([h('span', { class: 'hs' }, ['ストレスの 上限 ', h('b', { text: String(H.maxYoyu + D.PLAYER.stressStart) })])])),
         H.message ? h('small', { class: 'hmsg', text: H.message }) : null,
         h('small', { class: 'hgood', text: 'とくいな場面：' + H.good }),
         h('small', { class: 'hbad', text: 'にがてな場面：' + H.bad }),
@@ -146,7 +147,7 @@
     var A = D.ACTS[S.act];
     return h('main', { class: 'title' }, [
       h('h1', { text: (S.act) + 'そう目 クリア！' }),
-      h('p', { class: 'sub', text: '心の余裕が 全部 もどった。次は「' + A.name + '」' }),
+      h('p', { class: 'sub', text: 'ストレスが 0に なった。次は「' + A.name + '」' }),
       bossBanner(),
       h('button', { class: 'primary big', onclick: function () { act(function () { E.nextAct(S); }); }, text: '次の そうへ' })
     ]);
@@ -206,8 +207,8 @@
     var effects = [];
     var p = opts.preview || {};
     if (c.solve) effects.push(h('span', { class: 'fx solve' }, ['解決 ' + (p.solve != null ? p.solve : c.solve)]));
-    if (c.guard) effects.push(h('span', { class: 'fx guard' }, ['ゆとり ' + (p.guard != null ? p.guard : c.guard)]));
-    if (c.heal) effects.push(h('span', { class: 'fx heal' }, ['余裕 +' + c.heal]));
+    if (c.guard) effects.push(h('span', { class: 'fx guard' }, ['心の準備 ' + (p.guard != null ? p.guard : c.guard)]));
+    if (c.heal) effects.push(h('span', { class: 'fx heal' }, ['ストレス −' + c.heal]));
     if (c.draw) effects.push(h('span', { class: 'fx' }, ['1まい 引く']));
     if (c.growFail) effects.push(h('span', { class: 'fx reveal' }, ['失敗も 成長']));
     if (c.tame) effects.push(h('span', { class: 'fx reveal' }, ['いきおいを 0に']));
@@ -247,7 +248,7 @@
 
   function battleScreen() {
     var b = S.battle, en = b.enemy, it = E.intent(S), EN = D.ENEMIES[en.id];
-    var itText = it.t === 'stress' ? '心の余裕 −' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
+    var itText = it.t === 'stress' ? 'ストレス +' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
     var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
     var bubble = h('section', { class: 'bubble k-' + en.kind }, [
       h('div', { class: 'ekind', text: (en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
@@ -266,7 +267,7 @@
     if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(en.id)) { monster.innerHTML = SST_ILLUST.svg(en.id); }
     var hero = h('div', { class: 'hero' + (b.guard ? ' shield' : '') }, [
       sprite('hero_' + (D.HEROES[S.hero] ? D.HEROES[S.hero].look : 'hayatsu'), 2, 'me'),
-      h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: 'ゆとり' }), h('b', { text: String(b.guard) })])
+      h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: '心の準備' }), h('b', { text: String(b.guard) })])
     ]);
     var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, bubble, monster]);
     var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.slice(-3).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
@@ -311,7 +312,7 @@
     var r = S.reward;
     return h('main', { class: 'reward' }, [
       h('h2', { text: r.frozen ? '時間が すぎた…' : r.fled ? 'その場を はなれた' : r.escaped ? '安全な ところへ はなれた！' : r.passed ? '時間が たった' : '乗りこえた！' }),
-      r.frozen ? h('p', { class: 'story', text: '動けないまま、時間が すぎた。「' + D.CTX_LABEL[r.frozen.ctx] + '」に 苦手意識が ついた（' + r.frozen.to + '）。この場面では ストレスが 少し ふえる。心の余裕は 1割まで もどった。' }) : null,
+      r.frozen ? h('p', { class: 'story', text: '動けないまま、時間が すぎた。「' + D.CTX_LABEL[r.frozen.ctx] + '」に 苦手意識が ついた（' + r.frozen.to + '）。この場面では ストレスが 少し ふえる。ストレスは 9割まで さがった。' }) : null,
       r.fled ? h('p', { class: 'story', text: 'にげたので、問題は そのまま のこった（モヤモヤが デッキに 入った）。にげるのが いい場面と、そうでない場面が ある。' }) : null,
       r.escaped ? h('p', { class: 'praise', text: 'あぶない場面では、はなれる・にげる・大人を よぶ が いちばん。自分の 安全を 守れた。' }) : null,
       r.passed ? h('p', { class: 'story', text: r.passed + (r.leave ? '（モヤモヤが デッキに 入った）' : '') }) : null,
@@ -363,7 +364,7 @@
       h('h2', { text: 'ひと休み' }),
       equipPanel,
       h('div', { class: 'two' }, [
-        h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['休む', h('small', { text: '心の余裕を ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' 回ふく。「お家の人に そうだんする」カードが もらえる' })]),
+        h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['休む', h('small', { text: 'ストレスを ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' へらす。「お家の人に そうだんする」カードが もらえる' })]),
         h('button', { class: 'secondary big', onclick: function () { removing = true; render(); } }, ['自分を 見つめ直す', h('small', { text: 'いらない くせを 1つ 卒業する' })])
       ])
     ]);
@@ -437,7 +438,7 @@
       items.push(h('li', { class: 'unlock' }, [h('b', { text: 'トラブルの あと、正直に 話して やり直せた' }), h('span', { text: 'まちがえても、話して あやまれば やり直せる。それも 大事な力。' })]));
     });
     sm.nigate.forEach(function (e) {
-      items.push(h('li', {}, [h('b', { text: '「' + D.CTX_LABEL[e.ctx] + '」が 苦手に なった（' + e.to + '）' }), h('span', { text: '心の余裕が なくなる前に、休む・きょりを おく・だれかに そうだん しよう。' })]));
+      items.push(h('li', {}, [h('b', { text: '「' + D.CTX_LABEL[e.ctx] + '」が 苦手に なった（' + e.to + '）' }), h('span', { text: 'ストレスが いっぱいに なる前に、休む・きょりを おく・だれかに そうだん しよう。' })]));
     });
     if (sm.supportUses.length) {
       var names = {};

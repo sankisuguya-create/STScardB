@@ -335,6 +335,9 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .hmsg { background: #e7f5ec; color: var(--good); border-radius: 8px; padding: 2px 6px; font-weight: 700; }
 .fx.term { color: #5f3dc4; border-color: #5f3dc4; }
 .termnote { font-size: .85rem; color: #5f3dc4; font-weight: 800; }
+/* ストレス（ふえるほど 悪い） */
+.top .meter .fill { background: #f08c3a; }
+.top .meter.low .fill { background: var(--bad); }
 
 </style>
 </head>
@@ -368,10 +371,10 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     low: { p: 0.35, label: '失敗するかも' }
   };
 
-  var PLAYER = { statMin: -2, weakFail: 0.2, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
+  var PLAYER = { stressStart: 10, statMin: -2, weakFail: 0.2, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
 
   var RULES = {
-    stressThreshold: 0.3,      // 心の余裕がこの割合未満でカッとなるが手札にまざる
+    stressThreshold: 0.3,      // 余裕（＝上限−ストレス）がこの割合未満でカッとなるが手札にまざる
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 2.0, resist: 0.35, anxiety: 0.6,
@@ -473,7 +476,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     routine: { name: '毎日 コツコツ', line: '少しずつ、毎日 つづける。', type: 'act', judge: 'good', style: 'assertive', cost: 0, solve: 7, energy: 1, req: { act: 4 }, adv: true, ctx: ['study', 'stage'], term: 'long' },
     brave_step: { name: '勇気を 出して 一歩', line: 'こわいけど、自分から 一歩 前に 出る。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 16, chance: 'mid', growFail: true, req: { act: 5 }, adv: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
     safe_route: { name: '安全な 道を えらぶ', line: '人の 多い 明るい 道を 通って、大人の いる ところへ。', type: 'act', judge: 'good', style: 'distance', cost: 0, escape: true, heal: 6, req: { act: 4 }, adv: true, ctx: ['danger'] },
-    ugokenai: { name: '動けない', line: '心の余裕が なくなって、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
+    ugokenai: { name: '動けない', line: 'ストレスが いっぱいで、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     wameku: { name: 'わめく', line: 'ぎゃーっと 大声で わめく。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
     junk_advice: { name: '「気にしなきゃ いいじゃん」', line: '友だちの アドバイス。でも、気になるものは 気になる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 1 },
     give_up: { name: '「やっぱり やめる」', line: 'だまって すわってしまう。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 1, guard: 12, chance: 'high', trust: -1, curse: true },
@@ -487,10 +490,10 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   // つけられるのは slots まで。ひと休みで、持っているものと入れかえられる
   var SUPPORTS = {
     teacher: { name: '先生に そうだん', line: '「先生、聞いてほしいことが あります」', note: 'この場面で 先生に すすめられた カードが 手札に入る（戦いのあと 報酬にも出る）。状きょうも 1つ 整理される', term: 'long' },
-    friend: { name: '友だちに そうだん', line: '「ねえ、どう思う？」', note: '心の余裕 +5。友だちの アドバイスが カードになる（ときどき 役に立たないことも）', heal: 5 },
-    family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', note: '心の余裕 +10', heal: 10, term: 'long' },
-    diary: { name: '日記を 書く', line: '今日の ことを ノートに 書く。', note: 'モヤモヤを 1まい デッキから けす。心の余裕 +3', heal: 3, purgeMoya: true, term: 'long' },
-    book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', note: '心の余裕 +4、手札の モヤモヤを すてる', heal: 4, clearMoya: true, term: 'long' }
+    friend: { name: '友だちに そうだん', line: '「ねえ、どう思う？」', note: 'ストレス −5。友だちの アドバイスが カードになる（ときどき 役に立たないことも）', heal: 5 },
+    family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', note: 'ストレス −10', heal: 10, term: 'long' },
+    diary: { name: '日記を 書く', line: '今日の ことを ノートに 書く。', note: 'モヤモヤを 1まい デッキから けす。ストレス −3', heal: 3, purgeMoya: true, term: 'long' },
+    book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', note: 'ストレス −4、手札の モヤモヤを すてる', heal: 4, clearMoya: true, term: 'long' }
   };
   // 先生がすすめるカード（場面ごと）、友だちのアドバイス（junk はハズレ）
   var TEACHER_CARDS = { study: 'ask_teacher', conflict: 'consult', join: 'consult', tease: 'tell_teacher', stage: 'breathe_first', danger: 'call_adult' };
@@ -514,7 +517,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   // レアカードの 系統（かしこさ系・社交系・実働系）
   var RARE_LINE = { think: 'かしこさ系', relate: '社交系', act: '実働系', calm: 'かしこさ系' };
 
-  // 主人公4人：はじめの成長・心の余裕・とくいカード
+  // 主人公：はじめの成長・maxYoyu（ストレスの上限は これ＋10）・とくいカード
   // ctxMod：その場面の 課題の 問題の大きさ・ストレスに かける（1より小さいと 楽、大きいと きびしい）
   var HEROES = {
     hanoko: { name: 'ハノコ', note: 'かしこいが 運動は にがて', stats: { think: 2, act: -1, relate: 1 }, maxYoyu: 50, cards: ['analyse', 'write_plan'], look: 'hanoko',
@@ -538,7 +541,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 
   // pass: そのターン数を乗りこえると、課題は時間とともに過ぎ去る（報酬なし。leave なら モヤモヤが のこる）。
   //   からかい・発表には付けない：放っておいても過ぎ去らない問題があることを残すため
-  // moves: stress=心の余裕を n へらす／grow=問題が大きくなる（以後の stress に +n）／worry=モヤモヤを1まい まぜる
+  // moves: stress=ストレスを n ふやす／grow=問題が大きくなる（以後の stress に +n）／worry=モヤモヤを1まい まぜる
   // forms: 3つの姿の名前。view: いちばん現実の姿（2）になった時に わかる ほんとう（相性が変わる）
   var ENEMIES = {
     dunno: {
@@ -778,7 +781,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     win: 'さいごまで たどりついた！',
     failCause: ['今日は タイミングが 合わなかった。', '相手の じゅんびが まだだった。', 'こういう日も ある。'],
     curseGained: 'モヤモヤが デッキに 入った。',
-    stressIntrude: '心の余裕が へって、「カッとなる」が 手札に まざった。'
+    stressIntrude: 'ストレスが たまって、「カッとなる」が 手札に まざった。'
   };
 
   Object.keys(ENEMIES).forEach(function (k) {
@@ -837,7 +840,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       hero: heroId && D.HEROES[heroId] ? heroId : 'hayatsu',
       ver: ENGINE_VER, seed: seed >>> 0, rng: seed >>> 0, mode: mode || 1,
       phase: 'map', act: 0, floor: 0, row: 0, pos: null, acts: (mode === 3 ? 3 : 1), hearts: D.MAP.hearts,
-      yoyu: HERO.maxYoyu, maxYoyu: HERO.maxYoyu,
+      yoyu: HERO.maxYoyu, maxYoyu: HERO.maxYoyu + D.PLAYER.stressStart,
       trust: D.PLAYER.trustStart,
       stats: { think: HERO.stats.think, act: HERO.stats.act, relate: HERO.stats.relate },
       deck: D.STARTER.concat(HERO.cards || []), nigate: {}, items: (HERO.items || D.SUPPORT_RULES.start).slice(), equip: (HERO.items || D.SUPPORT_RULES.start).slice(),
@@ -1043,7 +1046,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     }
     if (first && s.trust >= D.RULES.allyTrust) {
       b.guard += D.RULES.allyGuard;
-      msg(s, '信頼が 高いので、友だちが そばにいてくれる（ゆとり +' + D.RULES.allyGuard + '）', 'ally');
+      msg(s, '信頼が 高いので、友だちが そばにいてくれる（心の準備 +' + D.RULES.allyGuard + '）', 'ally');
       log(s, { k: 'ally' });
     }
     if (first) {
@@ -1053,7 +1056,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       b.hand.forEach(function (h) { if (!h.temp || h.id !== 'panic') b.discard.push(h); });
       b.hand = [{ id: 'ugokenai', temp: true }];
       b.energy = 0;
-      msg(s, '心の余裕が なくなって、動けない…（このまま 時間が すぎるのを まつ）', 'stress');
+      msg(s, 'ストレスが いっぱいに なって、動けない…（このまま 時間が すぎるのを まつ）', 'stress');
       return;
     }
     var pn = b.hand.filter(function (x) { return x.id === 'panic' && !x.fresh; }).length;
@@ -1234,7 +1237,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var ng = (s.nigate[ctx] || 0) * D.RULES.nigateStress;
     return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul * (en.bossMul || 1) * (en.heroMul || 1));
   }
-  // 心の余裕は0より下がらない。下がった分は「動けない」中の つらさとして数える
+  // 余裕（＝上限−ストレス）は0より下がらない。下がった分は「動けない」中の つらさとして数える
   function hurt(s, dmg) {
     var b = s.battle;
     if (b) b.taken = (b.taken || 0) + dmg;
@@ -1262,7 +1265,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       var blocked = Math.min(b.guard, n);
       var dmg = n - blocked;
       hurt(s, dmg);
-      msg(s, mv.say + '（心の余裕 −' + dmg + (blocked ? '、ゆとりで ' + blocked + ' うけとめた' : '') + '）', 'hit');
+      msg(s, mv.say + '（ストレス +' + dmg + (blocked ? '、心の準備で ' + blocked + ' うけとめた' : '') + '）', 'hit');
     } else if (mv.t === 'grow') {
       en.str += mv.n;
       msg(s, mv.say + '（問題の いきおい +' + mv.n + '）', 'grow');
@@ -1301,12 +1304,12 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     b.hand = keep;
     if (panics) {
       hurt(s, panics * fragile(s).panicDrain);
-      msg(s, 'パニックで 心の余裕 −' + panics * fragile(s).panicDrain, 'worry');
+      msg(s, 'パニックで ストレス +' + panics * fragile(s).panicDrain, 'worry');
     }
     if (moya) {
       var md = moya * D.RULES.moyaDrain * (fragile(s) ? fragile(s).moyaMul : 1);
       hurt(s, md);
-      msg(s, 'モヤモヤが 気になって 心の余裕 −' + md, 'curse');
+      msg(s, 'モヤモヤが 気になって ストレス +' + md, 'curse');
     }
     var wasFrozen = b.frozen;
     enemyAct(s);
@@ -1320,7 +1323,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     return s;
   }
 
-  // 動けないまま 時間が すぎた：苦手意識が つき、心の余裕は 1割まで もどる
+  // 動けないまま 時間が すぎた：苦手意識が つき、ストレスは 9割まで さがる
   function endFrozen(s) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
     var lv = Math.max(1, Math.ceil((b.deficit || 0) / D.RULES.nigatePer)) * (fragile(s) ? fragile(s).nigateMul : 1);
@@ -1837,13 +1840,14 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 
   // --- 上の帯 ---
   function topBar() {
-    var pct = Math.round(S.yoyu / S.maxYoyu * 100);
+    var stress = S.maxYoyu - S.yoyu;
+    var pct = Math.round(stress / S.maxYoyu * 100);
     var low = S.yoyu < S.maxYoyu * D.RULES.stressThreshold;
     return h('header', { class: 'top' }, [
       h('div', { class: 'meter' + (low ? ' low' : '') }, [
-        h('span', { class: 'lbl', text: '心の余裕' }),
+        h('span', { class: 'lbl', text: 'ストレス' }),
         h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + pct + '%' })]),
-        h('b', { text: S.yoyu + '/' + S.maxYoyu })
+        h('b', { text: stress + '/' + S.maxYoyu })
       ]),
       h('div', { class: 'chip trust', title: '信頼' }, [h('span', { class: 'lbl', text: '信頼' }), h('b', { text: String(S.trust) })]),
       h('div', { class: 'stats' }, Object.keys(D.STATS).map(function (k) {
@@ -1911,7 +1915,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
         sprite('hero_' + H.look, 2, 'hpic'),
         h('b', { class: 'hname', text: H.name }),
         h('small', { text: H.note }),
-        h('div', { class: 'hstats' }, ['think', 'act', 'relate'].map(stat).concat([h('span', { class: 'hs' }, ['心の余裕 ', h('b', { text: String(H.maxYoyu) })])])),
+        h('div', { class: 'hstats' }, ['think', 'act', 'relate'].map(stat).concat([h('span', { class: 'hs' }, ['ストレスの 上限 ', h('b', { text: String(H.maxYoyu + D.PLAYER.stressStart) })])])),
         H.message ? h('small', { class: 'hmsg', text: H.message }) : null,
         h('small', { class: 'hgood', text: 'とくいな場面：' + H.good }),
         h('small', { class: 'hbad', text: 'にがてな場面：' + H.bad }),
@@ -1952,7 +1956,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var A = D.ACTS[S.act];
     return h('main', { class: 'title' }, [
       h('h1', { text: (S.act) + 'そう目 クリア！' }),
-      h('p', { class: 'sub', text: '心の余裕が 全部 もどった。次は「' + A.name + '」' }),
+      h('p', { class: 'sub', text: 'ストレスが 0に なった。次は「' + A.name + '」' }),
       bossBanner(),
       h('button', { class: 'primary big', onclick: function () { act(function () { E.nextAct(S); }); }, text: '次の そうへ' })
     ]);
@@ -2012,8 +2016,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var effects = [];
     var p = opts.preview || {};
     if (c.solve) effects.push(h('span', { class: 'fx solve' }, ['解決 ' + (p.solve != null ? p.solve : c.solve)]));
-    if (c.guard) effects.push(h('span', { class: 'fx guard' }, ['ゆとり ' + (p.guard != null ? p.guard : c.guard)]));
-    if (c.heal) effects.push(h('span', { class: 'fx heal' }, ['余裕 +' + c.heal]));
+    if (c.guard) effects.push(h('span', { class: 'fx guard' }, ['心の準備 ' + (p.guard != null ? p.guard : c.guard)]));
+    if (c.heal) effects.push(h('span', { class: 'fx heal' }, ['ストレス −' + c.heal]));
     if (c.draw) effects.push(h('span', { class: 'fx' }, ['1まい 引く']));
     if (c.growFail) effects.push(h('span', { class: 'fx reveal' }, ['失敗も 成長']));
     if (c.tame) effects.push(h('span', { class: 'fx reveal' }, ['いきおいを 0に']));
@@ -2053,7 +2057,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 
   function battleScreen() {
     var b = S.battle, en = b.enemy, it = E.intent(S), EN = D.ENEMIES[en.id];
-    var itText = it.t === 'stress' ? '心の余裕 −' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
+    var itText = it.t === 'stress' ? 'ストレス +' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
     var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
     var bubble = h('section', { class: 'bubble k-' + en.kind }, [
       h('div', { class: 'ekind', text: (en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
@@ -2072,7 +2076,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(en.id)) { monster.innerHTML = SST_ILLUST.svg(en.id); }
     var hero = h('div', { class: 'hero' + (b.guard ? ' shield' : '') }, [
       sprite('hero_' + (D.HEROES[S.hero] ? D.HEROES[S.hero].look : 'hayatsu'), 2, 'me'),
-      h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: 'ゆとり' }), h('b', { text: String(b.guard) })])
+      h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: '心の準備' }), h('b', { text: String(b.guard) })])
     ]);
     var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, bubble, monster]);
     var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.slice(-3).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
@@ -2117,7 +2121,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var r = S.reward;
     return h('main', { class: 'reward' }, [
       h('h2', { text: r.frozen ? '時間が すぎた…' : r.fled ? 'その場を はなれた' : r.escaped ? '安全な ところへ はなれた！' : r.passed ? '時間が たった' : '乗りこえた！' }),
-      r.frozen ? h('p', { class: 'story', text: '動けないまま、時間が すぎた。「' + D.CTX_LABEL[r.frozen.ctx] + '」に 苦手意識が ついた（' + r.frozen.to + '）。この場面では ストレスが 少し ふえる。心の余裕は 1割まで もどった。' }) : null,
+      r.frozen ? h('p', { class: 'story', text: '動けないまま、時間が すぎた。「' + D.CTX_LABEL[r.frozen.ctx] + '」に 苦手意識が ついた（' + r.frozen.to + '）。この場面では ストレスが 少し ふえる。ストレスは 9割まで さがった。' }) : null,
       r.fled ? h('p', { class: 'story', text: 'にげたので、問題は そのまま のこった（モヤモヤが デッキに 入った）。にげるのが いい場面と、そうでない場面が ある。' }) : null,
       r.escaped ? h('p', { class: 'praise', text: 'あぶない場面では、はなれる・にげる・大人を よぶ が いちばん。自分の 安全を 守れた。' }) : null,
       r.passed ? h('p', { class: 'story', text: r.passed + (r.leave ? '（モヤモヤが デッキに 入った）' : '') }) : null,
@@ -2169,7 +2173,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       h('h2', { text: 'ひと休み' }),
       equipPanel,
       h('div', { class: 'two' }, [
-        h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['休む', h('small', { text: '心の余裕を ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' 回ふく。「お家の人に そうだんする」カードが もらえる' })]),
+        h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['休む', h('small', { text: 'ストレスを ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' へらす。「お家の人に そうだんする」カードが もらえる' })]),
         h('button', { class: 'secondary big', onclick: function () { removing = true; render(); } }, ['自分を 見つめ直す', h('small', { text: 'いらない くせを 1つ 卒業する' })])
       ])
     ]);
@@ -2243,7 +2247,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       items.push(h('li', { class: 'unlock' }, [h('b', { text: 'トラブルの あと、正直に 話して やり直せた' }), h('span', { text: 'まちがえても、話して あやまれば やり直せる。それも 大事な力。' })]));
     });
     sm.nigate.forEach(function (e) {
-      items.push(h('li', {}, [h('b', { text: '「' + D.CTX_LABEL[e.ctx] + '」が 苦手に なった（' + e.to + '）' }), h('span', { text: '心の余裕が なくなる前に、休む・きょりを おく・だれかに そうだん しよう。' })]));
+      items.push(h('li', {}, [h('b', { text: '「' + D.CTX_LABEL[e.ctx] + '」が 苦手に なった（' + e.to + '）' }), h('span', { text: 'ストレスが いっぱいに なる前に、休む・きょりを おく・だれかに そうだん しよう。' })]));
     });
     if (sm.supportUses.length) {
       var names = {};

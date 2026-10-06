@@ -40,7 +40,7 @@
       hero: heroId && D.HEROES[heroId] ? heroId : 'hayatsu',
       ver: ENGINE_VER, seed: seed >>> 0, rng: seed >>> 0, mode: mode || 1,
       phase: 'map', act: 0, floor: 0, row: 0, pos: null, acts: (mode === 3 ? 3 : 1), hearts: D.MAP.hearts,
-      yoyu: HERO.maxYoyu, maxYoyu: HERO.maxYoyu,
+      yoyu: HERO.maxYoyu, maxYoyu: HERO.maxYoyu + D.PLAYER.stressStart,
       trust: D.PLAYER.trustStart,
       stats: { think: HERO.stats.think, act: HERO.stats.act, relate: HERO.stats.relate },
       deck: D.STARTER.concat(HERO.cards || []), nigate: {}, items: (HERO.items || D.SUPPORT_RULES.start).slice(), equip: (HERO.items || D.SUPPORT_RULES.start).slice(),
@@ -246,7 +246,7 @@
     }
     if (first && s.trust >= D.RULES.allyTrust) {
       b.guard += D.RULES.allyGuard;
-      msg(s, '信頼が 高いので、友だちが そばにいてくれる（ゆとり +' + D.RULES.allyGuard + '）', 'ally');
+      msg(s, '信頼が 高いので、友だちが そばにいてくれる（心の準備 +' + D.RULES.allyGuard + '）', 'ally');
       log(s, { k: 'ally' });
     }
     if (first) {
@@ -256,7 +256,7 @@
       b.hand.forEach(function (h) { if (!h.temp || h.id !== 'panic') b.discard.push(h); });
       b.hand = [{ id: 'ugokenai', temp: true }];
       b.energy = 0;
-      msg(s, '心の余裕が なくなって、動けない…（このまま 時間が すぎるのを まつ）', 'stress');
+      msg(s, 'ストレスが いっぱいに なって、動けない…（このまま 時間が すぎるのを まつ）', 'stress');
       return;
     }
     var pn = b.hand.filter(function (x) { return x.id === 'panic' && !x.fresh; }).length;
@@ -437,7 +437,7 @@
     var ng = (s.nigate[ctx] || 0) * D.RULES.nigateStress;
     return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul * (en.bossMul || 1) * (en.heroMul || 1));
   }
-  // 心の余裕は0より下がらない。下がった分は「動けない」中の つらさとして数える
+  // 余裕（＝上限−ストレス）は0より下がらない。下がった分は「動けない」中の つらさとして数える
   function hurt(s, dmg) {
     var b = s.battle;
     if (b) b.taken = (b.taken || 0) + dmg;
@@ -465,7 +465,7 @@
       var blocked = Math.min(b.guard, n);
       var dmg = n - blocked;
       hurt(s, dmg);
-      msg(s, mv.say + '（心の余裕 −' + dmg + (blocked ? '、ゆとりで ' + blocked + ' うけとめた' : '') + '）', 'hit');
+      msg(s, mv.say + '（ストレス +' + dmg + (blocked ? '、心の準備で ' + blocked + ' うけとめた' : '') + '）', 'hit');
     } else if (mv.t === 'grow') {
       en.str += mv.n;
       msg(s, mv.say + '（問題の いきおい +' + mv.n + '）', 'grow');
@@ -504,12 +504,12 @@
     b.hand = keep;
     if (panics) {
       hurt(s, panics * fragile(s).panicDrain);
-      msg(s, 'パニックで 心の余裕 −' + panics * fragile(s).panicDrain, 'worry');
+      msg(s, 'パニックで ストレス +' + panics * fragile(s).panicDrain, 'worry');
     }
     if (moya) {
       var md = moya * D.RULES.moyaDrain * (fragile(s) ? fragile(s).moyaMul : 1);
       hurt(s, md);
-      msg(s, 'モヤモヤが 気になって 心の余裕 −' + md, 'curse');
+      msg(s, 'モヤモヤが 気になって ストレス +' + md, 'curse');
     }
     var wasFrozen = b.frozen;
     enemyAct(s);
@@ -523,7 +523,7 @@
     return s;
   }
 
-  // 動けないまま 時間が すぎた：苦手意識が つき、心の余裕は 1割まで もどる
+  // 動けないまま 時間が すぎた：苦手意識が つき、ストレスは 9割まで さがる
   function endFrozen(s) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
     var lv = Math.max(1, Math.ceil((b.deficit || 0) / D.RULES.nigatePer)) * (fragile(s) ? fragile(s).nigateMul : 1);
