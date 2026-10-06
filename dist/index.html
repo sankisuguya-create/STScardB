@@ -366,7 +366,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 2.0, resist: 0.35, anxiety: 0.6,
-    restHeal: 0.3, dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 7, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 3.0,
+    restHeal: 0.3, dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 9, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 3.0,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -505,8 +505,9 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       ctxMod: { study: 1.5, conflict: 0.8, join: 0.75, tease: 0.85, stage: 1.0, danger: 1.0 }, good: '友だち・遊び', bad: 'べんきょう' },
     musuhi: { name: 'ムスヒ', note: '運動は とくいだが 人づきあいは にがて', stats: { think: 1, act: 2, relate: 0 }, maxYoyu: 50, cards: ['dash', 'start_now'], look: 'musuhi',
       ctxMod: { study: 1.0, conflict: 1.4, join: 1.4, tease: 1.3, stage: 0.75, danger: 0.8 }, good: '発表・練習・あぶない場面', bad: '友だち・からかい' },
-    hayatsu: { name: 'ハヤツ', note: '何でも できるが、打たれ弱い', stats: { think: 1, act: 1, relate: 1 }, maxYoyu: 36, cards: ['sort_out'], look: 'hayatsu',
-      ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.2, stage: 1.0, danger: 1.0 }, good: 'どれも ふつう', bad: 'からかい（打たれ弱い）' }
+    hayatsu: { name: 'ハヤツ', note: '何でも できるが、一度 つまずくと なかなか 立ち直れない', stats: { think: 2, act: 2, relate: 2 }, maxYoyu: 50, cards: ['sort_out'], look: 'hayatsu',
+      ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.0, stage: 1.0, danger: 1.0 }, good: 'どれも とくい', bad: 'ピンチに 弱い（マイナスカードに 弱い）',
+      fragile: { pinch: 0.4, healMul: 0.5, frozenRecover: 0.05, nigateMul: 2, moyaMul: 2, panicDrain: 3, stressThreshold: 0.45, slumpBattles: 3, slumpPanic: 2 } }
   };
 
 
@@ -932,6 +933,13 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   // --- 戦い ---
   // ボスは、なくした ハートの数だけ 弱くなる
   function lostHearts(s) { return D.MAP.hearts - s.hearts; }
+  function fragile(s) { var H = D.HEROES[s.hero]; return H && H.fragile; }
+  // ピンチ（余裕が少ない）の時、回復が 弱まる
+  function heal(s, n) {
+    var f = fragile(s);
+    if (f && s.yoyu < s.maxYoyu * f.pinch) n = Math.ceil(n * f.healMul);
+    s.yoyu = Math.min(s.maxYoyu, s.yoyu + n);
+  }
   function heroMod(s, E) { var H = D.HEROES[s.hero]; return (H && H.ctxMod && H.ctxMod[E.ctx]) || 1; }
   function bossHp(s, E) {
     var hp = E.hp * D.RULES.hpScale * heroMod(s, E);
@@ -985,6 +993,11 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   function startTurn(s, first) {
     var b = s.battle;
     b.turn++; b.energy = D.PLAYER.energy; b.guard = 0; b.calm = false;
+    if (first && s.slump > 0) {
+      for (var sp = 0; sp < fragile(s).slumpPanic; sp++) addToHand(s, { id: 'panic', temp: true });
+      s.slump--;
+      msg(s, 'この前の ことが 頭から はなれない…（落ちこみ：あと ' + s.slump + '回）', 'worry');
+    }
     if (first && s.trust >= D.RULES.allyTrust) {
       b.guard += D.RULES.allyGuard;
       msg(s, '信頼が 高いので、友だちが そばにいてくれる（ゆとり +' + D.RULES.allyGuard + '）', 'ally');
@@ -1004,7 +1017,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     b.hand.forEach(function (x) { delete x.fresh; });
     if (pn) addToHand(s, { id: 'panic', temp: true });
     drawCards(s, Math.max(0, handLimit(s) - b.hand.length));
-    if (s.yoyu < s.maxYoyu * D.RULES.stressThreshold) {
+    if (s.yoyu < s.maxYoyu * (fragile(s) ? fragile(s).stressThreshold : D.RULES.stressThreshold)) {
       addToHand(s, { id: 'kattonaru', temp: true });
       msg(s, D.TEXT.stressIntrude, 'stress');
       log(s, { k: 'intrude' });
@@ -1139,7 +1152,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
         }
       }
       if (c.guard) b.guard += c.guard + (st ? s.stats[st] : 0);
-      if (c.heal) s.yoyu = Math.min(s.maxYoyu, s.yoyu + c.heal);
+      if (c.heal) heal(s, c.heal);
       if (c.draw) drawCards(s, c.draw);
       if (c.judge === 'impulse' && !entry.backfire) msg(s, '「' + c.name + '」で すっきりした。でも…', 'impulse');
     } else {
@@ -1233,17 +1246,19 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var moya = 0, keep = [], panics = 0;
     b.hand.forEach(function (h) {
       if (h.id === 'moyamoya') moya++;
-      if (card(h.id).retain) { keep.push(h); if (h.id === 'panic') panics++; return; }
+      if (h.id === 'panic' && fragile(s)) panics++;
+      if (card(h.id).retain) { keep.push(h); return; }
       if (h.id === 'kattonaru') b.exhaust.push(h); else b.discard.push(h);
     });
     b.hand = keep;
     if (panics) {
-      hurt(s, panics * D.RULES.panicDrain);
-      msg(s, 'パニックで 心の余裕 −' + panics * D.RULES.panicDrain + '。このままだと パニックが ふえる！', 'worry');
+      hurt(s, panics * fragile(s).panicDrain);
+      msg(s, 'パニックで 心の余裕 −' + panics * fragile(s).panicDrain, 'worry');
     }
     if (moya) {
-      hurt(s, moya * D.RULES.moyaDrain);
-      msg(s, 'モヤモヤが 気になって 心の余裕 −' + moya * D.RULES.moyaDrain, 'curse');
+      var md = moya * D.RULES.moyaDrain * (fragile(s) ? fragile(s).moyaMul : 1);
+      hurt(s, md);
+      msg(s, 'モヤモヤが 気になって 心の余裕 −' + md, 'curse');
     }
     var wasFrozen = b.frozen;
     enemyAct(s);
@@ -1260,10 +1275,11 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   // 動けないまま 時間が すぎた：苦手意識が つき、心の余裕は 1割まで もどる
   function endFrozen(s) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
-    var lv = Math.max(1, Math.ceil((b.deficit || 0) / D.RULES.nigatePer));
+    var lv = Math.max(1, Math.ceil((b.deficit || 0) / D.RULES.nigatePer)) * (fragile(s) ? fragile(s).nigateMul : 1);
     s.nigate[E.ctx] = (s.nigate[E.ctx] || 0) + lv;
-    s.yoyu = Math.max(1, Math.round(s.maxYoyu * D.RULES.frozenRecover));
+    s.yoyu = Math.max(1, Math.round(s.maxYoyu * (fragile(s) ? fragile(s).frozenRecover : D.RULES.frozenRecover)));
     log(s, { k: 'nigate', ctx: E.ctx, add: lv, to: s.nigate[E.ctx], enemy: en.id });
+    if (fragile(s)) { s.slump = fragile(s).slumpBattles; log(s, { k: 'slump' }); }
     log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, frozen: true });
     if (en.kind === 'boss') { endRun(s, false); return; }
     s.phase = 'reward';
@@ -1356,7 +1372,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var u = D.SUPPORTS[id], b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
     b.usedItems[id] = 1;
     msg(s, '「' + u.name + '」', 'ally');
-    if (u.heal) s.yoyu = Math.min(s.maxYoyu, s.yoyu + u.heal);
+    if (u.heal) heal(s, u.heal);
     if (id === 'teacher') {
       var tc = D.TEACHER_CARDS[E.ctx];
       addToHand(s, { id: tc, temp: true }); b.teacherCard = tc;
@@ -1421,7 +1437,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     if (choice === 'rest') {
       var before = s.yoyu;
       s.deck.push('consult_family'); log(s, { k: 'gain', card: 'consult_family', why: 'rest' });
-      s.yoyu = Math.min(s.maxYoyu, s.yoyu + Math.round(s.maxYoyu * D.RULES.restHeal));
+      heal(s, Math.round(s.maxYoyu * D.RULES.restHeal));
       log(s, { k: 'rest', d: s.yoyu - before });
     } else if (choice === 'remove') {
       var id = s.deck[deckIdx];

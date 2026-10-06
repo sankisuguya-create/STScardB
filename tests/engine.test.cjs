@@ -106,7 +106,7 @@ test('場面に合わないカードは、その戦いの山札・手札に出�
 
 test('アイテム：戦いごとに1回、なくならない。先生は場面のカードをくれ、報酬にも出る', () => {
   for (let seed = 1; seed < 300; seed++) {
-    const s = E.newRun(seed, 1);
+    const s = E.newRun(seed, 1, 'tario');
     E.chooseNode(s, 0);
     if (s.battle.enemy.id !== 'dunno') continue;
     E.useSupport(s, 'teacher');
@@ -127,14 +127,14 @@ test('アイテム：戦いごとに1回、なくならない。先生は場面�
 });
 
 test('整理するカードで 姿が3段階 現実に近づき、いきおいが弱まる。かしこさ2なら 1段階目から', () => {
-  const s = E.newRun(11, 1);
+  const s = E.newRun(11, 1, 'tario');
   E.chooseNode(s, 0);
   const en = s.battle.enemy, E0 = D.ENEMIES[en.id];
   assert.strictEqual(en.form, 0); assert.strictEqual(en.name, E0.forms[0]);
   s.battle.hand.push({ id: 'sort_out', temp: true }); s.battle.energy = 3;
   E.playCard(s, s.battle.hand.length - 1);
   assert.strictEqual(en.form, 1); assert.ok(en.stressMul < 1);
-  const s2 = E.newRun(11, 1); s2.stats.think = 2;
+  const s2 = E.newRun(11, 1, 'tario'); s2.stats.think = 2;
   E.chooseNode(s2, 0);
   assert.strictEqual(s2.battle.enemy.form, 1);
 });
@@ -203,7 +203,7 @@ test('ふつうの課題で にげると 問題が のこる（モヤモヤ・�
 
 test('心の余裕が0：ゲームは終わらず「動けない」になり、終わると 苦手意識がつき 余裕は1割', () => {
   for (let seed = 1; seed < 400; seed++) {
-    const s = E.newRun(seed, 1);
+    const s = E.newRun(seed, 1, 'tario');
     E.chooseNode(s, 0);
     const E0 = D.ENEMIES[s.battle.enemy.id];
     if (E0.kind !== 'danger') continue;
@@ -345,7 +345,7 @@ test('すべての課題に 状きょうの 説明が ある。マスを えら�
 test('主人公4人：はじめの成長と 心の余裕が ちがう。ハヤツは 打たれ弱い', () => {
   const h = E.newRun(1, 1, 'hanoko'), y = E.newRun(1, 1, 'hayatsu');
   assert.strictEqual(h.stats.think, 2); assert.strictEqual(h.stats.act, 0);
-  assert.ok(y.maxYoyu < h.maxYoyu);
+  assert.deepStrictEqual(y.stats, { think: 2, act: 2, relate: 2 });
   assert.ok(h.deck.includes('write_plan'));
   assert.ok(h.deck.includes('analyse'));
   Object.values(D.HEROES).forEach((H) => H.cards.forEach((id) => { const c = D.CARDS[id]; if (c.req) Object.keys(c.req).forEach((k) => { if (k !== 'trust') assert.ok(H.stats[k] >= c.req[k], H.name + ':' + id); }); }));
@@ -375,4 +375,15 @@ test('上級カードは、成長が 条件に 届くまで 報酬に 出ない'
 test('デッキの カードの 場面は、どれも 実在する 場面', () => {
   const ctxs = new Set(Object.values(D.ENEMIES).map((e) => e.ctx));
   Object.entries(D.CARDS).forEach(([k, c]) => (c.ctx || []).forEach((x) => assert.ok(ctxs.has(x), k + ':' + x)));
+});
+
+test('ハヤツ：ピンチの時は 回復が 半分、モヤモヤの 減りが 2倍', () => {
+  const s = E.newRun(1, 1, 'hayatsu'); s.phase = 'rest'; s.yoyu = 10;
+  E.rest(s, 'rest');
+  assert.strictEqual(s.yoyu, 10 + Math.ceil(Math.round(s.maxYoyu * D.RULES.restHeal) * 0.5));
+  const t = E.newRun(1, 1, 'hayatsu'); E.chooseNode(t, E.reachable(t)[0]);
+  if (t.phase !== 'battle') return;
+  t.yoyu = 40; t.battle.guard = 999; t.battle.hand = [{ id: 'moyamoya' }]; t.deck.push('moyamoya');
+  const y0 = t.yoyu; E.endTurn(t);
+  assert.ok(y0 - t.yoyu >= D.RULES.moyaDrain * 2);
 });

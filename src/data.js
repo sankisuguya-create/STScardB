@@ -30,7 +30,7 @@
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 2.0, resist: 0.35, anxiety: 0.6,
-    restHeal: 0.3, dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 7, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 3.0,
+    restHeal: 0.3, dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 9, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 3.0,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -169,8 +169,9 @@
       ctxMod: { study: 1.5, conflict: 0.8, join: 0.75, tease: 0.85, stage: 1.0, danger: 1.0 }, good: '友だち・遊び', bad: 'べんきょう' },
     musuhi: { name: 'ムスヒ', note: '運動は とくいだが 人づきあいは にがて', stats: { think: 1, act: 2, relate: 0 }, maxYoyu: 50, cards: ['dash', 'start_now'], look: 'musuhi',
       ctxMod: { study: 1.0, conflict: 1.4, join: 1.4, tease: 1.3, stage: 0.75, danger: 0.8 }, good: '発表・練習・あぶない場面', bad: '友だち・からかい' },
-    hayatsu: { name: 'ハヤツ', note: '何でも できるが、打たれ弱い', stats: { think: 1, act: 1, relate: 1 }, maxYoyu: 36, cards: ['sort_out'], look: 'hayatsu',
-      ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.2, stage: 1.0, danger: 1.0 }, good: 'どれも ふつう', bad: 'からかい（打たれ弱い）' }
+    hayatsu: { name: 'ハヤツ', note: '何でも できるが、一度 つまずくと なかなか 立ち直れない', stats: { think: 2, act: 2, relate: 2 }, maxYoyu: 50, cards: ['sort_out'], look: 'hayatsu',
+      ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.0, stage: 1.0, danger: 1.0 }, good: 'どれも とくい', bad: 'ピンチに 弱い（マイナスカードに 弱い）',
+      fragile: { pinch: 0.4, healMul: 0.5, frozenRecover: 0.05, nigateMul: 2, moyaMul: 2, panicDrain: 3, stressThreshold: 0.45, slumpBattles: 3, slumpPanic: 2 } }
   };
 
 

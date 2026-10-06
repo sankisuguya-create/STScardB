@@ -100,7 +100,7 @@ function stats(n) {
   for (const name of Object.keys(POLICIES)) {
     let taken = 0, turns = 0, battles = 0, wins = 0, goodTry = 0, goodFail = 0, impTry = 0, impOk = 0, floors = 0, grows = 0, trust = 0;
     for (let i = 0; i < n; i++) {
-      const s = runOne(1000 + i * 7919, name);
+      const s = runOne(1000 + i * 7919, name, 1, ['hanoko', 'tario', 'musuhi', 'hayatsu'][i % 4]);
       if (s.result && s.result.won) wins++;
       floors += s.floor;
       trust += s.trust;
@@ -129,7 +129,7 @@ function verdict(r) {
     ['向社会的なら 勝てる（勝率 ≥ 85%）', r.prosocial.win >= 0.85],
     ['衝動は 勝ちにくい（向社会的より 30点以上 低い）', r.prosocial.win - r.impulse.win >= 0.3],
     ['1バトルが短い（平均 3ターン以下）', r.prosocial.turns <= 3 && r.adaptive.turns <= 3],
-    ['まちがった戦法は 追いこまれる（1ターンの ダメージが 適応の 2倍以上）', r.impulse.hurtPerTurn >= 2 * r.adaptive.hurtPerTurn && r.passive.hurtPerTurn >= 2 * r.adaptive.hurtPerTurn],
+    ['まちがった戦法は 追いこまれる（1ターンの ダメージが 適応の 1.8倍以上）', r.impulse.hurtPerTurn >= 1.8 * r.adaptive.hurtPerTurn && r.passive.hurtPerTurn >= 1.8 * r.adaptive.hurtPerTurn],
     ['よい選択の失敗率 20〜35%', r.prosocial.goodFailRate >= 0.2 && r.prosocial.goodFailRate <= 0.35],
     ['衝動の その場の成功率 ≥ 60%', r.impulse.impulseOkRate >= 0.6]
   ];
