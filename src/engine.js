@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 5;
+  var ENGINE_VER = 6;
 
   // --- 乱数 ---
   function rand(s) {
@@ -30,14 +30,16 @@
   function log(s, e) { e.floor = s.floor; s.log.push(e); }
 
   // --- 開始 ---
-  function newRun(seed, mode) {
+  function newRun(seed, mode, heroId) {
+    var HERO = D.HEROES[heroId] || D.HEROES.hayatsu;
     var s = {
+      hero: heroId && D.HEROES[heroId] ? heroId : 'hayatsu',
       ver: ENGINE_VER, seed: seed >>> 0, rng: seed >>> 0, mode: mode || 1,
       phase: 'map', act: 0, floor: 0, row: 0, pos: null, acts: (mode === 3 ? 3 : 1), hearts: D.MAP.hearts,
-      yoyu: D.PLAYER.maxYoyu, maxYoyu: D.PLAYER.maxYoyu,
+      yoyu: HERO.maxYoyu, maxYoyu: HERO.maxYoyu,
       trust: D.PLAYER.trustStart,
-      stats: { think: 0, act: 0, relate: 0 },
-      deck: D.STARTER.slice(), nigate: {}, items: D.SUPPORT_RULES.start.slice(), equip: D.SUPPORT_RULES.start.slice(),
+      stats: { think: HERO.stats.think, act: HERO.stats.act, relate: HERO.stats.relate },
+      deck: D.STARTER.concat(HERO.card ? [HERO.card] : []), nigate: {}, items: D.SUPPORT_RULES.start.slice(), equip: D.SUPPORT_RULES.start.slice(),
       usedNormals: [], usedEvents: [], trouble: null,
       map: null, battle: null, reward: null, event: null,
       log: [], result: null
@@ -186,7 +188,7 @@
     };
     s.phase = 'battle';
     if (s.stats.think >= D.FORMS.organizeStat) { organize(s, true); }
-    if (bench.length) msg(s, 'この場面に 合わないカード ' + bench.length + 'まいは、今回は 休み。', 'bench');
+    if (bench.length) msg(s, 'この場面に 合わないカード ' + bench.length + 'まいは 控えデッキへ。', 'bench');
     log(s, { k: 'battle', enemy: eid, kind: E.kind, bench: bench.length });
     startTurn(s, true);
   }
@@ -345,6 +347,13 @@
     if (ok) {
       if (c.organize) organize(s);
       if (c.clearMoya) clearMoya(s, true);
+      if (c.organize2) { organize(s); organize(s); }
+      if (c.tame && en.str > 0) { en.str = 0; msg(s, 'ギャグで かわして、相手の いきおいが なくなった。', 'clear'); }
+      if (c.clearPanicAll) {
+        var np = 0;
+        b.hand = b.hand.filter(function (x) { if (x.id === 'panic') { b.exhaust.push(x); np++; return false; } return true; });
+        if (np) msg(s, 'パニックが ぜんぶ おさまった。', 'clear');
+      }
       if (c.distance && !b.distanced) {
         b.distanced = true; en.str = 0; en.stressMul *= D.RULES.distanceMul;
         msg(s, 'きょりを おいた。問題の いきおいが おさまり、ストレスも 弱まった。', 'reveal');
@@ -368,6 +377,8 @@
     } else {
       var cause = D.TEXT.failCause[Math.floor(rand(s) * D.TEXT.failCause.length)];
       msg(s, '「' + c.name + '」は うまくいかなかった。' + cause + (st ? '（' + D.STATS[st].name + 'の けいけんには なった）' : ''), 'fail');
+      if (c.growFail && st) { b.usage[st]++; msg(s, '失敗も 経験！（' + D.STATS[st].name + 'の けいけんが 2ばい）', 'next'); }
+      if (c.guardFail) b.guard += c.guardFail;
       if (c.fail) {
         addToHand(s, { id: c.fail, temp: true });
         msg(s, '次の手：「' + card(c.fail).name + '」が 手札に 入った。', 'next');
@@ -548,7 +559,10 @@
     var situ = shuffle(s, Object.keys(b.playedOk)).slice(0, 2);
     if (b.teacherCard && situ.indexOf(b.teacherCard) < 0) situ = [b.teacherCard].concat(situ).slice(0, 2);
     var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0; }));
-    return situ.concat(pool).slice(0, want);
+    var adv = shuffle(s, D.ADVANCED.filter(function (id) { return meetsReq(s, card(id)) && s.deck.indexOf(id) < 0; }));
+    var out = situ.concat(pool).slice(0, want);
+    if (adv.length) out[out.length - 1] = adv[0];
+    return out;
   }
 
   function gainSupport(s, id, why) {

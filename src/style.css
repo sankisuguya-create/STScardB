@@ -299,3 +299,15 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .intro-text { max-width: 640px; background: var(--paper); color: var(--ink); border: 3px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 16px 20px; font-size: 1.2rem; line-height: 1.8; animation: appear .4s ease-out both; }
 .intro.k-danger .intro-text { box-shadow: 0 4px 0 var(--impulse); }
 @media (max-width: 760px) { .intro-art canvas { width: 150px; height: 150px; } .intro-text { font-size: 1.05rem; } }
+
+/* 主人公を えらぶ */
+.heroes { gap: 14px; }
+.herogrid { display: grid; grid-template-columns: repeat(4, minmax(0, 220px)); gap: 14px; }
+.herocard { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px; background: var(--paper); color: var(--ink); }
+.herocard .hpic { width: 112px; height: 112px; }
+.hname { font-family: var(--display); font-size: 1.5rem; font-weight: 400; }
+.hstats { display: flex; flex-wrap: wrap; gap: 4px 10px; justify-content: center; font-size: .85rem; }
+.hs b { font-size: 1rem; }
+.hcard { color: var(--sub); }
+.fx.adv { background: var(--gold); }
+@media (max-width: 760px) { .herogrid { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; } .herocard .hpic { width: 80px; height: 80px; } }

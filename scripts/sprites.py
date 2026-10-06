@@ -294,6 +294,10 @@ S['team_r'] = g.outline().out()
 
 # ===== 自分・アイテム =====
 g = G(); kid(g, 16, 31, hair='n', hair2='N', shirt='b', shirt2='B', mouth='smile', k=1.3); S['hero'] = g.outline().out()
+g = G(); kid(g, 16, 31, hair='k', hair2='g', shirt='P', shirt2='p', mouth='smile', k=1.3, glasses=True); S['hero_hanoko'] = g.outline().out()
+g = G(); kid(g, 16, 31, hair='o', hair2='O', shirt='y', shirt2='Y', mouth='laugh', k=1.3); S['hero_tario'] = g.outline().out()
+g = G(); kid(g, 16, 31, hair='n', hair2='N', shirt='e', shirt2='E', mouth='flat', k=1.3); g.rect(9, 8, 15, 2, 'r'); S['hero_musuhi'] = g.outline().out()
+g = G(); kid(g, 16, 31, hair='y', hair2='Y', shirt='b', shirt2='B', mouth='smile', k=1.3); S['hero_hayatsu'] = g.outline().out()
 g = G(); kid(g, 16, 31, hair='G', hair2='g', shirt='e', shirt2='E', mouth='smile', k=1.3, glasses=True); S['teacher'] = g.outline().out()
 g = G(); kid(g, 9, 30, hair='y', hair2='Y', shirt='o', shirt2='O', mouth='laugh'); kid(g, 23, 30, hair='n', hair2='N', shirt='b', shirt2='B', mouth='laugh'); S['friend'] = g.outline().out()
 g = G(); kid(g, 11, 31, hair='k', hair2='g', shirt='P', shirt2='p', mouth='smile', k=1.25); kid(g, 24, 31, hair='n', hair2='N', shirt='b', shirt2='B', mouth='smile', k=.8); S['family'] = g.outline().out()

@@ -20,7 +20,7 @@ test('全カード・全課題の参照が正しい', () => {
 test('相談・謝罪・整えるカードには使用条件がない', () => {
   ['consult', 'tell_teacher', 'ask_teacher', 'apologize', 'firm_reply', 'tell_hurt', 'breathe', 'name_feeling', 'breathe_first', 'say_dunno']
     .forEach((id) => assert.ok(!D.CARDS[id].req, id));
-  Object.values(D.CARDS).filter((c) => c.type === 'calm').forEach((c) => assert.ok(!c.req, c.name));
+  Object.values(D.CARDS).filter((c) => c.type === 'calm' && !c.adv).forEach((c) => assert.ok(!c.req, c.name));
 });
 
 test('衝動カードは成長の経験にならず、必ずモヤモヤが入る', () => {
@@ -293,7 +293,7 @@ test('手札は 5まい＋かしこさ まで。あふれた カードは すて
     assert.ok(s.battle.hand.length <= lim);
     for (let k = 0; k < 4 && s.phase === 'battle'; k++) { E.endTurn(s); if (s.phase === 'battle') assert.ok(s.battle.hand.length <= lim); }
   }
-  const s = E.newRun(2, 1); E.chooseNode(s, E.reachable(s)[0]);
+  const s = E.newRun(2, 1); s.stats.think = 0; E.chooseNode(s, E.reachable(s)[0]);
   while (s.battle.hand.length < 5) s.battle.hand.push({ id: 'endure', temp: true });
   const d = s.battle.discard.length;
   s.battle.energy = 3; s.battle.hand.push({ id: 'write_plan', temp: true });
@@ -340,4 +340,37 @@ test('すべての課題に 状きょうの 説明が ある。マスを えら�
   assert.strictEqual(s.phase, 'intro');
   E.beginBattle(s);
   assert.strictEqual(s.phase, 'battle');
+});
+
+test('主人公4人：はじめの成長と 心の余裕が ちがう。ハヤツは 打たれ弱い', () => {
+  const h = E.newRun(1, 1, 'hanoko'), y = E.newRun(1, 1, 'hayatsu');
+  assert.strictEqual(h.stats.think, 2); assert.strictEqual(h.stats.act, 0);
+  assert.ok(y.maxYoyu < h.maxYoyu);
+  assert.ok(h.deck.includes('write_plan'));
+});
+
+test('上級カードは、成長が 条件に 届くまで 報酬に 出ない', () => {
+  for (let seed = 1; seed < 80; seed++) {
+    const s = E.newRun(seed, 1, 'hayatsu'); s.stats = { think: 0, act: 0, relate: 0 };
+    E.chooseNode(s, E.reachable(s)[0]);
+    if (s.phase !== 'battle') continue;
+    s.battle.enemy.hp = 0; s.battle.hand.push({ id: 'endure', temp: true }); s.battle.energy = 3;
+    s.battle.hand.push({ id: 'try_it', temp: true }); E.playCard(s, s.battle.hand.length - 1);
+    if (s.phase === 'reward') s.reward.choices.forEach((id) => assert.ok(!D.CARDS[id].adv, id));
+  }
+  const s = E.newRun(3, 1, 'hayatsu'); s.stats = { think: 3, act: 3, relate: 3 }; s.trust = 8;
+  let seen = false;
+  for (let i = 0; i < 20 && !seen; i++) {
+    const t = E.newRun(i + 3, 1, 'hayatsu'); t.stats = { think: 3, act: 3, relate: 3 }; t.trust = 8;
+    E.chooseNode(t, E.reachable(t)[0]);
+    if (t.phase !== 'battle') continue;
+    t.battle.enemy.hp = 0; t.battle.hand.push({ id: 'try_it', temp: true }); t.battle.energy = 3; E.playCard(t, t.battle.hand.length - 1);
+    if (t.phase === 'reward' && t.reward.choices.some((id) => D.CARDS[id].adv)) seen = true;
+  }
+  assert.ok(seen);
+});
+
+test('デッキの カードの 場面は、どれも 実在する 場面', () => {
+  const ctxs = new Set(Object.values(D.ENEMIES).map((e) => e.ctx));
+  Object.entries(D.CARDS).forEach(([k, c]) => (c.ctx || []).forEach((x) => assert.ok(ctxs.has(x), k + ':' + x)));
 });

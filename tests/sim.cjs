@@ -65,9 +65,9 @@ function playTurn(s, pol) {
   if (s.phase === 'battle') E.endTurn(s);
 }
 
-function runOne(seed, polName, mode) {
+function runOne(seed, polName, mode, hero) {
   const pol = POLICIES[polName];
-  const s = E.newRun(seed, mode || 1);
+  const s = E.newRun(seed, mode || 1, hero || 'hayatsu');
   let steps = 0;
   while (s.phase !== 'end' && steps++ < 6000) {
     if (s.phase === 'intro') E.beginBattle(s);

@@ -93,10 +93,23 @@
       fixed ? h('button', { class: saved ? 'secondary big' : 'primary big', onclick: function () { start(fixed); }, text: saved ? 'はじめから' : 'はじめる' }) : h('div', { class: 'two' }, modes)
     ]));
   }
-  function start(mode) {
-    S = E.newRun((Date.now() ^ (Math.random() * 1e9)) >>> 0, mode === 3 ? 3 : 1);
-    debriefPage = 0;
-    save(); render();
+  function start(mode) { heroScreen(mode === 3 ? 3 : 1); }
+  function heroScreen(mode) {
+    var cards = Object.keys(D.HEROES).map(function (id) {
+      var H = D.HEROES[id];
+      var stat = function (k) { var v = H.stats[k]; return h('span', { class: 'hs' }, [D.STATS[k].name + ' ', h('b', { text: v >= 2 ? '◎' : v === 1 ? '○' : '△' })]); };
+      return h('button', { class: 'herocard', onclick: function () {
+        S = E.newRun((Date.now() ^ (Math.random() * 1e9)) >>> 0, mode, id);
+        debriefPage = 0; save(); render();
+      } }, [
+        sprite('hero_' + H.look, 2, 'hpic'),
+        h('b', { class: 'hname', text: H.name }),
+        h('small', { text: H.note }),
+        h('div', { class: 'hstats' }, ['think', 'act', 'relate'].map(stat).concat([h('span', { class: 'hs' }, ['心の余裕 ', h('b', { text: String(H.maxYoyu) })])])),
+        h('small', { class: 'hcard', text: 'とくい：' + cardName(H.card) })
+      ]);
+    });
+    app.replaceChildren(h('main', { class: 'title heroes' }, [h('h2', { text: 'だれで ぼうけんする？' }), h('div', { class: 'herogrid' }, cards)]));
   }
 
   function hearts(n) {
@@ -193,6 +206,11 @@
     if (c.guard) effects.push(h('span', { class: 'fx guard' }, ['ゆとり ' + (p.guard != null ? p.guard : c.guard)]));
     if (c.heal) effects.push(h('span', { class: 'fx heal' }, ['余裕 +' + c.heal]));
     if (c.draw) effects.push(h('span', { class: 'fx' }, ['1まい 引く']));
+    if (c.adv) effects.push(h('span', { class: 'fx adv' }, ['上級']));
+    if (c.growFail) effects.push(h('span', { class: 'fx reveal' }, ['失敗も 成長']));
+    if (c.tame) effects.push(h('span', { class: 'fx reveal' }, ['いきおいを 0に']));
+    if (c.organize2) effects.push(h('span', { class: 'fx reveal' }, ['整理 ×2']));
+    if (c.clearPanicAll) effects.push(h('span', { class: 'fx reveal' }, ['パニックを ぜんぶ けす']));
     if (c.clearMoya) effects.push(h('span', { class: 'fx reveal' }, ['モヤモヤを けす']));
     if (c.organize) effects.push(h('span', { class: 'fx reveal' }, ['整理する']));
     if (c.escape) effects.push(h('span', { class: 'fx reveal' }, ['その場を はなれる']));
@@ -243,7 +261,7 @@
     var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(en.id, en.form), en.form, 'mon')]);
     if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(en.id)) { monster.innerHTML = SST_ILLUST.svg(en.id); }
     var hero = h('div', { class: 'hero' + (b.guard ? ' shield' : '') }, [
-      sprite('hero', 2, 'me'),
+      sprite('hero_' + (D.HEROES[S.hero] ? D.HEROES[S.hero].look : 'hayatsu'), 2, 'me'),
       h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: 'ゆとり' }), h('b', { text: String(b.guard) })])
     ]);
     var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, bubble, monster]);
@@ -270,7 +288,7 @@
     var help = h('p', { class: 'hint', text: sel >= 0 && E.canPlay(S, sel) ? 'もう一度 タップで 使う' : sel >= 0 ? (E.card(b.hand[sel].id).unplayable ? 'モヤモヤは 使えない' : '元気が たりない／条件が たりない') : 'カードを タップして えらぶ' });
     var end = h('button', { class: 'primary endturn', onclick: function () { act(function () { E.endTurn(S); }); }, text: 'ターンを おわる' });
     var piles = h('div', { class: 'pile draw', text: '山札 ' + b.draw.length });
-    var disc = h('div', { class: 'pile disc', text: 'すて札 ' + b.discard.length });
+    var disc = h('div', { class: 'pile disc', text: 'すて札 ' + b.discard.length + (b.bench.length ? '／控え ' + b.bench.length : '') });
     var flyMsgs = b.msgs.filter(function (m) { return m.tag === 'curse' || m.tag === 'worry' || m.tag === 'inject'; });
     var moyaN = flyMsgs.length;
     var moyaKey = dealKey + ':' + b.msgs.length;
