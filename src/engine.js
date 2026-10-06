@@ -39,7 +39,7 @@
       yoyu: HERO.maxYoyu, maxYoyu: HERO.maxYoyu,
       trust: D.PLAYER.trustStart,
       stats: { think: HERO.stats.think, act: HERO.stats.act, relate: HERO.stats.relate },
-      deck: D.STARTER.concat(HERO.card ? [HERO.card] : []), nigate: {}, items: D.SUPPORT_RULES.start.slice(), equip: D.SUPPORT_RULES.start.slice(),
+      deck: D.STARTER.concat(HERO.cards || []), nigate: {}, items: D.SUPPORT_RULES.start.slice(), equip: D.SUPPORT_RULES.start.slice(),
       usedNormals: [], usedEvents: [], trouble: null,
       map: null, battle: null, reward: null, event: null,
       log: [], result: null
@@ -165,8 +165,9 @@
   // --- 戦い ---
   // ボスは、なくした ハートの数だけ 弱くなる
   function lostHearts(s) { return D.MAP.hearts - s.hearts; }
+  function heroMod(s, E) { var H = D.HEROES[s.hero]; return (H && H.ctxMod && H.ctxMod[E.ctx]) || 1; }
   function bossHp(s, E) {
-    var hp = E.hp * D.RULES.hpScale;
+    var hp = E.hp * D.RULES.hpScale * heroMod(s, E);
     if (E.kind === 'boss') hp *= D.MAP.bossBase * (1 - D.MAP.heartHp * lostHearts(s));
     return Math.round(hp);
   }
@@ -176,7 +177,7 @@
     var en = {
       id: eid, name: E.forms[0], form: 0, hp: bossHp(s, E), maxHp: bossHp(s, E), kind: E.kind, str: 0, mi: 0,
       revealed: false, weak: E.weak.slice(), resist: E.resist.slice(),
-      backfire: (E.backfire || []).slice(), stressMul: 1, bossMul: E.kind === 'boss' ? 1 - D.MAP.heartStress * lostHearts(s) : 1
+      backfire: (E.backfire || []).slice(), stressMul: 1, heroMul: heroMod(s, E), bossMul: E.kind === 'boss' ? 1 - D.MAP.heartStress * lostHearts(s) : 1
     };
     var bench = [], cards = [];
     s.deck.forEach(function (id) { (fits(id, E.ctx) ? cards : bench).push({ id: id }); });
@@ -403,7 +404,7 @@
   function stressOf(s, mv) {
     var en = s.battle.enemy, ctx = D.ENEMIES[en.id].ctx;
     var ng = (s.nigate[ctx] || 0) * D.RULES.nigateStress;
-    return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul * (en.bossMul || 1));
+    return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul * (en.bossMul || 1) * (en.heroMul || 1));
   }
   // 心の余裕は0より下がらない。下がった分は「動けない」中の つらさとして数える
   function hurt(s, dmg) {

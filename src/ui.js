@@ -106,7 +106,9 @@
         h('b', { class: 'hname', text: H.name }),
         h('small', { text: H.note }),
         h('div', { class: 'hstats' }, ['think', 'act', 'relate'].map(stat).concat([h('span', { class: 'hs' }, ['心の余裕 ', h('b', { text: String(H.maxYoyu) })])])),
-        h('small', { class: 'hcard', text: 'とくい：' + cardName(H.card) })
+        h('small', { class: 'hgood', text: 'とくいな場面：' + H.good }),
+        h('small', { class: 'hbad', text: 'にがてな場面：' + H.bad }),
+        h('small', { class: 'hcard', text: '★レア：' + (H.cards.filter(function (id) { return E.card(id).adv; }).map(cardName).join('') || 'なし（成長して 手に入れる）') })
       ]);
     });
     app.replaceChildren(h('main', { class: 'title heroes' }, [h('h2', { text: 'だれで ぼうけんする？' }), h('div', { class: 'herogrid' }, cards)]));
@@ -206,7 +208,6 @@
     if (c.guard) effects.push(h('span', { class: 'fx guard' }, ['ゆとり ' + (p.guard != null ? p.guard : c.guard)]));
     if (c.heal) effects.push(h('span', { class: 'fx heal' }, ['余裕 +' + c.heal]));
     if (c.draw) effects.push(h('span', { class: 'fx' }, ['1まい 引く']));
-    if (c.adv) effects.push(h('span', { class: 'fx adv' }, ['上級']));
     if (c.growFail) effects.push(h('span', { class: 'fx reveal' }, ['失敗も 成長']));
     if (c.tame) effects.push(h('span', { class: 'fx reveal' }, ['いきおいを 0に']));
     if (c.organize2) effects.push(h('span', { class: 'fx reveal' }, ['整理 ×2']));
@@ -223,9 +224,9 @@
     if (p.resist) tags.push(h('span', { class: 'tag', text: '効きにくい' }));
     if (p.backfire) tags.push(h('span', { class: 'tag bad', text: 'あとで こじれる' }));
     var lock = opts.lock;
-    return h('div', { class: 'card t-' + c.type + (opts.selected ? ' selected' : '') + (opts.disabled ? ' off' : '') + (opts.temp ? ' temp' : '') }, [
+    return h('div', { class: 'card' + (c.adv ? ' rare' : '') + ' t-' + c.type + (opts.selected ? ' selected' : '') + (opts.disabled ? ' off' : '') + (opts.temp ? ' temp' : '') }, [
       h('div', { class: 'cost', text: c.unplayable ? '-' : String(c.cost) }),
-      h('div', { class: 'ctype', text: D.TYPE_LABEL[c.type] + (opts.temp ? '・この場' : '') }),
+      c.adv ? h('div', { class: 'rarebadge', text: '★レア ' + (D.RARE_LINE[c.type] || '') }) : h('div', { class: 'ctype', text: D.TYPE_LABEL[c.type] + (opts.temp ? '・この場' : '') }),
       h('div', { class: 'cname', text: c.name }),
       h('div', { class: 'cline', text: c.line }),
       h('div', { class: 'fxs' }, effects),

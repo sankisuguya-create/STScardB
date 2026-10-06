@@ -311,3 +311,11 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .hcard { color: var(--sub); }
 .fx.adv { background: var(--gold); }
 @media (max-width: 760px) { .herogrid { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; } .herocard .hpic { width: 80px; height: 80px; } }
+
+/* レアカード */
+.card.rare { border-color: #b8860b; background: linear-gradient(160deg, #fff8dc 0%, #fffdf7 45%, #fff3c4 100%); box-shadow: 0 4px 0 #8a6508, 0 0 0 2px #ffd23f inset; overflow: hidden; }
+.card.rare::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.75) 50%, transparent 65%); transform: translateX(-120%); animation: shine 2.8s ease-in-out infinite; pointer-events: none; }
+@keyframes shine { 60%, 100% { transform: translateX(120%); } }
+.rarebadge { order: -2; align-self: flex-end; font-size: .68rem; font-weight: 800; color: #7a5200; background: #ffd23f; border: 2px solid #8a6508; border-radius: 999px; padding: 0 6px; }
+.hgood { color: var(--good); font-weight: 700; }
+.hbad { color: var(--bad); font-weight: 700; }

@@ -347,6 +347,8 @@ test('主人公4人：はじめの成長と 心の余裕が ちがう。ハヤ�
   assert.strictEqual(h.stats.think, 2); assert.strictEqual(h.stats.act, 0);
   assert.ok(y.maxYoyu < h.maxYoyu);
   assert.ok(h.deck.includes('write_plan'));
+  assert.ok(h.deck.includes('analyse'));
+  Object.values(D.HEROES).forEach((H) => H.cards.forEach((id) => { const c = D.CARDS[id]; if (c.req) Object.keys(c.req).forEach((k) => { if (k !== 'trust') assert.ok(H.stats[k] >= c.req[k], H.name + ':' + id); }); }));
 });
 
 test('上級カードは、成長が 条件に 届くまで 報酬に 出ない', () => {

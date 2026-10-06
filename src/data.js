@@ -115,6 +115,10 @@
     big_picture: { name: '先を 見通す', line: '「まず これ、次に これ。そうすれば 間に合う」', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 6, organize2: true, draw: 1, req: { think: 3 }, adv: true, ctx: ['study', 'stage', 'join', 'conflict', 'tease'] },
     mediate: { name: '間に 入って 取りもつ', line: '「二人とも、言いたいこと あるよね。じゅんばんに 聞こう」', type: 'relate', judge: 'good', style: 'assertive', cost: 2, solve: 16, trust: 1, req: { relate: 3, think: 1 }, adv: true, ctx: ['conflict', 'join'] },
     calm_master: { name: '自分を 落ちつかせる', line: '「だいじょうぶ。一つずつ やれば いい」と 自分に 言う。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 12, clearPanicAll: true, req: { think: 2, act: 1 }, adv: true, ctx: ['study', 'stage', 'conflict', 'tease', 'join'] },
+    analyse: { name: '原因を 考える', line: '「なんで こうなったんだろう？」と 考えて、手を 打つ。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 9, organize: true, req: { think: 2 }, adv: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
+    make_friends: { name: 'だれとでも 話せる', line: '「ねえねえ、それ 何？」と 自然に 話しかける。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 9, trust: 1, draw: 1, req: { relate: 2 }, adv: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
+    dash: { name: 'すぐに 動いて 片づける', line: '考えるより 先に 体が 動く。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 14, req: { act: 2 }, adv: true, ctx: ['study', 'join', 'stage'] },
+    show_by_doing: { name: '行動で 見せる', line: '言葉より 先に、自分から やってみせる。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 10, guard: 8, trust: 1, req: { act: 3 }, adv: true, ctx: ['study', 'conflict', 'join', 'stage'] },
     ugokenai: { name: '動けない', line: '心の余裕が なくなって、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     wameku: { name: 'わめく', line: 'ぎゃーっと 大声で わめく。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
     junk_advice: { name: '「気にしなきゃ いいじゃん」', line: '友だちの アドバイス。でも、気になるものは 気になる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 1 },
@@ -152,15 +156,23 @@
   };
   var TROUBLE_RANK = ['trouble_hit', 'trouble_rumor', 'trouble_yell', 'trouble_withdraw'];
 
-  var ADVANCED = ['positive_try', 'humor_dodge', 'big_picture', 'mediate', 'calm_master'];
+  var ADVANCED = ['positive_try', 'humor_dodge', 'big_picture', 'mediate', 'calm_master', 'analyse', 'make_friends', 'dash', 'show_by_doing'];
+  // レアカードの 系統（かしこさ系・社交系・実働系）
+  var RARE_LINE = { think: 'かしこさ系', relate: '社交系', act: '実働系', calm: 'かしこさ系' };
 
   // 主人公4人：はじめの成長・心の余裕・とくいカード
+  // ctxMod：その場面の 課題の 問題の大きさ・ストレスに かける（1より小さいと 楽、大きいと きびしい）
   var HEROES = {
-    hanoko: { name: 'ハノコ', note: 'かしこいが 運動は にがて', stats: { think: 2, act: 0, relate: 1 }, maxYoyu: 50, card: 'write_plan', look: 'hanoko' },
-    tario: { name: 'タリオ', note: '社交的だが 勉強は にがて', stats: { think: 0, act: 1, relate: 2 }, maxYoyu: 50, card: 'together', look: 'tario' },
-    musuhi: { name: 'ムスヒ', note: '運動は とくいだが 人づきあいは にがて', stats: { think: 1, act: 2, relate: 0 }, maxYoyu: 50, card: 'start_now', look: 'musuhi' },
-    hayatsu: { name: 'ハヤツ', note: '何でも できるが、打たれ弱い', stats: { think: 1, act: 1, relate: 1 }, maxYoyu: 36, card: 'sort_out', look: 'hayatsu' }
+    hanoko: { name: 'ハノコ', note: 'かしこいが 運動は にがて', stats: { think: 2, act: 0, relate: 1 }, maxYoyu: 50, cards: ['analyse', 'write_plan'], look: 'hanoko',
+      ctxMod: { study: 0.9, conflict: 1.1, join: 1.2, tease: 1.1, stage: 1.8, danger: 1.3 }, good: 'べんきょう', bad: '発表・練習' },
+    tario: { name: 'タリオ', note: '社交的だが 勉強は にがて', stats: { think: 0, act: 1, relate: 2 }, maxYoyu: 50, cards: ['make_friends', 'together'], look: 'tario',
+      ctxMod: { study: 1.5, conflict: 0.8, join: 0.75, tease: 0.85, stage: 1.0, danger: 1.0 }, good: '友だち・遊び', bad: 'べんきょう' },
+    musuhi: { name: 'ムスヒ', note: '運動は とくいだが 人づきあいは にがて', stats: { think: 1, act: 2, relate: 0 }, maxYoyu: 50, cards: ['dash', 'start_now'], look: 'musuhi',
+      ctxMod: { study: 1.0, conflict: 1.4, join: 1.4, tease: 1.3, stage: 0.75, danger: 0.8 }, good: '発表・練習・あぶない場面', bad: '友だち・からかい' },
+    hayatsu: { name: 'ハヤツ', note: '何でも できるが、打たれ弱い', stats: { think: 1, act: 1, relate: 1 }, maxYoyu: 36, cards: ['sort_out'], look: 'hayatsu',
+      ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.2, stage: 1.0, danger: 1.0 }, good: 'どれも ふつう', bad: 'からかい（打たれ弱い）' }
   };
+
 
   var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'keep_distance', 'breathe', 'talk', 'okoru', 'run_away'];
   var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply', 'plan_time', 'sukkiri', 'review_notes'];
@@ -412,7 +424,7 @@
     });
   });
 
-  var DATA = { ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
+  var DATA = { RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
   else root.SST_DATA = DATA;
 })(this);
