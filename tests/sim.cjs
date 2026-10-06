@@ -78,7 +78,7 @@ function runOne(seed, polName, mode, hero) {
     } else if (s.phase === 'battle') playTurn(s, pol);
     else if (s.phase === 'reward') {
       if (s.reward.support) E.takeSupport(s);
-      const c = s.reward.choices.find((id) => pol.reward(E.card(id)));
+      const c = s.reward.choices.find((id) => E.card(id).adv && pol.reward(E.card(id))) || s.reward.choices.find((id) => pol.reward(E.card(id)));
       E.pickReward(s, c || null);
     } else if (s.phase === 'rest') {
       E.setEquip(s, s.items.slice(0, D.SUPPORT_RULES.slots));

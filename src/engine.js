@@ -361,6 +361,8 @@
       if (c.organize) organize(s);
       if (c.clearMoya) clearMoya(s, true);
       if (c.organize2) { organize(s); organize(s); }
+      if (c.formTo2) { while (en.form < 2) organize(s); }
+      if (c.energy) { b.energy += c.energy; msg(s, '元気が +' + c.energy + '。', 'next'); }
       if (c.tame && en.str > 0) { en.str = 0; msg(s, 'ギャグで かわして、相手の いきおいが なくなった。', 'clear'); }
       if (c.clearPanicAll) {
         var np = 0;
@@ -569,15 +571,17 @@
     s.reward = { choices: rewardChoices(s), other: E.other, support: sup, escaped: !!escaped };
   }
 
+  // 報酬：その課題の 場面で 使える カードだけを 出す。レアは 条件を 満たし、運が よい時だけ（大きなかべは 出やすい）
   function rewardChoices(s) {
-    var b = s.battle;
+    var b = s.battle, ctx = D.ENEMIES[b.enemy.id].ctx;
     var want = s.trust >= D.RULES.highTrust ? D.RULES.rewardChoicesHighTrust : D.RULES.rewardChoices;
     var situ = shuffle(s, Object.keys(b.playedOk)).slice(0, 2);
     if (b.teacherCard && situ.indexOf(b.teacherCard) < 0) situ = [b.teacherCard].concat(situ).slice(0, 2);
-    var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0; }));
-    var adv = shuffle(s, D.ADVANCED.filter(function (id) { return meetsReq(s, card(id)) && s.deck.indexOf(id) < 0; }));
+    var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0 && fits(id, ctx); }));
     var out = situ.concat(pool).slice(0, want);
-    if (adv.length) out[out.length - 1] = adv[0];
+    var chance = (b.enemy.kind === 'elite' ? D.RULES.rareChanceElite : D.RULES.rareChance)[s.act] || 0;
+    var adv = shuffle(s, D.ADVANCED.filter(function (id) { var c = card(id); return !c.signature && meetsReq(s, c) && s.deck.indexOf(id) < 0 && fits(id, ctx); }));
+    if (adv.length && rand(s) < chance) { if (out.length >= want) out[out.length - 1] = adv[0]; else out.push(adv[0]); }
     return out;
   }
 

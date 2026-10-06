@@ -360,10 +360,9 @@ test('上級カードは、成長が 条件に 届くまで 報酬に 出ない'
     s.battle.hand.push({ id: 'try_it', temp: true }); E.playCard(s, s.battle.hand.length - 1);
     if (s.phase === 'reward') s.reward.choices.forEach((id) => assert.ok(!D.CARDS[id].adv, id));
   }
-  const s = E.newRun(3, 1, 'hayatsu'); s.stats = { think: 3, act: 3, relate: 3 }; s.trust = 8;
   let seen = false;
-  for (let i = 0; i < 20 && !seen; i++) {
-    const t = E.newRun(i + 3, 1, 'hayatsu'); t.stats = { think: 3, act: 3, relate: 3 }; t.trust = 8;
+  for (let i = 0; i < 200 && !seen; i++) {
+    const t = E.newRun(i + 3, 1, 'hayatsu'); t.stats = { think: 5, act: 5, relate: 5 }; t.trust = 8; t.act = 1; t.map = t.map;
     E.chooseNode(t, E.reachable(t)[0]);
     if (t.phase !== 'battle') continue;
     t.battle.enemy.hp = 0; t.battle.hand.push({ id: 'try_it', temp: true }); t.battle.energy = 3; E.playCard(t, t.battle.hand.length - 1);
@@ -386,4 +385,21 @@ test('ハヤツ：ピンチの時は 回復が 半分、モヤモヤの 減り�
   t.yoyu = 40; t.battle.guard = 999; t.battle.hand = [{ id: 'moyamoya' }]; t.deck.push('moyamoya');
   const y0 = t.yoyu; E.endTurn(t);
   assert.ok(y0 - t.yoyu >= D.RULES.moyaDrain * 2);
+});
+
+test('報酬の カードは、その課題の 場面で 使えるものだけ', () => {
+  for (let seed = 1; seed < 120; seed++) {
+    const s = E.newRun(seed, 1, 'tario'); E.chooseNode(s, E.reachable(s)[0]);
+    if (s.phase !== 'battle') continue;
+    const ctx = D.ENEMIES[s.battle.enemy.id].ctx;
+    s.battle.enemy.hp = 0; s.battle.hand.push({ id: 'endure', temp: true }); s.battle.energy = 3;
+    E.playCard(s, s.battle.hand.length - 1);
+    if (s.phase !== 'reward') continue;
+    s.reward.choices.forEach((id) => assert.ok(E.fits(id, ctx), id + ' @' + ctx));
+  }
+});
+
+test('レアは 1層では ほとんど 出ず、2層から 出はじめる', () => {
+  assert.ok(D.RULES.rareChance[0] < 0.1 && D.RULES.rareChance[1] >= 0.3);
+  assert.ok(D.ADVANCED.length >= 18);
 });
