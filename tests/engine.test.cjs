@@ -127,14 +127,14 @@ test('アイテム：戦いごとに1回、なくならない。先生は場面�
 });
 
 test('整理するカードで 姿が3段階 現実に近づき、いきおいが弱まる。かしこさ2なら 1段階目から', () => {
-  const s = E.newRun(11, 1, 'tario');
+  const s = E.newRun(11, 1, 'musuhi');
   E.chooseNode(s, 0);
   const en = s.battle.enemy, E0 = D.ENEMIES[en.id];
   assert.strictEqual(en.form, 0); assert.strictEqual(en.name, E0.forms[0]);
   s.battle.hand.push({ id: 'sort_out', temp: true }); s.battle.energy = 3;
   E.playCard(s, s.battle.hand.length - 1);
   assert.strictEqual(en.form, 1); assert.ok(en.stressMul < 1);
-  const s2 = E.newRun(11, 1, 'tario'); s2.stats.think = 2;
+  const s2 = E.newRun(11, 1, 'musuhi'); s2.stats.think = 2;
   E.chooseNode(s2, 0);
   assert.strictEqual(s2.battle.enemy.form, 1);
 });
@@ -242,7 +242,7 @@ test('信頼の理由（why）は すべて振り返りで 文に できる', ()
   }
 });
 
-test('マップ：7段＋ボス、線で つながった マスしか えらべない、課題の半分以上が ボスに 関連', () => {
+test('マップ：10段＋ボス、線で つながった マスしか えらべない、課題の半分以上が ボスに 関連', () => {
   for (let seed = 1; seed < 50; seed++) {
     const s = E.newRun(seed, 1);
     assert.strictEqual(s.map.rows.length, D.MAP.rows + 1);
@@ -344,7 +344,7 @@ test('すべての課題に 状きょうの 説明が ある。マスを えら�
 
 test('主人公4人：はじめの成長と 心の余裕が ちがう。ハヤツは 打たれ弱い', () => {
   const h = E.newRun(1, 1, 'hanoko'), y = E.newRun(1, 1, 'hayatsu');
-  assert.strictEqual(h.stats.think, 2); assert.strictEqual(h.stats.act, 0);
+  assert.strictEqual(h.stats.think, 2); assert.strictEqual(h.stats.act, -1);
   assert.deepStrictEqual(y.stats, { think: 2, act: 2, relate: 2 });
   assert.ok(h.deck.includes('write_plan'));
   assert.ok(h.deck.includes('analyse'));
@@ -402,4 +402,27 @@ test('報酬の カードは、その課題の 場面で 使えるものだけ',
 test('レアは 1層では ほとんど 出ず、2層から 出はじめる', () => {
   assert.ok(D.RULES.rareChance[0] < 0.1 && D.RULES.rareChance[1] >= 0.3);
   assert.ok(D.ADVANCED.length >= 18);
+});
+
+test('苦手（成長が マイナス）の 種類の カードは 失敗することが ある', () => {
+  let fails = 0;
+  for (let seed = 1; seed < 200; seed++) {
+    const s = E.newRun(seed, 1, 'hanoko'); E.chooseNode(s, E.reachable(s)[0]);
+    if (s.phase !== 'battle') continue;
+    s.battle.hand.push({ id: 'move_body', temp: true }); s.battle.energy = 3;
+    E.playCard(s, s.battle.hand.length - 1);
+    if (!s.log.filter((e) => e.k === 'play').pop().ok) fails++;
+  }
+  assert.ok(fails > 10, String(fails));
+});
+
+test('マップの 線は 分かれ道と 合流を ふくむ', () => {
+  let merges = 0, splits = 0;
+  for (let seed = 1; seed < 30; seed++) {
+    const s = E.newRun(seed, 1);
+    const into = {}, out = {};
+    s.map.edges.forEach((e) => { into[(e.r + 1) + ':' + e.to] = (into[(e.r + 1) + ':' + e.to] || 0) + 1; out[e.r + ':' + e.from] = (out[e.r + ':' + e.from] || 0) + 1; });
+    merges += Object.values(into).filter((n) => n > 1).length; splits += Object.values(out).filter((n) => n > 1).length;
+  }
+  assert.ok(merges > 60 && splits > 60, merges + ' ' + splits);
 });

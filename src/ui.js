@@ -97,7 +97,7 @@
   function heroScreen(mode) {
     var cards = Object.keys(D.HEROES).map(function (id) {
       var H = D.HEROES[id];
-      var stat = function (k) { var v = H.stats[k]; return h('span', { class: 'hs' }, [D.STATS[k].name + ' ', h('b', { text: v >= 2 ? '◎' : v === 1 ? '○' : '△' })]); };
+      var stat = function (k) { var v = H.stats[k]; return h('span', { class: 'hs' + (v < 0 ? ' minus' : '') }, [D.STATS[k].name + ' ', h('b', { text: v >= 2 ? '◎' : v === 1 ? '○' : v === 0 ? '△' : '×（' + v + '）' })]); };
       return h('button', { class: 'herocard', onclick: function () {
         S = E.newRun((Date.now() ^ (Math.random() * 1e9)) >>> 0, mode, id);
         debriefPage = 0; save(); render();
@@ -157,7 +157,7 @@
   };
 
   // --- マップ（線で つながった 分かれ道） ---
-  var MX = 150, MY = 58, MW = 4 * MX, MH = (D.MAP.rows + 1) * MY;
+  var MX = 150, MY = 46, MW = 4 * MX, MH = (D.MAP.rows + 1) * MY;
   function nodeXY(r, col) { return [col * MX + MX / 2, MH - (r + 0.5) * MY]; }
   function mapScreen() {
     var ok = E.reachable(S), m = S.map;
@@ -195,7 +195,7 @@
       bossBanner(),
       notice ? h('p', { class: 'praise', text: notice }) : null,
       h('div', { class: 'maprow2' }, [itemSlots(false), h('p', { class: 'hint', text: '光っている マスから 次に 行くところを えらぼう' })]),
-      h('div', { class: 'mapbox' }, [svg].concat(nodes))
+      h('div', { class: 'mapbox', style: 'aspect-ratio:' + MW + ' / ' + MH }, [svg].concat(nodes))
     ]);
   }
 
@@ -230,7 +230,7 @@
       h('div', { class: 'cname', text: c.name }),
       h('div', { class: 'cline', text: c.line }),
       h('div', { class: 'fxs' }, effects),
-      c.chance ? h('div', { class: 'chance c-' + c.chance, text: D.CHANCE[c.chance].label }) : null,
+      (c.chance || (D.STATS[c.type] && S && S.stats[c.type] < 0)) ? h('div', { class: 'chance c-' + (c.chance || 'weak'), text: (D.STATS[c.type] && S && S.stats[c.type] < 0) ? '失敗するかも（にがて）' : D.CHANCE[c.chance].label }) : null,
       tags.length ? h('div', { class: 'tags' }, tags) : null,
       lock ? h('div', { class: 'lock', text: lock }) : null,
       c.ctx && opts.showCtx ? h('div', { class: 'ctx', text: '使える場面：' + c.ctx.map(function (k) { return D.CTX_LABEL[k]; }).join('・') }) : null

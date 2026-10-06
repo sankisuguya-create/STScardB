@@ -211,7 +211,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .hearts { display: inline-flex; gap: 2px; font-size: 1.6rem; color: #ff5a6a; text-shadow: 0 2px 0 var(--line); }
 .ename .hearts { font-size: 1.2rem; margin-left: 10px; vertical-align: middle; }
 .heart.lost { color: #8d98bd; }
-.mapbox { position: relative; width: 600px; max-width: 100%; aspect-ratio: 600 / 464; flex: none; }
+.mapbox { position: relative; width: 600px; max-width: 100%; flex: none; }
 .maplines { position: absolute; inset: 0; width: 100%; height: 100%; }
 .maplines .ml { stroke: #8d98bd; stroke-width: 3; stroke-dasharray: 6 6; }
 .maplines .ml.past { stroke: #5b6578; }
@@ -258,7 +258,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   /* マップ */
   .bb-name { font-size: 1.7rem; }
   .maprow2 { flex-direction: column; gap: 6px; }
-  .mapbox { width: 100%; aspect-ratio: 600 / 820; }
+  .mapbox { width: 100%; aspect-ratio: 600 / 1150 !important; }
   .maplines .ml { vector-effect: non-scaling-stroke; }
   .mnode { min-width: 0; width: 21%; padding: 2px 3px; min-height: 40px; }
   .mapbox { margin: 0 4px; width: calc(100% - 8px); }
@@ -328,6 +328,10 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .rarebadge { order: -2; align-self: flex-end; font-size: .68rem; font-weight: 800; color: #7a5200; background: #ffd23f; border: 2px solid #8a6508; border-radius: 999px; padding: 0 6px; }
 .hgood { color: var(--good); font-weight: 700; }
 .hbad { color: var(--bad); font-weight: 700; }
+.hs.minus b { color: var(--bad); }
+.chance.c-weak { color: var(--bad); font-weight: 800; }
+.mnode { min-height: 36px; padding: 1px 6px; }
+.mnode b { font-size: .88rem; }
 
 </style>
 </head>
@@ -359,7 +363,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     low: { p: 0.35, label: '失敗するかも' }
   };
 
-  var PLAYER = { maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
+  var PLAYER = { statMin: -2, weakFail: 0.2, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
 
   var RULES = {
     stressThreshold: 0.3,      // 心の余裕がこの割合未満でカッとなるが手札にまざる
@@ -508,12 +512,12 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   // 主人公4人：はじめの成長・心の余裕・とくいカード
   // ctxMod：その場面の 課題の 問題の大きさ・ストレスに かける（1より小さいと 楽、大きいと きびしい）
   var HEROES = {
-    hanoko: { name: 'ハノコ', note: 'かしこいが 運動は にがて', stats: { think: 2, act: 0, relate: 1 }, maxYoyu: 50, cards: ['analyse', 'write_plan'], look: 'hanoko',
-      ctxMod: { study: 0.9, conflict: 1.1, join: 1.2, tease: 1.1, stage: 1.8, danger: 1.3 }, good: 'べんきょう', bad: '発表・練習' },
-    tario: { name: 'タリオ', note: '社交的だが 勉強は にがて', stats: { think: 0, act: 1, relate: 2 }, maxYoyu: 50, cards: ['make_friends', 'together'], look: 'tario',
-      ctxMod: { study: 1.5, conflict: 0.8, join: 0.75, tease: 0.85, stage: 1.0, danger: 1.0 }, good: '友だち・遊び', bad: 'べんきょう' },
-    musuhi: { name: 'ムスヒ', note: '運動は とくいだが 人づきあいは にがて', stats: { think: 1, act: 2, relate: 0 }, maxYoyu: 50, cards: ['dash', 'start_now'], look: 'musuhi',
-      ctxMod: { study: 1.0, conflict: 1.4, join: 1.4, tease: 1.3, stage: 0.75, danger: 0.8 }, good: '発表・練習・あぶない場面', bad: '友だち・からかい' },
+    hanoko: { name: 'ハノコ', note: 'かしこいが 運動は にがて', stats: { think: 2, act: -1, relate: 1 }, maxYoyu: 50, cards: ['analyse', 'write_plan'], look: 'hanoko',
+      ctxMod: { study: 0.8, conflict: 1.1, join: 1.3, tease: 1.1, stage: 1.9, danger: 1.4 }, good: 'べんきょう', bad: '発表・練習' },
+    tario: { name: 'タリオ', note: '社交的だが 勉強は にがて', stats: { think: -1, act: 1, relate: 2 }, maxYoyu: 50, cards: ['make_friends', 'together'], look: 'tario',
+      ctxMod: { study: 1.4, conflict: 0.7, join: 0.6, tease: 0.75, stage: 1.0, danger: 1.0 }, good: '友だち・遊び', bad: 'べんきょう' },
+    musuhi: { name: 'ムスヒ', note: '運動は とくいだが 人づきあいは にがて', stats: { think: 1, act: 2, relate: -1 }, maxYoyu: 50, cards: ['dash', 'start_now'], look: 'musuhi',
+      ctxMod: { study: 1.0, conflict: 1.6, join: 1.6, tease: 1.5, stage: 0.6, danger: 0.65 }, good: '発表・練習・あぶない場面', bad: '友だち・からかい' },
     hayatsu: { name: 'ハヤツ', note: '何でも できるが、一度 つまずくと なかなか 立ち直れない', stats: { think: 2, act: 2, relate: 2 }, maxYoyu: 50, cards: ['sort_out'], look: 'hayatsu',
       ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.0, stage: 1.0, danger: 1.0 }, good: 'どれも とくい', bad: 'ピンチに 弱い（マイナスカードに 弱い）',
       fragile: { pinch: 0.4, healMul: 0.5, frozenRecover: 0.05, nigateMul: 2, moyaMul: 2, panicDrain: 3, stressThreshold: 0.45, slumpBattles: 3, slumpPanic: 2 } }
@@ -750,7 +754,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['friend_trouble', 'library', 'family_talk'] },
     { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['library', 'family_talk', 'friend_trouble'] }
   ];
-  var MAP = { rows: 7, cols: 4, paths: 3, relatedShare: 0.5, hearts: 3, heartHp: 0.22, heartStress: 0.2, bossBase: 1.35, actHeal: 1 };
+  var MAP = { rows: 10, cols: 4, paths: 4, crossEdge: 0.35, relatedShare: 0.5, hearts: 3, heartHp: 0.22, heartStress: 0.2, bossBase: 1.35, actHeal: 1 };
 
   var TEXT = {
     title: 'こころの 冒険',
@@ -844,6 +848,14 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
         }
       }
     });
+    for (var r2 = 0; r2 < M.rows - 1; r2++) {
+      Object.keys(nodes[r2]).forEach(function (c) {
+        c = Number(c);
+        [c - 1, c + 1].forEach(function (nc) {
+          if (nodes[r2 + 1][nc] && rand(s) < M.crossEdge) edges[r2 + ':' + c + ':' + nc] = 1;
+        });
+      });
+    }
     var rows = nodes.map(function (o) { return Object.keys(o).map(Number).sort(function (a, b) { return a - b; }).map(function (c) { return o[c]; }); });
     // マスの種類
     rows.forEach(function (row, r) {
@@ -1127,7 +1139,9 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       if (pi >= 0) { b.exhaust.push(b.hand.splice(pi, 1)[0]); msg(s, '落ちついて、パニックが 1つ おさまった。', 'clear'); }
     }
 
-    var ok = c.chance ? rand(s) < D.CHANCE[c.chance].p : true;
+    var okP = c.chance ? D.CHANCE[c.chance].p : 1;
+    if (st && s.stats[st] < 0) okP -= D.PLAYER.weakFail * -s.stats[st];
+    var ok = okP >= 1 ? true : rand(s) < okP;
     var entry = { k: 'play', card: h.id, enemy: en.id, ok: ok, judge: c.judge, style: c.style, temp: !!h.temp, revealedBefore: en.revealed };
 
     if (c.trust) addTrust(s, c.trust, h.id, c.trust > 0);
@@ -1538,7 +1552,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var errs = [];
     if (s.yoyu < 0 || s.yoyu > s.maxYoyu) errs.push('yoyu range');
     if (s.trust < 0 || s.trust > D.PLAYER.trustMax) errs.push('trust range');
-    Object.keys(s.stats).forEach(function (k) { if (s.stats[k] < 0 || s.stats[k] > D.PLAYER.statMax) errs.push('stat range ' + k); });
+    Object.keys(s.stats).forEach(function (k) { if (s.stats[k] < D.PLAYER.statMin || s.stats[k] > D.PLAYER.statMax) errs.push('stat range ' + k); });
     if (s.battle && s.phase === 'battle') {
       var b = s.battle;
       var piles = b.draw.concat(b.hand, b.discard, b.exhaust, b.bench).filter(function (h) { return !h.temp; });
@@ -1862,7 +1876,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   function heroScreen(mode) {
     var cards = Object.keys(D.HEROES).map(function (id) {
       var H = D.HEROES[id];
-      var stat = function (k) { var v = H.stats[k]; return h('span', { class: 'hs' }, [D.STATS[k].name + ' ', h('b', { text: v >= 2 ? '◎' : v === 1 ? '○' : '△' })]); };
+      var stat = function (k) { var v = H.stats[k]; return h('span', { class: 'hs' + (v < 0 ? ' minus' : '') }, [D.STATS[k].name + ' ', h('b', { text: v >= 2 ? '◎' : v === 1 ? '○' : v === 0 ? '△' : '×（' + v + '）' })]); };
       return h('button', { class: 'herocard', onclick: function () {
         S = E.newRun((Date.now() ^ (Math.random() * 1e9)) >>> 0, mode, id);
         debriefPage = 0; save(); render();
@@ -1922,7 +1936,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   };
 
   // --- マップ（線で つながった 分かれ道） ---
-  var MX = 150, MY = 58, MW = 4 * MX, MH = (D.MAP.rows + 1) * MY;
+  var MX = 150, MY = 46, MW = 4 * MX, MH = (D.MAP.rows + 1) * MY;
   function nodeXY(r, col) { return [col * MX + MX / 2, MH - (r + 0.5) * MY]; }
   function mapScreen() {
     var ok = E.reachable(S), m = S.map;
@@ -1960,7 +1974,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       bossBanner(),
       notice ? h('p', { class: 'praise', text: notice }) : null,
       h('div', { class: 'maprow2' }, [itemSlots(false), h('p', { class: 'hint', text: '光っている マスから 次に 行くところを えらぼう' })]),
-      h('div', { class: 'mapbox' }, [svg].concat(nodes))
+      h('div', { class: 'mapbox', style: 'aspect-ratio:' + MW + ' / ' + MH }, [svg].concat(nodes))
     ]);
   }
 
@@ -1995,7 +2009,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       h('div', { class: 'cname', text: c.name }),
       h('div', { class: 'cline', text: c.line }),
       h('div', { class: 'fxs' }, effects),
-      c.chance ? h('div', { class: 'chance c-' + c.chance, text: D.CHANCE[c.chance].label }) : null,
+      (c.chance || (D.STATS[c.type] && S && S.stats[c.type] < 0)) ? h('div', { class: 'chance c-' + (c.chance || 'weak'), text: (D.STATS[c.type] && S && S.stats[c.type] < 0) ? '失敗するかも（にがて）' : D.CHANCE[c.chance].label }) : null,
       tags.length ? h('div', { class: 'tags' }, tags) : null,
       lock ? h('div', { class: 'lock', text: lock }) : null,
       c.ctx && opts.showCtx ? h('div', { class: 'ctx', text: '使える場面：' + c.ctx.map(function (k) { return D.CTX_LABEL[k]; }).join('・') }) : null

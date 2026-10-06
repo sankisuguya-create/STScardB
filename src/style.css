@@ -202,7 +202,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .hearts { display: inline-flex; gap: 2px; font-size: 1.6rem; color: #ff5a6a; text-shadow: 0 2px 0 var(--line); }
 .ename .hearts { font-size: 1.2rem; margin-left: 10px; vertical-align: middle; }
 .heart.lost { color: #8d98bd; }
-.mapbox { position: relative; width: 600px; max-width: 100%; aspect-ratio: 600 / 464; flex: none; }
+.mapbox { position: relative; width: 600px; max-width: 100%; flex: none; }
 .maplines { position: absolute; inset: 0; width: 100%; height: 100%; }
 .maplines .ml { stroke: #8d98bd; stroke-width: 3; stroke-dasharray: 6 6; }
 .maplines .ml.past { stroke: #5b6578; }
@@ -249,7 +249,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   /* マップ */
   .bb-name { font-size: 1.7rem; }
   .maprow2 { flex-direction: column; gap: 6px; }
-  .mapbox { width: 100%; aspect-ratio: 600 / 820; }
+  .mapbox { width: 100%; aspect-ratio: 600 / 1150 !important; }
   .maplines .ml { vector-effect: non-scaling-stroke; }
   .mnode { min-width: 0; width: 21%; padding: 2px 3px; min-height: 40px; }
   .mapbox { margin: 0 4px; width: calc(100% - 8px); }
@@ -319,3 +319,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .rarebadge { order: -2; align-self: flex-end; font-size: .68rem; font-weight: 800; color: #7a5200; background: #ffd23f; border: 2px solid #8a6508; border-radius: 999px; padding: 0 6px; }
 .hgood { color: var(--good); font-weight: 700; }
 .hbad { color: var(--bad); font-weight: 700; }
+.hs.minus b { color: var(--bad); }
+.chance.c-weak { color: var(--bad); font-weight: 800; }
+.mnode { min-height: 36px; padding: 1px 6px; }
+.mnode b { font-size: .88rem; }

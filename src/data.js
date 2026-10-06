@@ -23,7 +23,7 @@
     low: { p: 0.35, label: '失敗するかも' }
   };
 
-  var PLAYER = { maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
+  var PLAYER = { statMin: -2, weakFail: 0.2, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
 
   var RULES = {
     stressThreshold: 0.3,      // 心の余裕がこの割合未満でカッとなるが手札にまざる
@@ -172,12 +172,12 @@
   // 主人公4人：はじめの成長・心の余裕・とくいカード
   // ctxMod：その場面の 課題の 問題の大きさ・ストレスに かける（1より小さいと 楽、大きいと きびしい）
   var HEROES = {
-    hanoko: { name: 'ハノコ', note: 'かしこいが 運動は にがて', stats: { think: 2, act: 0, relate: 1 }, maxYoyu: 50, cards: ['analyse', 'write_plan'], look: 'hanoko',
-      ctxMod: { study: 0.9, conflict: 1.1, join: 1.2, tease: 1.1, stage: 1.8, danger: 1.3 }, good: 'べんきょう', bad: '発表・練習' },
-    tario: { name: 'タリオ', note: '社交的だが 勉強は にがて', stats: { think: 0, act: 1, relate: 2 }, maxYoyu: 50, cards: ['make_friends', 'together'], look: 'tario',
-      ctxMod: { study: 1.5, conflict: 0.8, join: 0.75, tease: 0.85, stage: 1.0, danger: 1.0 }, good: '友だち・遊び', bad: 'べんきょう' },
-    musuhi: { name: 'ムスヒ', note: '運動は とくいだが 人づきあいは にがて', stats: { think: 1, act: 2, relate: 0 }, maxYoyu: 50, cards: ['dash', 'start_now'], look: 'musuhi',
-      ctxMod: { study: 1.0, conflict: 1.4, join: 1.4, tease: 1.3, stage: 0.75, danger: 0.8 }, good: '発表・練習・あぶない場面', bad: '友だち・からかい' },
+    hanoko: { name: 'ハノコ', note: 'かしこいが 運動は にがて', stats: { think: 2, act: -1, relate: 1 }, maxYoyu: 50, cards: ['analyse', 'write_plan'], look: 'hanoko',
+      ctxMod: { study: 0.8, conflict: 1.1, join: 1.3, tease: 1.1, stage: 1.9, danger: 1.4 }, good: 'べんきょう', bad: '発表・練習' },
+    tario: { name: 'タリオ', note: '社交的だが 勉強は にがて', stats: { think: -1, act: 1, relate: 2 }, maxYoyu: 50, cards: ['make_friends', 'together'], look: 'tario',
+      ctxMod: { study: 1.4, conflict: 0.7, join: 0.6, tease: 0.75, stage: 1.0, danger: 1.0 }, good: '友だち・遊び', bad: 'べんきょう' },
+    musuhi: { name: 'ムスヒ', note: '運動は とくいだが 人づきあいは にがて', stats: { think: 1, act: 2, relate: -1 }, maxYoyu: 50, cards: ['dash', 'start_now'], look: 'musuhi',
+      ctxMod: { study: 1.0, conflict: 1.6, join: 1.6, tease: 1.5, stage: 0.6, danger: 0.65 }, good: '発表・練習・あぶない場面', bad: '友だち・からかい' },
     hayatsu: { name: 'ハヤツ', note: '何でも できるが、一度 つまずくと なかなか 立ち直れない', stats: { think: 2, act: 2, relate: 2 }, maxYoyu: 50, cards: ['sort_out'], look: 'hayatsu',
       ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.0, stage: 1.0, danger: 1.0 }, good: 'どれも とくい', bad: 'ピンチに 弱い（マイナスカードに 弱い）',
       fragile: { pinch: 0.4, healMul: 0.5, frozenRecover: 0.05, nigateMul: 2, moyaMul: 2, panicDrain: 3, stressThreshold: 0.45, slumpBattles: 3, slumpPanic: 2 } }
@@ -414,7 +414,7 @@
     { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['friend_trouble', 'library', 'family_talk'] },
     { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['library', 'family_talk', 'friend_trouble'] }
   ];
-  var MAP = { rows: 7, cols: 4, paths: 3, relatedShare: 0.5, hearts: 3, heartHp: 0.22, heartStress: 0.2, bossBase: 1.35, actHeal: 1 };
+  var MAP = { rows: 10, cols: 4, paths: 4, crossEdge: 0.35, relatedShare: 0.5, hearts: 3, heartHp: 0.22, heartStress: 0.2, bossBase: 1.35, actHeal: 1 };
 
   var TEXT = {
     title: 'こころの 冒険',

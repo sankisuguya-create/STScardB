@@ -67,6 +67,14 @@
         }
       }
     });
+    for (var r2 = 0; r2 < M.rows - 1; r2++) {
+      Object.keys(nodes[r2]).forEach(function (c) {
+        c = Number(c);
+        [c - 1, c + 1].forEach(function (nc) {
+          if (nodes[r2 + 1][nc] && rand(s) < M.crossEdge) edges[r2 + ':' + c + ':' + nc] = 1;
+        });
+      });
+    }
     var rows = nodes.map(function (o) { return Object.keys(o).map(Number).sort(function (a, b) { return a - b; }).map(function (c) { return o[c]; }); });
     // マスの種類
     rows.forEach(function (row, r) {
@@ -350,7 +358,9 @@
       if (pi >= 0) { b.exhaust.push(b.hand.splice(pi, 1)[0]); msg(s, '落ちついて、パニックが 1つ おさまった。', 'clear'); }
     }
 
-    var ok = c.chance ? rand(s) < D.CHANCE[c.chance].p : true;
+    var okP = c.chance ? D.CHANCE[c.chance].p : 1;
+    if (st && s.stats[st] < 0) okP -= D.PLAYER.weakFail * -s.stats[st];
+    var ok = okP >= 1 ? true : rand(s) < okP;
     var entry = { k: 'play', card: h.id, enemy: en.id, ok: ok, judge: c.judge, style: c.style, temp: !!h.temp, revealedBefore: en.revealed };
 
     if (c.trust) addTrust(s, c.trust, h.id, c.trust > 0);
@@ -761,7 +771,7 @@
     var errs = [];
     if (s.yoyu < 0 || s.yoyu > s.maxYoyu) errs.push('yoyu range');
     if (s.trust < 0 || s.trust > D.PLAYER.trustMax) errs.push('trust range');
-    Object.keys(s.stats).forEach(function (k) { if (s.stats[k] < 0 || s.stats[k] > D.PLAYER.statMax) errs.push('stat range ' + k); });
+    Object.keys(s.stats).forEach(function (k) { if (s.stats[k] < D.PLAYER.statMin || s.stats[k] > D.PLAYER.statMax) errs.push('stat range ' + k); });
     if (s.battle && s.phase === 'battle') {
       var b = s.battle;
       var piles = b.draw.concat(b.hand, b.discard, b.exhaust, b.bench).filter(function (h) { return !h.temp; });
