@@ -136,7 +136,7 @@
     var ok = E.reachable(S), m = S.map;
     var ns = 'http://www.w3.org/2000/svg';
     var svg = document.createElementNS(ns, 'svg');
-    svg.setAttribute('viewBox', '0 0 ' + MW + ' ' + MH); svg.setAttribute('class', 'maplines');
+    svg.setAttribute('viewBox', '0 0 ' + MW + ' ' + MH); svg.setAttribute('preserveAspectRatio', 'none'); svg.setAttribute('class', 'maplines');
     var bossR = m.rows.length - 1;
     function line(a, b, cls) {
       var l = document.createElementNS(ns, 'line');

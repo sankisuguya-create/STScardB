@@ -9,7 +9,8 @@ const fs = require('node:fs');
   const out = process.argv[2] || path.join(__dirname, '..', 'shots');
   fs.mkdirSync(out, { recursive: true });
   const browser = await chromium.launch();
-  const page = await browser.newPage({ ignoreHTTPSErrors: true, viewport: { width: 1366, height: 768 }, hasTouch: true, isMobile: false });
+  const phone = process.env.PHONE === '1';
+  const page = await browser.newPage({ ignoreHTTPSErrors: true, viewport: phone ? { width: 390, height: 844 } : { width: 1366, height: 768 }, hasTouch: true, isMobile: phone, deviceScaleFactor: phone ? 2 : 1 });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) errors.push(m.text()); });
@@ -21,8 +22,13 @@ const fs = require('node:fs');
   let overflow = [];
   for (let step = 0; step < 1500; step++) {
     const phase = await page.getAttribute('#app', 'data-phase');
-    const ov = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
-    if (ov) overflow.push(phase);
+    const ov = await page.evaluate(() => {
+      if (document.documentElement.scrollWidth <= window.innerWidth) return null;
+      const W = window.innerWidth, out = [];
+      document.querySelectorAll('#app *').forEach((e) => { const r = e.getBoundingClientRect(); if (r.right > W + 1) out.push(String(e.className && e.className.baseVal !== undefined ? e.className.baseVal : e.className) + '@' + Math.round(r.right)); });
+      return out.slice(0, 3).join(',');
+    });
+    if (ov) overflow.push(phase + ':' + ov);
     if (phase === 'map') { await snap('01-map'); const nodes = await page.$$('.mnode.here'); await nodes[step % nodes.length].tap(); }
     else if (phase === 'battle') {
       await snap('02-battle');

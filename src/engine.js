@@ -165,7 +165,7 @@
   function lostHearts(s) { return D.MAP.hearts - s.hearts; }
   function bossHp(s, E) {
     var hp = E.hp * D.RULES.hpScale;
-    if (E.kind === 'boss') hp *= 1 - D.MAP.heartHp * lostHearts(s);
+    if (E.kind === 'boss') hp *= D.MAP.bossBase * (1 - D.MAP.heartHp * lostHearts(s));
     return Math.round(hp);
   }
 

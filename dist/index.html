@@ -216,7 +216,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .maplines .ml { stroke: #8d98bd; stroke-width: 3; stroke-dasharray: 6 6; }
 .maplines .ml.past { stroke: #5b6578; }
 .maplines .ml.next { stroke: var(--gold); stroke-width: 5; stroke-dasharray: none; }
-.mnode { position: absolute; transform: translate(-50%, -50%); min-width: 116px; min-height: 44px; padding: 3px 8px; display: flex; flex-direction: column; align-items: center; line-height: 1.15; font-family: var(--display); }
+.mnode { position: absolute; translate: -50% -50%; min-width: 116px; min-height: 44px; padding: 3px 8px; display: flex; flex-direction: column; align-items: center; line-height: 1.15; font-family: var(--display); }
 .mnode b { font-weight: 400; font-size: .95rem; }
 .mnode small { font-family: var(--body); font-size: .68rem; }
 .mnode:disabled { opacity: .55; }
@@ -242,6 +242,64 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 @keyframes injectfly { 0% { transform: scale(.4); opacity: 0; } 25% { transform: scale(1.2); opacity: 1; } 100% { left: 45%; top: 80%; transform: scale(.5); opacity: 0; } }
 .troublebadge { background: #c92a2a; color: #fff; font-family: var(--display); padding: 4px 14px; border-radius: 999px; border: 3px solid var(--line); }
 .event { padding-top: 20px; }
+
+/* スマホ（たて画面）：プレビュー用。Chromebook（1366×768）の見た目は変えない */
+@media (max-width: 760px) {
+  html, body { font-size: 14px; }
+  #app { height: auto; min-height: 100vh; }
+  .top { gap: 6px; padding: 6px 10px; }
+  .meter { min-width: 0; flex: 1 1 100%; }
+  .chip { padding: 2px 8px; }
+  .floor { margin-left: auto; font-size: .85rem; }
+  main { padding: 8px 10px; overflow: visible; }
+  button.big { min-width: 0; width: 100%; }
+  .two { flex-direction: column; gap: 12px; width: 100%; }
+  .title h1 { font-size: 2.2rem; }
+  /* マップ */
+  .bb-name { font-size: 1.7rem; }
+  .maprow2 { flex-direction: column; gap: 6px; }
+  .mapbox { width: 100%; aspect-ratio: 600 / 820; }
+  .maplines .ml { vector-effect: non-scaling-stroke; }
+  .mnode { min-width: 0; width: 21%; padding: 2px 3px; min-height: 40px; }
+  .mapbox { margin: 0 4px; width: calc(100% - 8px); }
+  .mnode b { font-size: .78rem; }
+  .mnode small { font-size: .58rem; }
+  .mnode.n-boss { width: 40%; }
+  /* 戦い */
+  .battle { overflow: visible; }
+  .stage { height: auto; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; padding: 8px 10px 10px; gap: 8px; background: linear-gradient(var(--stage-top) 0 80%, var(--floor) 80%); }
+  .items { position: static; grid-column: 1 / -1; flex-wrap: wrap; }
+  .item, .item.empty { width: 52px; height: 52px; }
+  .item canvas { width: 32px; height: 32px; }
+  .itemtip { max-width: 100%; flex: 1 1 100%; }
+  .hero { grid-column: 1; grid-row: 2; }
+  .hero canvas.me { width: 96px; height: 96px; }
+  .hero.shield::after { width: 120px; height: 120px; }
+  .monster { grid-column: 2; grid-row: 2; }
+  .monster canvas.mon { width: 150px; height: 150px; }
+  .monster.f2 svg { width: 160px; height: 152px; }
+  .bubble { grid-column: 1 / -1; grid-row: 3; max-width: none; }
+  .bubble::before, .bubble::after { display: none; }
+  .ename { font-size: 1.25rem; }
+  .row { flex-wrap: wrap; padding: 0 10px; gap: 8px; }
+  .msgs { flex: 1 1 100%; order: 3; min-height: 0; }
+  .endturn { min-width: 0; flex: 1; }
+  .orb { width: 56px; height: 56px; }
+  .handrow { grid-template-columns: 1fr; padding: 0 6px 12px; }
+  .pile { display: none; }
+  .hand { flex-wrap: wrap; justify-content: center; gap: 6px; padding-top: 12px; }
+  .card { flex: 0 0 calc(33% - 6px); min-width: 0; max-width: none; height: auto; min-height: 168px; margin: 0; transform: none; }
+  .card.selected { transform: translateY(-6px) scale(1.03); }
+  .card .cline { display: none; }
+  .card.selected .cline { display: block; }
+  @keyframes deal { from { transform: translateY(60px) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+  /* 報酬・休み・できごと・振り返り */
+  .choices .card { flex: 0 0 calc(50% - 8px); width: auto; }
+  .choices.small .card { flex: 0 0 calc(33% - 8px); }
+  .opts { min-width: 0; width: 100%; }
+  .grid4 { grid-template-columns: 70px 1fr 1fr; font-size: .9rem; }
+  .eq { min-width: 0; flex: 1 1 40%; }
+}
 
 </style>
 </head>
@@ -356,7 +414,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     force_own: { name: '自分の 意見を おしつける', line: '「ぜったい こっちが いい！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
     consult_family: { name: 'お家の人に そうだんする', line: '「今日 こんなことが あってね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, heal: 6, guard: 4 },
     sukkiri: { name: '気もちを 話して すっきり', line: 'もやもやを 言葉にして だれかに 話す。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 3, clearMoya: true, exhaust: true },
-    panic: { name: 'パニック', line: '頭が ぐるぐるして 何も 考えられない。手札に のこり、毎ターン ふえる。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true, retain: true, split: true },
+    panic: { name: 'パニック', line: '頭が ぐるぐるして 何も 考えられない。使えず、手札を ふさぐ。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     tataku: { name: 'たたく', line: 'カッとして 手が 出る。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -3, curse: true },
     warukuchi: { name: '悪口を 言い返す', line: '「そっちだって ○○じゃん！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 9, chance: 'high', trust: -2, curse: true },
     ugokenai: { name: '動けない', line: '心の余裕が なくなって、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
@@ -611,7 +669,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['friend_trouble', 'library', 'family_talk'] },
     { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['library', 'family_talk', 'friend_trouble'] }
   ];
-  var MAP = { rows: 7, cols: 4, paths: 3, relatedShare: 0.5, hearts: 3, heartHp: 0.15, heartStress: 0.1, actHeal: 1 };
+  var MAP = { rows: 7, cols: 4, paths: 3, relatedShare: 0.5, hearts: 3, heartHp: 0.22, heartStress: 0.2, bossBase: 1.35, actHeal: 1 };
 
   var TEXT = {
     title: 'こころの 冒険',
@@ -794,7 +852,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   function lostHearts(s) { return D.MAP.hearts - s.hearts; }
   function bossHp(s, E) {
     var hp = E.hp * D.RULES.hpScale;
-    if (E.kind === 'boss') hp *= 1 - D.MAP.heartHp * lostHearts(s);
+    if (E.kind === 'boss') hp *= D.MAP.bossBase * (1 - D.MAP.heartHp * lostHearts(s));
     return Math.round(hp);
   }
 
@@ -1713,7 +1771,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var ok = E.reachable(S), m = S.map;
     var ns = 'http://www.w3.org/2000/svg';
     var svg = document.createElementNS(ns, 'svg');
-    svg.setAttribute('viewBox', '0 0 ' + MW + ' ' + MH); svg.setAttribute('class', 'maplines');
+    svg.setAttribute('viewBox', '0 0 ' + MW + ' ' + MH); svg.setAttribute('preserveAspectRatio', 'none'); svg.setAttribute('class', 'maplines');
     var bossR = m.rows.length - 1;
     function line(a, b, cls) {
       var l = document.createElementNS(ns, 'line');

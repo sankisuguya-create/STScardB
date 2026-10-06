@@ -299,18 +299,14 @@ test('手札は 5まい＋かしこさ まで。あふれた カードは すて
   assert.ok(s.battle.hand.length <= 5);
 });
 
-test('パニック：手札に のこり 毎ターン ふえる。整えるカードで 1まい 消える', () => {
+test('パニック：効果のない 使えないカード。整えるカードで 1まい 消える', () => {
   const s = E.newRun(4, 1); E.chooseNode(s, E.reachable(s)[0]);
   if (s.phase !== 'battle') return;
-  s.yoyu = 999; s.maxYoyu = 999;
-  s.battle.hand = [{ id: 'panic', temp: true }];
-  E.endTurn(s);
-  if (s.phase !== 'battle') return;
-  assert.ok(s.battle.hand.filter((h) => h.id === 'panic').length >= 2);
+  s.battle.hand = [{ id: 'panic', temp: true }, { id: 'panic', temp: true }];
+  assert.ok(!E.canPlay(s, 0));
   s.battle.hand.push({ id: 'breathe', temp: true }); s.battle.energy = 3;
-  const n = s.battle.hand.filter((h) => h.id === 'panic').length;
   E.playCard(s, s.battle.hand.length - 1);
-  assert.strictEqual(s.battle.hand.filter((h) => h.id === 'panic').length, n - 1);
+  assert.strictEqual(s.battle.hand.filter((h) => h.id === 'panic').length, 1);
 });
 
 test('問題行動を えらぶと、次に 道と関係なく トラブルが 起き、そのあと 同じ段の マップに もどる', () => {

@@ -106,7 +106,7 @@
     force_own: { name: '自分の 意見を おしつける', line: '「ぜったい こっちが いい！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
     consult_family: { name: 'お家の人に そうだんする', line: '「今日 こんなことが あってね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, heal: 6, guard: 4 },
     sukkiri: { name: '気もちを 話して すっきり', line: 'もやもやを 言葉にして だれかに 話す。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 3, clearMoya: true, exhaust: true },
-    panic: { name: 'パニック', line: '頭が ぐるぐるして 何も 考えられない。手札に のこり、毎ターン ふえる。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true, retain: true, split: true },
+    panic: { name: 'パニック', line: '頭が ぐるぐるして 何も 考えられない。使えず、手札を ふさぐ。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     tataku: { name: 'たたく', line: 'カッとして 手が 出る。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -3, curse: true },
     warukuchi: { name: '悪口を 言い返す', line: '「そっちだって ○○じゃん！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 9, chance: 'high', trust: -2, curse: true },
     ugokenai: { name: '動けない', line: '心の余裕が なくなって、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
@@ -361,7 +361,7 @@
     { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['friend_trouble', 'library', 'family_talk'] },
     { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['library', 'family_talk', 'friend_trouble'] }
   ];
-  var MAP = { rows: 7, cols: 4, paths: 3, relatedShare: 0.5, hearts: 3, heartHp: 0.15, heartStress: 0.1, actHeal: 1 };
+  var MAP = { rows: 7, cols: 4, paths: 3, relatedShare: 0.5, hearts: 3, heartHp: 0.22, heartStress: 0.2, bossBase: 1.35, actHeal: 1 };
 
   var TEXT = {
     title: 'こころの 冒険',
