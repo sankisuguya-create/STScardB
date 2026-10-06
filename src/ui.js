@@ -46,12 +46,12 @@
       h('div', { class: 'nigates' }, Object.keys(S.nigate || {}).map(function (k) {
         return h('div', { class: 'chip nigate', title: '苦手意識' }, [h('span', { class: 'lbl', text: '苦手：' + D.CTX_LABEL[k] }), h('b', { text: String(S.nigate[k]) })]);
       })),
-      h('div', { class: 'floor', text: (S.row + 1) + ' / ' + S.map.length + ' だん' })
+      h('div', { class: 'floor', text: (S.acts > 1 ? (S.act + 1) + 'そう目・' : '') + Math.min(S.row + 1, S.map.rows.length) + ' / ' + S.map.rows.length + ' だん' })
     ]);
   }
 
   var selSup = null;
-  var lastDealKey = '';
+  var lastDealKey = '', lastMoyaKey = '', lastClearKey = '';
   function sprite(key, form, cls) {
     var cv = document.createElement('canvas');
     cv.className = 'px ' + (cls || '');
@@ -81,18 +81,47 @@
 
   // --- タイトル ---
   function titleScreen(saved) {
+    var fixed = Number(P.param('mode'));
+    var modes = fixed ? [] : [
+      h('button', { class: 'primary big', onclick: function () { start(1); } }, ['みじかく あそぶ', h('small', { text: '1そう（約15分）' })]),
+      h('button', { class: 'secondary big', onclick: function () { start(3); } }, ['ながく あそぶ', h('small', { text: '3そう（約45分）' })])
+    ];
     app.replaceChildren(h('main', { class: 'title' }, [
       h('h1', { text: D.TEXT.title }),
       h('p', { class: 'sub', text: '毎日の「こまった」に、どの手で こたえる？' }),
       saved ? h('button', { class: 'primary big', onclick: function () { S = saved; render(); }, text: 'つづきから' }) : null,
-      h('button', { class: saved ? 'secondary big' : 'primary big', onclick: start, text: saved ? 'はじめから' : 'はじめる' })
+      fixed ? h('button', { class: saved ? 'secondary big' : 'primary big', onclick: function () { start(fixed); }, text: saved ? 'はじめから' : 'はじめる' }) : h('div', { class: 'two' }, modes)
     ]));
   }
-  function start() {
-    var mode = Number(P.param('mode')) || 1;
-    S = E.newRun((Date.now() ^ (Math.random() * 1e9)) >>> 0, mode);
+  function start(mode) {
+    S = E.newRun((Date.now() ^ (Math.random() * 1e9)) >>> 0, mode === 3 ? 3 : 1);
     debriefPage = 0;
     save(); render();
+  }
+
+  function hearts(n) {
+    var out = [];
+    for (var i = 0; i < D.MAP.hearts; i++) out.push(h('span', { class: 'heart' + (i < n ? '' : ' lost'), text: i < n ? '♥' : '♡' }));
+    return h('span', { class: 'hearts', 'aria-label': 'ボスの ハート ' + n }, out);
+  }
+  function bossBanner() {
+    var A = D.ACTS[S.act], B = D.ENEMIES[A.boss];
+    return h('div', { class: 'bossbanner' }, [
+      h('div', { class: 'bb-act', text: (S.acts > 1 ? (S.act + 1) + 'そう目「' + A.name + '」' : '「' + A.name + '」') + 'の ボス' }),
+      h('div', { class: 'bb-name' }, [h('span', { text: B.scene }), hearts(S.hearts)]),
+      h('div', { class: 'bb-hint', text: '★の ついた 課題を 乗りこえるたびに、ボスの ハートが へって 弱くなる' })
+    ]);
+  }
+
+  // 段が 変わるとき（3層モード）
+  function actClearScreen() {
+    var A = D.ACTS[S.act];
+    return h('main', { class: 'title' }, [
+      h('h1', { text: (S.act) + 'そう目 クリア！' }),
+      h('p', { class: 'sub', text: '心の余裕が 全部 もどった。次は「' + A.name + '」' }),
+      bossBanner(),
+      h('button', { class: 'primary big', onclick: function () { act(function () { E.nextAct(S); }); }, text: '次の そうへ' })
+    ]);
   }
 
   var NODE = {
@@ -100,21 +129,47 @@
     event: { label: 'できごと', cls: 'n-event' }, rest: { label: 'ひと休み', cls: 'n-rest' }, boss: { label: 'ボス', cls: 'n-boss' }
   };
 
-  // --- マップ ---
+  // --- マップ（線で つながった 分かれ道） ---
+  var MX = 150, MY = 58, MW = 4 * MX, MH = (D.MAP.rows + 1) * MY;
+  function nodeXY(r, col) { return [col * MX + MX / 2, MH - (r + 0.5) * MY]; }
   function mapScreen() {
-    var rows = S.map.map(function (row, r) {
-      return h('div', { class: 'maprow' + (r === S.row ? ' now' : r < S.row ? ' past' : '') }, [
-        h('span', { class: 'rownum', text: r === S.map.length - 1 ? 'さいご' : (r + 1) + 'だん目' })
-      ].concat(row.map(function (k, c) {
-        var n = NODE[k];
-        return h('button', {
-          class: 'node ' + n.cls, disabled: r !== S.row,
-          onclick: function () { act(function () { E.chooseNode(S, c); }); }
-        }, [n.label]);
-      })));
-    }).reverse();
+    var ok = E.reachable(S), m = S.map;
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + MW + ' ' + MH); svg.setAttribute('class', 'maplines');
+    var bossR = m.rows.length - 1;
+    function line(a, b, cls) {
+      var l = document.createElementNS(ns, 'line');
+      l.setAttribute('x1', a[0]); l.setAttribute('y1', a[1]); l.setAttribute('x2', b[0]); l.setAttribute('y2', b[1]);
+      l.setAttribute('class', cls); svg.appendChild(l);
+    }
+    m.edges.forEach(function (e) {
+      var cls = 'ml' + (e.r === S.row - 1 && e.from === S.pos ? ' next' : e.r < S.row - 1 ? ' past' : '');
+      line(nodeXY(e.r, e.from), nodeXY(e.r + 1, e.to), cls);
+    });
+    m.rows[bossR - 1].forEach(function (n) { line(nodeXY(bossR - 1, n.col), nodeXY(bossR, 1.5), 'ml' + (S.row === bossR && S.pos === n.col ? ' next' : '')); });
+    var nodes = [];
+    m.rows.forEach(function (row, r) {
+      row.forEach(function (n, i) {
+        var xy = nodeXY(r, n.col), here = r === S.row && ok.indexOf(i) >= 0;
+        var E0 = n.enemy && D.ENEMIES[n.enemy];
+        var label = NODE[n.kind].label;
+        var sub = E0 ? (E0.kind === 'danger' ? 'あぶない場面' : E0.scene) : '';
+        nodes.push(h('button', {
+          class: 'mnode ' + NODE[n.kind].cls + (here ? ' here' : '') + (r < S.row ? ' past' : '') + (n.related ? ' rel' : ''),
+          style: 'left:' + (xy[0] / MW * 100) + '%;top:' + (xy[1] / MH * 100) + '%',
+          disabled: !here,
+          onclick: function () { act(function () { E.chooseNode(S, i); }); }
+        }, [h('b', { text: (n.related ? '★' : '') + label }), sub ? h('small', { text: sub }) : null]));
+      });
+    });
     var notice = S.notice; S.notice = null;
-    return h('main', { class: 'map' }, [notice ? h('p', { class: 'praise', text: notice }) : null, itemSlots(false), h('p', { class: 'hint', text: '次に 行くところを えらぼう' })].concat(rows));
+    return h('main', { class: 'map' }, [
+      bossBanner(),
+      notice ? h('p', { class: 'praise', text: notice }) : null,
+      h('div', { class: 'maprow2' }, [itemSlots(false), h('p', { class: 'hint', text: '光っている マスから 次に 行くところを えらぼう' })]),
+      h('div', { class: 'mapbox' }, [svg].concat(nodes))
+    ]);
   }
 
   // --- 戦い ---
@@ -126,6 +181,7 @@
     if (c.guard) effects.push(h('span', { class: 'fx guard' }, ['ゆとり ' + (p.guard != null ? p.guard : c.guard)]));
     if (c.heal) effects.push(h('span', { class: 'fx heal' }, ['余裕 +' + c.heal]));
     if (c.draw) effects.push(h('span', { class: 'fx' }, ['1まい 引く']));
+    if (c.clearMoya) effects.push(h('span', { class: 'fx reveal' }, ['モヤモヤを けす']));
     if (c.organize) effects.push(h('span', { class: 'fx reveal' }, ['整理する']));
     if (c.escape) effects.push(h('span', { class: 'fx reveal' }, ['その場を はなれる']));
     if (c.distance) effects.push(h('span', { class: 'fx reveal' }, ['いきおいを おさめる']));
@@ -162,7 +218,7 @@
     var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
     var bubble = h('section', { class: 'bubble k-' + en.kind }, [
       h('div', { class: 'ekind', text: (en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
-      h('h2', { class: 'ename', text: en.name }),
+      h('h2', { class: 'ename' }, [en.name, en.kind === 'boss' ? hearts(S.hearts) : null]),
       h('div', { class: 'meter hp' }, [
         h('span', { class: 'lbl', text: '問題の大きさ' }),
         h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + hpPct + '%' })]),
@@ -174,7 +230,7 @@
     ]);
     var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(en.id, en.form), en.form, 'mon')]);
     if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(en.id)) { monster.innerHTML = SST_ILLUST.svg(en.id); }
-    var hero = h('div', { class: 'hero' }, [
+    var hero = h('div', { class: 'hero' + (b.guard ? ' shield' : '') }, [
       sprite('hero', 2, 'me'),
       h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: 'ゆとり' }), h('b', { text: String(b.guard) })])
     ]);
@@ -203,7 +259,16 @@
     var end = h('button', { class: 'primary endturn', onclick: function () { act(function () { E.endTurn(S); }); }, text: 'ターンを おわる' });
     var piles = h('div', { class: 'pile draw', text: '山札 ' + b.draw.length });
     var disc = h('div', { class: 'pile disc', text: 'すて札 ' + b.discard.length });
-    return h('main', { class: 'battle' }, [stage, h('div', { class: 'row' }, [energy, msgs, help, end]), h('div', { class: 'handrow' }, [piles, hand, disc])]);
+    var moyaN = b.msgs.filter(function (m) { return m.tag === 'curse' || m.tag === 'worry'; }).length;
+    var moyaKey = dealKey + ':' + b.msgs.length;
+    var flies = [];
+    if (moyaN && moyaKey !== lastMoyaKey) {
+      for (var mi = 0; mi < moyaN; mi++) flies.push(h('div', { class: 'moyafly', style: 'animation-delay:' + (mi * 180) + 'ms', text: 'モヤモヤ' }));
+    }
+    lastMoyaKey = moyaKey;
+    var clears = b.msgs.some(function (m) { return m.tag === 'clear'; }) && moyaKey !== lastClearKey ? [h('div', { class: 'moyaclear', text: 'すっきり！' })] : [];
+    if (clears.length) lastClearKey = moyaKey;
+    return h('main', { class: 'battle' }, flies.concat(clears, [stage, h('div', { class: 'row' }, [energy, msgs, help, end]), h('div', { class: 'handrow' }, [piles, hand, disc])]));
   }
 
   // --- 報酬 ---
@@ -237,7 +302,7 @@
   function restScreen() {
     if (removing) {
       return h('main', { class: 'rest' }, [
-        h('h2', { text: '手放す（卒業する）カードを えらぶ' }),
+        h('h2', { text: '自分を 見つめ直す：もう 使わない カードを 1まい えらぶ' }),
         h('div', { class: 'choices small' }, S.deck.map(function (id, i) {
           var el = cardView(E.card(id), { showCtx: true });
           el.addEventListener('click', function () { removing = false; act(function () { E.rest(S, 'remove', i); }); });
@@ -263,8 +328,8 @@
       h('h2', { text: 'ひと休み' }),
       equipPanel,
       h('div', { class: 'two' }, [
-        h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['休む', h('small', { text: '心の余裕を ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' 回ふく' })]),
-        h('button', { class: 'secondary big', onclick: function () { removing = true; render(); } }, ['手放す', h('small', { text: 'いらない くせを 1つ 卒業する' })])
+        h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['休む', h('small', { text: '心の余裕を ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' 回ふく。「お家の人に そうだんする」カードが もらえる' })]),
+        h('button', { class: 'secondary big', onclick: function () { removing = true; render(); } }, ['自分を 見つめ直す', h('small', { text: 'いらない くせを 1つ 卒業する' })])
       ])
     ]);
   }
@@ -445,6 +510,7 @@
     else if (S.phase === 'reward') screen = rewardScreen();
     else if (S.phase === 'rest') screen = restScreen();
     else if (S.phase === 'event') screen = eventScreen();
+    else if (S.phase === 'actclear') screen = actClearScreen();
     else screen = endScreen();
     app.replaceChildren(topBar(), screen);
     app.setAttribute('data-phase', S.phase);

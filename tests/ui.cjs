@@ -13,17 +13,17 @@ const fs = require('node:fs');
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) errors.push(m.text()); });
-  await page.goto('file://' + path.join(__dirname, '..', 'dist', 'index.html') + '?mode=1');
+  await page.goto('file://' + path.join(__dirname, '..', 'dist', 'index.html') + '?mode=' + (process.env.MODE || 1));
   const shot = {};
   async function snap(name) { if (!shot[name]) { shot[name] = 1; await page.screenshot({ path: path.join(out, name + '.png') }); } }
   await snap('00-title');
   await page.tap('button.primary');
   let overflow = [];
-  for (let step = 0; step < 600; step++) {
+  for (let step = 0; step < 1500; step++) {
     const phase = await page.getAttribute('#app', 'data-phase');
     const ov = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     if (ov) overflow.push(phase);
-    if (phase === 'map') { await snap('01-map'); const nodes = await page.$$('.maprow.now .node:not([disabled])'); await nodes[step % nodes.length].tap(); }
+    if (phase === 'map') { await snap('01-map'); const nodes = await page.$$('.mnode.here'); await nodes[step % nodes.length].tap(); }
     else if (phase === 'battle') {
       await snap('02-battle');
       const playable = await page.$$('.hand .card:not(.off)');
@@ -31,6 +31,7 @@ const fs = require('node:fs');
       else await page.tap('.endturn');
     }
     else if (phase === 'reward') { await snap('04-reward'); const c = await page.$('.choices .card'); if (c) await c.tap(); else await page.tap('.reward > button.secondary'); }
+    else if (phase === 'actclear') { await snap('06b-actclear'); await page.tap('main button.primary'); }
     else if (phase === 'rest') { await snap('05-rest'); await page.tap('.two button >> nth=0'); }
     else if (phase === 'event') {
       await snap('06-event');

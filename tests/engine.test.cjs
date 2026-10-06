@@ -77,8 +77,10 @@ test('見方カードで課題の名前と相性が変わる', () => {
 
 test('信頼3以下ならやり直しのできごとが出る', () => {
   const s = E.newRun(5, 1);
-  s.trust = 2; s.row = 1;
-  E.chooseNode(s, 1);
+  s.trust = 2;
+  s.phase = 'map'; s.row = 1; s.pos = null;
+  s.map.rows[1] = [{ col: 0, kind: 'event' }]; s.map.edges.push({ r: 0, from: null, to: 0 });
+  E.chooseNode(s, 0);
   assert.strictEqual(s.event.id, 'second_chance');
 });
 
@@ -235,4 +237,45 @@ test('信頼の理由（why）は すべて振り返りで 文に できる', ()
       assert.ok(e.why === 'start' || e.why === 'escape' || e.why.startsWith('event:') || D.CARDS[e.why], e.why);
     });
   }
+});
+
+test('マップ：7段＋ボス、線で つながった マスしか えらべない、課題の半分以上が ボスに 関連', () => {
+  for (let seed = 1; seed < 50; seed++) {
+    const s = E.newRun(seed, 1);
+    assert.strictEqual(s.map.rows.length, D.MAP.rows + 1);
+    const battles = s.map.rows.flat().filter((n) => n.kind === 'battle');
+    assert.ok(battles.filter((n) => n.related).length >= battles.length / 2);
+    battles.forEach((n) => assert.ok(D.ENEMIES[n.enemy]));
+    E.chooseNode(s, E.reachable(s)[0]);
+    s.phase = 'map'; s.battle = null; s.row = 1;
+    const ok = E.reachable(s);
+    assert.ok(ok.length >= 1);
+    s.map.rows[1].forEach((n, i) => { if (!ok.includes(i)) assert.throws(() => E.chooseNode(s, i)); });
+  }
+});
+
+test('関連する課題を 乗りこえると ボスの ハートが へり、ボスが 弱くなる', () => {
+  const s = E.newRun(7, 1);
+  const i = s.map.rows[0].findIndex((n) => n.related);
+  if (i < 0) return;
+  E.chooseNode(s, i);
+  s.battle.enemy.hp = 0; s.battle.hand.push({ id: 'try_it', temp: true }); s.battle.energy = 3;
+  E.playCard(s, s.battle.hand.length - 1);
+  assert.strictEqual(s.hearts, D.MAP.hearts - 1);
+  const s2 = E.newRun(7, 1); s2.hearts = 0; s2.phase = 'map'; s2.row = D.MAP.rows;
+  E.chooseNode(s2, 0);
+  const full = Math.round(D.ENEMIES[D.ACTS[0].boss].hp * D.RULES.hpScale);
+  assert.ok(s2.battle.enemy.maxHp < full);
+});
+
+test('3層モード：ボスを たおすと 次の層へ。3つ目の ボスで おわる', () => {
+  const s = runOne(3, 'adaptive', 3);
+  assert.strictEqual(s.phase, 'end');
+  assert.ok(s.log.some((e) => e.k === 'act'));
+});
+
+test('休むと「お家の人に そうだんする」が デッキに 入る', () => {
+  const s = E.newRun(3, 1); s.phase = 'rest';
+  E.rest(s, 'rest');
+  assert.ok(s.deck.includes('consult_family'));
 });

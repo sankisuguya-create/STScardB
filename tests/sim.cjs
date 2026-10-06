@@ -64,17 +64,15 @@ function playTurn(s, pol) {
   if (s.phase === 'battle') E.endTurn(s);
 }
 
-function runOne(seed, polName) {
+function runOne(seed, polName, mode) {
   const pol = POLICIES[polName];
-  const s = E.newRun(seed, 1);
+  const s = E.newRun(seed, mode || 1);
   let steps = 0;
-  while (s.phase !== 'end' && steps++ < 2000) {
-    if (s.phase === 'map') {
-      const row = s.map[s.row];
-      // 向社会的は休み・できごとも使う。ほかは戦い優先
-      let col = 0;
-      if (row.length > 1) col = Math.floor((seed + s.row) % row.length);
-      E.chooseNode(s, col);
+  while (s.phase !== 'end' && steps++ < 6000) {
+    if (s.phase === 'actclear') E.nextAct(s);
+    else if (s.phase === 'map') {
+      const ok = E.reachable(s);
+      E.chooseNode(s, ok[(seed + s.row) % ok.length]);
     } else if (s.phase === 'battle') playTurn(s, pol);
     else if (s.phase === 'reward') {
       if (s.reward.support) E.takeSupport(s);

@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 3;
+  var ENGINE_VER = 4;
 
   // --- 乱数 ---
   function rand(s) {
@@ -33,7 +33,7 @@
   function newRun(seed, mode) {
     var s = {
       ver: ENGINE_VER, seed: seed >>> 0, rng: seed >>> 0, mode: mode || 1,
-      phase: 'map', act: 0, floor: 0, row: 0,
+      phase: 'map', act: 0, floor: 0, row: 0, pos: null, acts: (mode === 3 ? 3 : 1), hearts: D.MAP.hearts,
       yoyu: D.PLAYER.maxYoyu, maxYoyu: D.PLAYER.maxYoyu,
       trust: D.PLAYER.trustStart,
       stats: { think: 0, act: 0, relate: 0 },
@@ -47,9 +47,61 @@
     return s;
   }
 
+  // 分かれ道のマップ：7段×4列。3本の道を下から上へ引き、通ったマスと線を使う。
+  // マスの課題は はじめに 決めておく（マップで 名前が 見える）。課題の半分以上は ボスに 関連する課題
   function buildMap(s) {
-    var act = D.ACTS[s.act];
-    return act.rows.map(function (row) { return row.slice(); }).concat([['boss']]);
+    var M = D.MAP, act = D.ACTS[s.act], nodes = [], edges = {};
+    for (var r = 0; r < M.rows; r++) nodes.push({});
+    var starts = shuffle(s, [0, 1, 2, 3]).slice(0, M.paths);
+    starts.forEach(function (c0) {
+      var c = c0;
+      for (var r = 0; r < M.rows; r++) {
+        nodes[r][c] = nodes[r][c] || { col: c };
+        if (r < M.rows - 1) {
+          var opts = [c - 1, c, c + 1].filter(function (x) { return x >= 0 && x < M.cols; });
+          var nc = pick(s, opts);
+          edges[r + ':' + c + ':' + nc] = 1;
+          c = nc;
+        }
+      }
+    });
+    var rows = nodes.map(function (o) { return Object.keys(o).map(Number).sort(function (a, b) { return a - b; }).map(function (c) { return o[c]; }); });
+    // マスの種類
+    rows.forEach(function (row, r) {
+      row.forEach(function (n) {
+        if (r === 0) n.kind = 'battle';
+        else if (r === M.rows - 1) n.kind = 'rest';
+        else {
+          var x = rand(s);
+          n.kind = x < .56 ? 'battle' : x < .78 ? 'event' : x < .86 ? 'rest' : (r >= 2 ? 'elite' : 'battle');
+        }
+      });
+    });
+    // 課題を わりあてる（関連する課題を 半分以上）
+    var battles = [];
+    rows.forEach(function (row) { row.forEach(function (n) { if (n.kind === 'battle') battles.push(n); }); });
+    var order = shuffle(s, battles.slice());
+    var needRelated = Math.ceil(order.length * M.relatedShare);
+    order.forEach(function (n, i) {
+      if (i < needRelated) { n.enemy = pick(s, act.related); n.related = true; }
+      else if (rand(s) < D.RULES.dangerChance) n.enemy = pick(s, act.dangers);
+      else n.enemy = pick(s, act.others);
+    });
+    rows.forEach(function (row) { row.forEach(function (n) { if (n.kind === 'elite') n.enemy = pick(s, act.elites); }); });
+    var edgeList = Object.keys(edges).map(function (k) { var p = k.split(':').map(Number); return { r: p[0], from: p[1], to: p[2] }; });
+    rows.push([{ col: 1.5, kind: 'boss', enemy: act.boss }]);
+    return { rows: rows, edges: edgeList };
+  }
+
+  // いまの段で えらべる マス（前の段から 線で つながっているもの）
+  function reachable(s) {
+    var row = s.map.rows[s.row];
+    if (!row) return [];
+    if (s.row === 0 || row[0].kind === 'boss') return row.map(function (n, i) { return i; });
+    var from = s.pos;
+    return row.map(function (n, i) { return i; }).filter(function (i) {
+      return s.map.edges.some(function (e) { return e.r === s.row - 1 && e.from === from && e.to === row[i].col; });
+    });
   }
 
   // --- 条件 ---
@@ -81,24 +133,17 @@
   }
 
   // --- マップ ---
-  function chooseNode(s, col) {
+  function chooseNode(s, i) {
     if (s.phase !== 'map') throw new Error('not map');
-    var kind = s.map[s.row][col];
-    if (!kind) throw new Error('bad node');
+    if (reachable(s).indexOf(i) < 0) throw new Error('not reachable');
+    var n = s.map.rows[s.row][i];
     s.floor++;
-    var act = D.ACTS[s.act];
-    if (kind === 'battle' && act.dangers && rand(s) < D.RULES.dangerChance) {
-      startBattle(s, pick(s, act.dangers));
-    } else if (kind === 'battle') {
-      var pool = act.normals.filter(function (e) { return s.usedNormals.indexOf(e) < 0; });
-      if (!pool.length) pool = act.normals.slice();
-      var eid = pick(s, pool); s.usedNormals.push(eid);
-      startBattle(s, eid);
-    } else if (kind === 'elite') startBattle(s, pick(s, act.elites));
-    else if (kind === 'boss') startBattle(s, act.boss);
-    else if (kind === 'event') startEvent(s);
-    else if (kind === 'rest') { s.phase = 'rest'; }
-    s.nodeKind = kind;
+    s.pos = n.col;
+    s.nodeRelated = !!n.related;
+    if (n.kind === 'battle' || n.kind === 'elite' || n.kind === 'boss') startBattle(s, n.enemy);
+    else if (n.kind === 'event') startEvent(s);
+    else if (n.kind === 'rest') { s.phase = 'rest'; }
+    s.nodeKind = n.kind;
     return s;
   }
 
@@ -110,12 +155,20 @@
   }
 
   // --- 戦い ---
+  // ボスは、なくした ハートの数だけ 弱くなる
+  function lostHearts(s) { return D.MAP.hearts - s.hearts; }
+  function bossHp(s, E) {
+    var hp = E.hp * D.RULES.hpScale;
+    if (E.kind === 'boss') hp *= 1 - D.MAP.heartHp * lostHearts(s);
+    return Math.round(hp);
+  }
+
   function startBattle(s, eid) {
     var E = D.ENEMIES[eid];
     var en = {
-      id: eid, name: E.forms[0], form: 0, hp: Math.round(E.hp * D.RULES.hpScale), maxHp: Math.round(E.hp * D.RULES.hpScale), kind: E.kind, str: 0, mi: 0,
+      id: eid, name: E.forms[0], form: 0, hp: bossHp(s, E), maxHp: bossHp(s, E), kind: E.kind, str: 0, mi: 0,
       revealed: false, weak: E.weak.slice(), resist: E.resist.slice(),
-      backfire: (E.backfire || []).slice(), stressMul: 1
+      backfire: (E.backfire || []).slice(), stressMul: 1, bossMul: E.kind === 'boss' ? 1 - D.MAP.heartStress * lostHearts(s) : 1
     };
     var bench = [], cards = [];
     s.deck.forEach(function (id) { (fits(id, E.ctx) ? cards : bench).push({ id: id }); });
@@ -266,6 +319,7 @@
 
     if (ok) {
       if (c.organize) organize(s);
+      if (c.clearMoya) clearMoya(s, true);
       if (c.distance && !b.distanced) {
         b.distanced = true; en.str = 0; en.stressMul *= D.RULES.distanceMul;
         msg(s, 'きょりを おいた。問題の いきおいが おさまり、ストレスも 弱まった。', 'reveal');
@@ -310,7 +364,7 @@
   function stressOf(s, mv) {
     var en = s.battle.enemy, ctx = D.ENEMIES[en.id].ctx;
     var ng = (s.nigate[ctx] || 0) * D.RULES.nigateStress;
-    return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul);
+    return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul * (en.bossMul || 1));
   }
   // 心の余裕は0より下がらない。下がった分は「動けない」中の つらさとして数える
   function hurt(s, dmg) {
@@ -429,7 +483,11 @@
       }
     }
     noteUnlocks(s, s.trust, statsBefore);
-    if (en.kind === 'boss') { endRun(s, true); return; }
+    if (s.nodeRelated && !passed && s.hearts > 0) {
+      s.hearts--;
+      log(s, { k: 'heart', left: s.hearts, enemy: en.id });
+    }
+    if (en.kind === 'boss') { bossDown(s); return; }
     s.phase = 'reward';
     if (passed) {
       s.reward = { choices: [], other: E.other, support: null, passed: E.pass.say, leave: !!E.pass.leave };
@@ -486,13 +544,31 @@
       log(s, { k: 'gain', card: fc, why: 'friend' });
       msg(s, '友だちの アドバイス：「' + card(fc).name + '」' + (fc === 'junk_advice' ? '（あまり 役に立たなかった…）' : ''), fc === 'junk_advice' ? 'fail' : 'next');
     }
-    if (u.clearMoya) {
-      var n = 0;
-      b.hand = b.hand.filter(function (h) { if (h.id === 'moyamoya') { b.discard.push(h); n++; return false; } return true; });
-      if (n) msg(s, 'モヤモヤが ' + n + 'まい 気にならなくなった。', 'reveal');
-    }
+    if (u.clearMoya) clearMoya(s, false);
+    if (u.purgeMoya) purgeOne(s);
     log(s, { k: 'useSupport', id: id, enemy: en.id });
     return s;
+  }
+
+  // 手札の モヤモヤを すてる（purge なら 1まい デッキからも けす）
+  function clearMoya(s, purge) {
+    var b = s.battle, n = 0;
+    b.hand = b.hand.filter(function (h) { if (h.id === 'moyamoya') { b.discard.push(h); n++; return false; } return true; });
+    if (n) msg(s, 'モヤモヤが ' + n + 'まい 気にならなくなった。', 'clear');
+    if (purge) purgeOne(s);
+  }
+  function purgeOne(s) {
+    var i = s.deck.indexOf('moyamoya');
+    if (i < 0) return;
+    s.deck.splice(i, 1);
+    var b = s.battle;
+    var piles = [b.discard, b.draw, b.hand];
+    for (var p = 0; p < piles.length; p++) {
+      var j = piles[p].findIndex(function (h) { return h.id === 'moyamoya' && !h.temp; });
+      if (j >= 0) { piles[p].splice(j, 1); break; }
+    }
+    msg(s, 'モヤモヤを 1まい デッキから けした。', 'clear');
+    log(s, { k: 'purge' });
   }
 
   // ひと休みで、つけるアイテムを えらび直す
@@ -519,6 +595,7 @@
     if (s.phase !== 'rest') throw new Error('not rest');
     if (choice === 'rest') {
       var before = s.yoyu;
+      s.deck.push('consult_family'); log(s, { k: 'gain', card: 'consult_family', why: 'rest' });
       s.yoyu = Math.min(s.maxYoyu, s.yoyu + Math.round(s.maxYoyu * D.RULES.restHeal));
       log(s, { k: 'rest', d: s.yoyu - before });
     } else if (choice === 'remove') {
@@ -568,6 +645,25 @@
   function leaveEvent(s) {
     if (s.phase !== 'event' || s.event.done == null) throw new Error('event not done');
     return advance(s);
+  }
+
+  // ボスを たおした：次の層へ。さいごの層なら おわり
+  function bossDown(s) {
+    if (s.act < s.acts - 1) {
+      s.act++; s.row = 0; s.pos = null; s.hearts = D.MAP.hearts;
+      s.yoyu = s.maxYoyu;
+      s.map = buildMap(s);
+      s.phase = 'actclear';
+      s.battle = null;
+      log(s, { k: 'act', act: s.act });
+      return;
+    }
+    endRun(s, true);
+  }
+  function nextAct(s) {
+    if (s.phase !== 'actclear') throw new Error('not actclear');
+    s.phase = 'map';
+    return s;
   }
 
   function endRun(s, won) {
@@ -634,7 +730,7 @@
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D

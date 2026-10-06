@@ -200,6 +200,45 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .nigates { display: flex; gap: 6px; }
 .chip.nigate { box-shadow: inset 0 -4px 0 var(--curse); }
 
+/* マップ（分かれ道） */
+.map { gap: 6px; }
+.map .items { position: static; }
+.maprow2 { display: flex; align-items: center; gap: 16px; }
+.bossbanner { text-align: center; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.bb-act { font-size: .9rem; color: #d6dcf0; }
+.bb-name { font-family: var(--display); font-size: 2.4rem; line-height: 1.1; display: flex; align-items: center; gap: 14px; text-shadow: 0 3px 0 var(--line); }
+.bb-hint { font-size: .8rem; color: #d6dcf0; }
+.hearts { display: inline-flex; gap: 2px; font-size: 1.6rem; color: #ff5a6a; text-shadow: 0 2px 0 var(--line); }
+.ename .hearts { font-size: 1.2rem; margin-left: 10px; vertical-align: middle; }
+.heart.lost { color: #8d98bd; }
+.mapbox { position: relative; width: 600px; max-width: 100%; aspect-ratio: 600 / 464; flex: none; }
+.maplines { position: absolute; inset: 0; width: 100%; height: 100%; }
+.maplines .ml { stroke: #8d98bd; stroke-width: 3; stroke-dasharray: 6 6; }
+.maplines .ml.past { stroke: #5b6578; }
+.maplines .ml.next { stroke: var(--gold); stroke-width: 5; stroke-dasharray: none; }
+.mnode { position: absolute; transform: translate(-50%, -50%); min-width: 116px; min-height: 44px; padding: 3px 8px; display: flex; flex-direction: column; align-items: center; line-height: 1.15; font-family: var(--display); }
+.mnode b { font-weight: 400; font-size: .95rem; }
+.mnode small { font-family: var(--body); font-size: .68rem; }
+.mnode:disabled { opacity: .55; }
+.mnode.past { opacity: .3; }
+.mnode.here { opacity: 1; animation: bob 1.4s steps(2) infinite; box-shadow: 0 0 0 4px var(--gold), var(--shadow); }
+.mnode.rel b { color: #a1131d; }
+.mnode.n-boss { min-width: 180px; }
+/* ゆとり（バリア） */
+.hero { position: relative; }
+.hero.shield::after { content: ""; position: absolute; left: 50%; top: 4px; width: 170px; height: 170px; transform: translateX(-50%); border-radius: 50%;
+  background: radial-gradient(circle, rgba(140,200,255,0) 55%, rgba(140,200,255,.35) 70%, rgba(200,235,255,.8) 74%, rgba(140,200,255,0) 78%);
+  animation: shield 1.6s ease-in-out infinite; pointer-events: none; }
+@keyframes shield { 50% { transform: translateX(-50%) scale(1.05); opacity: .8; } }
+/* モヤモヤ */
+.battle { position: relative; }
+.moyafly { position: absolute; z-index: 20; left: 60%; top: 25%; padding: 6px 12px; border-radius: 20px; background: #5f3dc4; color: #fff; font-family: var(--display); box-shadow: 0 0 16px 6px rgba(95,61,196,.6);
+  animation: moyafly 1.1s ease-in both; pointer-events: none; }
+@keyframes moyafly { 0% { transform: scale(.4); opacity: 0; } 25% { transform: scale(1.2) rotate(-6deg); opacity: 1; } 100% { left: 94%; top: 82%; transform: scale(.3) rotate(20deg); opacity: 0; } }
+.moyaclear { position: absolute; z-index: 20; left: 50%; top: 40%; transform: translate(-50%, -50%); font-family: var(--display); font-size: 2rem; color: #fff; text-shadow: 0 3px 0 var(--good);
+  animation: clearpop .9s ease-out both; pointer-events: none; }
+@keyframes clearpop { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.6); } 30% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -80%); } }
+
 </style>
 </head>
 <body>
@@ -237,7 +276,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 1.5, resist: 0.5, anxiety: 0.6,
-    restHeal: 0.3, dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 1.7, stressScale: 1.45,
+    restHeal: 0.3, dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 2.6, stressScale: 1.85,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -294,6 +333,25 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     call_adult: { name: '近くの 大人を よぶ', line: '「たすけてください！」と 大きな声で 言う。', type: 'relate', judge: 'good', style: 'distance', cost: 0, escape: true, trust: 1 },
     run_now: { name: 'すぐに にげる', line: '安全な ところまで 走る。', type: 'act', judge: 'good', style: 'distance', cost: 0, escape: true },
     say_no_stranger: { name: '「行きません」と ことわる', line: '知らない人には ついて行かない。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 8 },
+    review_notes: { name: '見直しを する', line: '名前・計算・書きわすれを たしかめる。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 9, organize: true },
+    plan_time: { name: '時間を 決めて やる', line: '「5時から 20分 やる」と 決める。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 6, draw: 1 },
+    put_off: { name: 'あとで やる…', line: 'テレビを 見てから…と 先のばし。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 9, chance: 'high', trust: -1, curse: true },
+    say_honest: { name: '正直に 言う', line: '「ノートを わすれました」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 9, trust: 1 },
+    borrow: { name: 'となりに かりる', line: '「えんぴつ、かしてくれる？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 8, chance: 'high', req: { trust: 5 } },
+    hide_it: { name: 'だまって かくす', line: 'わすれたことを だまっておく。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 8, chance: 'high', trust: -1, curse: true },
+    tell_feeling: { name: '自分の 気もちを つたえる', line: '「あのとき、悲しかったんだ」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'mid', fail: 'apologize' },
+    ignore_back: { name: 'むし し返す', line: 'こっちも 口を きかない。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 9, chance: 'high', trust: -1, curse: true },
+    ask_meaning: { name: '「どういう いみ？」と 聞く', line: '「それって、どういう いみ？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, organize: true },
+    not_join: { name: '話に のらない', line: '「わたしは いいや」と はなれる。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 7, solve: 4 },
+    spread: { name: 'ほかの子に 言いふらす', line: '「ねえ、聞いて！ あの子がね…」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -2, curse: true },
+    practice_again: { name: 'もう一回 れんしゅう', line: '「もう一回 やってみよう」', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 9, chance: 'mid', fail: 'ask_tip' },
+    ask_tip: { name: 'コツを 聞く', line: '「どうやったら うまく できる？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high' },
+    quit_it: { name: 'もう やめる', line: '「どうせ できないし」', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 9, chance: 'high', trust: -1, curse: true },
+    listen_all: { name: 'みんなの 意見を 聞く', line: '「一人ずつ 言ってみよう」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, organize: true },
+    vote: { name: '多数決に しよう', line: '「手を あげて 決めよう」', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'mid', fail: 'listen_all' },
+    force_own: { name: '自分の 意見を おしつける', line: '「ぜったい こっちが いい！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -2, curse: true },
+    consult_family: { name: 'お家の人に そうだんする', line: '「今日 こんなことが あってね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, heal: 6, guard: 4 },
+    sukkiri: { name: '気もちを 話して すっきり', line: 'もやもやを 言葉にして だれかに 話す。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 3, clearMoya: true, exhaust: true },
     ugokenai: { name: '動けない', line: '心の余裕が なくなって、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     wameku: { name: 'わめく', line: 'ぎゃーっと 大声で わめく。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -2, curse: true },
     junk_advice: { name: '「気にしなきゃ いいじゃん」', line: '友だちの アドバイス。でも、気になるものは 気になる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 1 },
@@ -310,6 +368,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     teacher: { name: '先生に そうだん', line: '「先生、聞いてほしいことが あります」', note: 'この場面で 先生に すすめられた カードが 手札に入る（戦いのあと 報酬にも出る）。状きょうも 1つ 整理される' },
     friend: { name: '友だちに そうだん', line: '「ねえ、どう思う？」', note: '心の余裕 +5。友だちの アドバイスが カードになる（ときどき 役に立たないことも）', heal: 5 },
     family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', note: '心の余裕 +10', heal: 10 },
+    diary: { name: '日記を 書く', line: '今日の ことを ノートに 書く。', note: 'モヤモヤを 1まい デッキから けす。心の余裕 +3', heal: 3, purgeMoya: true },
     book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', note: '心の余裕 +4、手札の モヤモヤを すてる', heal: 4, clearMoya: true }
   };
   // 先生がすすめるカード（場面ごと）、友だちのアドバイス（junk はハズレ）
@@ -322,7 +381,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   var FORMS = { stressMul: [1, 0.8, 0.6], organizeStat: 2 };
 
   var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'keep_distance', 'breathe', 'talk', 'okoru', 'run_away'];
-  var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply'];
+  var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply', 'plan_time', 'sukkiri', 'review_notes'];
 
   // pass: そのターン数を乗りこえると、課題は時間とともに過ぎ去る（報酬なし。leave なら モヤモヤが のこる）。
   //   からかい・発表には付けない：放っておいても過ぎ去らない問題があることを残すため
@@ -371,6 +430,67 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     }
   };
 
+  // ===== 層ごとの ボスと 関連する課題 =====
+  ENEMIES.test = {
+    forms: ['100点の 大まじん', 'むずかしそうな テスト用紙', 'いつもの 小テスト'],
+    ctx: 'study', scene: 'テスト', kind: 'boss', hp: 50,
+    moves: [{ t: 'stress', n: 9, say: '時間が どんどん へっていく' }, { t: 'worry', say: '「わからない 問題が ある…」' }, { t: 'stress', n: 11, say: 'まわりの えんぴつの 音が 気になる' }, { t: 'grow', n: 2, say: 'あせりが 大きくなる' }],
+    weak: ['think'], resist: [], backfire: [], situ: ['review_notes', 'breathe_first', 'give_up'],
+    other: '先生：「さいごまで あきらめずに 見直したね」'
+  };
+  ENEMIES.homework = {
+    forms: ['しゅくだい 大なだれ', 'つみ上がった プリント', '今日の 宿題 2まい'],
+    ctx: 'study', scene: '宿題の 山', kind: 'normal', hp: 26,
+    moves: [{ t: 'stress', n: 6, say: '「まだ こんなに ある…」' }, { t: 'grow', n: 2, say: 'ねる時間が 近づく' }, { t: 'stress', n: 7, say: 'あそびたい 気もちが じゃまをする' }],
+    weak: ['think', 'act'], resist: [], backfire: [], situ: ['plan_time', 'put_off'],
+    other: 'お家の人：「先に やって えらいね」'
+  };
+  ENEMIES.forgot_item = {
+    forms: ['なくしものの ぬま', '空っぽの ランドセル', 'ノートを わすれた 朝'],
+    ctx: 'study', scene: 'わすれもの', kind: 'normal', hp: 18, pass: { turns: 3, say: '一日 なんとか すごした。でも、言えないままだった。', leave: true },
+    moves: [{ t: 'stress', n: 6, say: '「どうしよう…」' }, { t: 'stress', n: 6, say: 'じゅぎょうが 始まる' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['say_honest', 'borrow', 'hide_it'],
+    other: '先生：「言いに来てくれて ありがとう。次から 気をつけようね」'
+  };
+  ENEMIES.friend_fight = {
+    forms: ['ギザギザ ハートの 竜', '目を 合わせない 友だち', 'なかなおり したい 友だち'],
+    ctx: 'conflict', scene: '友だちと 大げんか', kind: 'boss', hp: 55,
+    moves: [{ t: 'stress', n: 9, say: '口を きいて くれない' }, { t: 'grow', n: 3, say: 'ほかの子も まきこまれる' }, { t: 'stress', n: 10, say: 'さびしくて むかむかする' }, { t: 'worry', say: '「もう 友だちじゃ ないのかな」' }],
+    weak: [], resist: ['relate'], backfire: ['impulse'], situ: ['tell_feeling', 'keep_distance', 'ignore_back'],
+    view: { truth: 'benign', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.8 },
+    other: '友だち：「じつは こっちも あやまりたかった」'
+  };
+  ENEMIES.misunder = {
+    forms: ['もやもや 二面ぐも', 'ちがう話を している 二人', '言い方の ちがい'],
+    ctx: 'conflict', scene: 'かんちがい', kind: 'normal', hp: 24,
+    moves: [{ t: 'stress', n: 7, say: '「なんで そんなこと 言うの」' }, { t: 'grow', n: 2, say: '話が どんどん ずれていく' }],
+    weak: [], resist: ['relate'], backfire: ['impulse'], situ: ['ask_meaning', 'okoru'],
+    view: { truth: 'benign', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.6 },
+    other: '友だち：「あ、そういう いみじゃ なかったんだ！」'
+  };
+  ENEMIES.rumor = {
+    forms: ['ひそひそ こうもり', 'こそこそ 話す 子たち', 'ただの うわさ話'],
+    ctx: 'tease', scene: 'かげ口を 聞いた', kind: 'normal', hp: 24,
+    moves: [{ t: 'stress', n: 7, say: '聞こえないように 話している' }, { t: 'worry', say: '「自分の ことかも…」' }, { t: 'stress', n: 8, say: 'うわさが 広がっていく' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['not_join', 'tell_teacher', 'spread'],
+    other: '先生：「話に のらずに いてくれて ありがとう」'
+  };
+  ENEMIES.practice = {
+    forms: ['しっぱい ループ大へび', '何度も つまずく 練習', 'あと少しの 練習'],
+    ctx: 'stage', scene: '練習が うまくいかない', kind: 'normal', hp: 28,
+    moves: [{ t: 'stress', n: 7, say: 'また まちがえた' }, { t: 'grow', n: 2, say: '本番が 近づく' }, { t: 'stress', n: 8, say: '「みんなは できてるのに」' }],
+    weak: ['act'], resist: [], backfire: [], situ: ['practice_again', 'quit_it'],
+    other: '先生：「くり返し 練習したから、できるように なったね」'
+  };
+  ENEMIES.team = {
+    forms: ['バラバラ 四つ頭', '言い合う グループ', '意見が ちがう だけの なかま'],
+    ctx: 'join', scene: 'グループで 意見が 合わない', kind: 'normal', hp: 30,
+    moves: [{ t: 'stress', n: 7, say: 'みんな 自分の 意見を ゆずらない' }, { t: 'grow', n: 2, say: '時間が なくなっていく' }, { t: 'stress', n: 8, say: '声が 大きくなる' }],
+    weak: [], resist: ['impulse'], backfire: ['impulse'], situ: ['listen_all', 'vote', 'force_own'],
+    view: { truth: 'benign', weak: ['relate', 'think'], resist: [], backfire: ['impulse'], stressMul: 0.7 },
+    other: 'グループの子：「みんなの 意見が 入って よかった」'
+  };
+
   // あぶない場面（ときどき 課題の代わりに出る）。戦って勝つのは ほぼ無理で、はなれる・にげる・大人をよぶ が正解
   ENEMIES.fight_near = {
     forms: ['あばれる 大あらし', 'もめている 上級生たち', 'ケンカ中の 上級生'],
@@ -407,6 +527,23 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
         { label: '見なかったことにする', effects: {}, result: 'そのまま 席にもどった。' }
       ]
     },
+    library: {
+      title: '図書室で 本を 見つけた',
+      text: '休み時間に 図書室へ 行ったら、気になる 本が 3さつ あった。',
+      options: [
+        { label: '『気もちの ことば じてん』を 読む', effects: { addCard: 'sukkiri' }, result: '気もちを 言葉に すると すっきりする、と 書いてあった。' },
+        { label: '『べんきょうの コツ』を 読む', effects: { addCard: 'plan_time' }, result: '時間を 決めると 集中できる、と わかった。' },
+        { label: '『友だちと なかよく』を 読む', effects: { addCard: 'thanks' }, result: '「ありがとう」の 言い方が いろいろ のっていた。' }
+      ]
+    },
+    family_talk: {
+      title: '夕ごはんの 時間',
+      text: 'お家の人が「今日は どうだった？」と 聞いてくれた。',
+      options: [
+        { label: '今日 あったことを 話す', effects: { addCard: 'consult_family', yoyu: 6 }, result: '話したら 気もちが 軽くなった。' },
+        { label: '「ふつう」とだけ 言う', effects: {}, result: 'そのまま ごはんを 食べた。' }
+      ]
+    },
     second_chance: {
       title: 'やり直しのチャンス',
       text: 'この前 言い合いになった子と、ろうかで 二人きりになった。',
@@ -419,14 +556,13 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   };
 
   // お試し版：4段＋ボス。各段は2マスから1つ選ぶ
+  // 1層＝7段＋ボス。課題の半分以上は ボスに 関連する課題（related）。関連する課題を 乗りこえるたびに ボスの ハートが へる
   var ACTS = [
-    {
-      name: '教室',
-      rows: [['battle', 'battle'], ['battle', 'event'], ['elite', 'event'], ['rest', 'battle']],
-      normals: ['dunno', 'bumped', 'left_out'], dangers: ['fight_near', 'stranger'], elites: ['teased'], boss: 'presentation',
-      events: ['forgot', 'friend_trouble']
-    }
+    { name: '教室', boss: 'test', related: ['dunno', 'homework', 'forgot_item'], others: ['bumped', 'left_out'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['forgot', 'friend_trouble', 'library', 'family_talk'] },
+    { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['friend_trouble', 'library', 'family_talk'] },
+    { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['library', 'family_talk', 'friend_trouble'] }
   ];
+  var MAP = { rows: 7, cols: 4, paths: 3, relatedShare: 0.5, hearts: 3, heartHp: 0.15, heartStress: 0.1, actHeal: 1 };
 
   var TEXT = {
     title: 'こころの 冒険',
@@ -437,7 +573,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     stressIntrude: '心の余裕が へって、「カッとなる」が 手札に まざった。'
   };
 
-  var DATA = { FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
+  var DATA = { MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
   else root.SST_DATA = DATA;
 })(this);
@@ -448,7 +584,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 3;
+  var ENGINE_VER = 4;
 
   // --- 乱数 ---
   function rand(s) {
@@ -477,7 +613,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   function newRun(seed, mode) {
     var s = {
       ver: ENGINE_VER, seed: seed >>> 0, rng: seed >>> 0, mode: mode || 1,
-      phase: 'map', act: 0, floor: 0, row: 0,
+      phase: 'map', act: 0, floor: 0, row: 0, pos: null, acts: (mode === 3 ? 3 : 1), hearts: D.MAP.hearts,
       yoyu: D.PLAYER.maxYoyu, maxYoyu: D.PLAYER.maxYoyu,
       trust: D.PLAYER.trustStart,
       stats: { think: 0, act: 0, relate: 0 },
@@ -491,9 +627,61 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     return s;
   }
 
+  // 分かれ道のマップ：7段×4列。3本の道を下から上へ引き、通ったマスと線を使う。
+  // マスの課題は はじめに 決めておく（マップで 名前が 見える）。課題の半分以上は ボスに 関連する課題
   function buildMap(s) {
-    var act = D.ACTS[s.act];
-    return act.rows.map(function (row) { return row.slice(); }).concat([['boss']]);
+    var M = D.MAP, act = D.ACTS[s.act], nodes = [], edges = {};
+    for (var r = 0; r < M.rows; r++) nodes.push({});
+    var starts = shuffle(s, [0, 1, 2, 3]).slice(0, M.paths);
+    starts.forEach(function (c0) {
+      var c = c0;
+      for (var r = 0; r < M.rows; r++) {
+        nodes[r][c] = nodes[r][c] || { col: c };
+        if (r < M.rows - 1) {
+          var opts = [c - 1, c, c + 1].filter(function (x) { return x >= 0 && x < M.cols; });
+          var nc = pick(s, opts);
+          edges[r + ':' + c + ':' + nc] = 1;
+          c = nc;
+        }
+      }
+    });
+    var rows = nodes.map(function (o) { return Object.keys(o).map(Number).sort(function (a, b) { return a - b; }).map(function (c) { return o[c]; }); });
+    // マスの種類
+    rows.forEach(function (row, r) {
+      row.forEach(function (n) {
+        if (r === 0) n.kind = 'battle';
+        else if (r === M.rows - 1) n.kind = 'rest';
+        else {
+          var x = rand(s);
+          n.kind = x < .56 ? 'battle' : x < .78 ? 'event' : x < .86 ? 'rest' : (r >= 2 ? 'elite' : 'battle');
+        }
+      });
+    });
+    // 課題を わりあてる（関連する課題を 半分以上）
+    var battles = [];
+    rows.forEach(function (row) { row.forEach(function (n) { if (n.kind === 'battle') battles.push(n); }); });
+    var order = shuffle(s, battles.slice());
+    var needRelated = Math.ceil(order.length * M.relatedShare);
+    order.forEach(function (n, i) {
+      if (i < needRelated) { n.enemy = pick(s, act.related); n.related = true; }
+      else if (rand(s) < D.RULES.dangerChance) n.enemy = pick(s, act.dangers);
+      else n.enemy = pick(s, act.others);
+    });
+    rows.forEach(function (row) { row.forEach(function (n) { if (n.kind === 'elite') n.enemy = pick(s, act.elites); }); });
+    var edgeList = Object.keys(edges).map(function (k) { var p = k.split(':').map(Number); return { r: p[0], from: p[1], to: p[2] }; });
+    rows.push([{ col: 1.5, kind: 'boss', enemy: act.boss }]);
+    return { rows: rows, edges: edgeList };
+  }
+
+  // いまの段で えらべる マス（前の段から 線で つながっているもの）
+  function reachable(s) {
+    var row = s.map.rows[s.row];
+    if (!row) return [];
+    if (s.row === 0 || row[0].kind === 'boss') return row.map(function (n, i) { return i; });
+    var from = s.pos;
+    return row.map(function (n, i) { return i; }).filter(function (i) {
+      return s.map.edges.some(function (e) { return e.r === s.row - 1 && e.from === from && e.to === row[i].col; });
+    });
   }
 
   // --- 条件 ---
@@ -525,24 +713,17 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   }
 
   // --- マップ ---
-  function chooseNode(s, col) {
+  function chooseNode(s, i) {
     if (s.phase !== 'map') throw new Error('not map');
-    var kind = s.map[s.row][col];
-    if (!kind) throw new Error('bad node');
+    if (reachable(s).indexOf(i) < 0) throw new Error('not reachable');
+    var n = s.map.rows[s.row][i];
     s.floor++;
-    var act = D.ACTS[s.act];
-    if (kind === 'battle' && act.dangers && rand(s) < D.RULES.dangerChance) {
-      startBattle(s, pick(s, act.dangers));
-    } else if (kind === 'battle') {
-      var pool = act.normals.filter(function (e) { return s.usedNormals.indexOf(e) < 0; });
-      if (!pool.length) pool = act.normals.slice();
-      var eid = pick(s, pool); s.usedNormals.push(eid);
-      startBattle(s, eid);
-    } else if (kind === 'elite') startBattle(s, pick(s, act.elites));
-    else if (kind === 'boss') startBattle(s, act.boss);
-    else if (kind === 'event') startEvent(s);
-    else if (kind === 'rest') { s.phase = 'rest'; }
-    s.nodeKind = kind;
+    s.pos = n.col;
+    s.nodeRelated = !!n.related;
+    if (n.kind === 'battle' || n.kind === 'elite' || n.kind === 'boss') startBattle(s, n.enemy);
+    else if (n.kind === 'event') startEvent(s);
+    else if (n.kind === 'rest') { s.phase = 'rest'; }
+    s.nodeKind = n.kind;
     return s;
   }
 
@@ -554,12 +735,20 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   }
 
   // --- 戦い ---
+  // ボスは、なくした ハートの数だけ 弱くなる
+  function lostHearts(s) { return D.MAP.hearts - s.hearts; }
+  function bossHp(s, E) {
+    var hp = E.hp * D.RULES.hpScale;
+    if (E.kind === 'boss') hp *= 1 - D.MAP.heartHp * lostHearts(s);
+    return Math.round(hp);
+  }
+
   function startBattle(s, eid) {
     var E = D.ENEMIES[eid];
     var en = {
-      id: eid, name: E.forms[0], form: 0, hp: Math.round(E.hp * D.RULES.hpScale), maxHp: Math.round(E.hp * D.RULES.hpScale), kind: E.kind, str: 0, mi: 0,
+      id: eid, name: E.forms[0], form: 0, hp: bossHp(s, E), maxHp: bossHp(s, E), kind: E.kind, str: 0, mi: 0,
       revealed: false, weak: E.weak.slice(), resist: E.resist.slice(),
-      backfire: (E.backfire || []).slice(), stressMul: 1
+      backfire: (E.backfire || []).slice(), stressMul: 1, bossMul: E.kind === 'boss' ? 1 - D.MAP.heartStress * lostHearts(s) : 1
     };
     var bench = [], cards = [];
     s.deck.forEach(function (id) { (fits(id, E.ctx) ? cards : bench).push({ id: id }); });
@@ -710,6 +899,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 
     if (ok) {
       if (c.organize) organize(s);
+      if (c.clearMoya) clearMoya(s, true);
       if (c.distance && !b.distanced) {
         b.distanced = true; en.str = 0; en.stressMul *= D.RULES.distanceMul;
         msg(s, 'きょりを おいた。問題の いきおいが おさまり、ストレスも 弱まった。', 'reveal');
@@ -754,7 +944,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   function stressOf(s, mv) {
     var en = s.battle.enemy, ctx = D.ENEMIES[en.id].ctx;
     var ng = (s.nigate[ctx] || 0) * D.RULES.nigateStress;
-    return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul);
+    return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul * (en.bossMul || 1));
   }
   // 心の余裕は0より下がらない。下がった分は「動けない」中の つらさとして数える
   function hurt(s, dmg) {
@@ -873,7 +1063,11 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       }
     }
     noteUnlocks(s, s.trust, statsBefore);
-    if (en.kind === 'boss') { endRun(s, true); return; }
+    if (s.nodeRelated && !passed && s.hearts > 0) {
+      s.hearts--;
+      log(s, { k: 'heart', left: s.hearts, enemy: en.id });
+    }
+    if (en.kind === 'boss') { bossDown(s); return; }
     s.phase = 'reward';
     if (passed) {
       s.reward = { choices: [], other: E.other, support: null, passed: E.pass.say, leave: !!E.pass.leave };
@@ -930,13 +1124,31 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       log(s, { k: 'gain', card: fc, why: 'friend' });
       msg(s, '友だちの アドバイス：「' + card(fc).name + '」' + (fc === 'junk_advice' ? '（あまり 役に立たなかった…）' : ''), fc === 'junk_advice' ? 'fail' : 'next');
     }
-    if (u.clearMoya) {
-      var n = 0;
-      b.hand = b.hand.filter(function (h) { if (h.id === 'moyamoya') { b.discard.push(h); n++; return false; } return true; });
-      if (n) msg(s, 'モヤモヤが ' + n + 'まい 気にならなくなった。', 'reveal');
-    }
+    if (u.clearMoya) clearMoya(s, false);
+    if (u.purgeMoya) purgeOne(s);
     log(s, { k: 'useSupport', id: id, enemy: en.id });
     return s;
+  }
+
+  // 手札の モヤモヤを すてる（purge なら 1まい デッキからも けす）
+  function clearMoya(s, purge) {
+    var b = s.battle, n = 0;
+    b.hand = b.hand.filter(function (h) { if (h.id === 'moyamoya') { b.discard.push(h); n++; return false; } return true; });
+    if (n) msg(s, 'モヤモヤが ' + n + 'まい 気にならなくなった。', 'clear');
+    if (purge) purgeOne(s);
+  }
+  function purgeOne(s) {
+    var i = s.deck.indexOf('moyamoya');
+    if (i < 0) return;
+    s.deck.splice(i, 1);
+    var b = s.battle;
+    var piles = [b.discard, b.draw, b.hand];
+    for (var p = 0; p < piles.length; p++) {
+      var j = piles[p].findIndex(function (h) { return h.id === 'moyamoya' && !h.temp; });
+      if (j >= 0) { piles[p].splice(j, 1); break; }
+    }
+    msg(s, 'モヤモヤを 1まい デッキから けした。', 'clear');
+    log(s, { k: 'purge' });
   }
 
   // ひと休みで、つけるアイテムを えらび直す
@@ -963,6 +1175,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     if (s.phase !== 'rest') throw new Error('not rest');
     if (choice === 'rest') {
       var before = s.yoyu;
+      s.deck.push('consult_family'); log(s, { k: 'gain', card: 'consult_family', why: 'rest' });
       s.yoyu = Math.min(s.maxYoyu, s.yoyu + Math.round(s.maxYoyu * D.RULES.restHeal));
       log(s, { k: 'rest', d: s.yoyu - before });
     } else if (choice === 'remove') {
@@ -1012,6 +1225,25 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   function leaveEvent(s) {
     if (s.phase !== 'event' || s.event.done == null) throw new Error('event not done');
     return advance(s);
+  }
+
+  // ボスを たおした：次の層へ。さいごの層なら おわり
+  function bossDown(s) {
+    if (s.act < s.acts - 1) {
+      s.act++; s.row = 0; s.pos = null; s.hearts = D.MAP.hearts;
+      s.yoyu = s.maxYoyu;
+      s.map = buildMap(s);
+      s.phase = 'actclear';
+      s.battle = null;
+      log(s, { k: 'act', act: s.act });
+      return;
+    }
+    endRun(s, true);
+  }
+  function nextAct(s) {
+    if (s.phase !== 'actclear') throw new Error('not actclear');
+    s.phase = 'map';
+    return s;
   }
 
   function endRun(s, won) {
@@ -1078,7 +1310,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D
@@ -1129,7 +1361,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 (function (root) {
   'use strict';
   var PAL = {"k": "#12172a", "w": "#ffffff", "W": "#d9dee8", "p": "#8e6ad8", "P": "#b79cf0", "y": "#ffd23f", "Y": "#e0a800", "r": "#e5484d", "R": "#b52a32", "g": "#5c6b8a", "q": "#45526e", "G": "#a7b2c8", "o": "#f08c3a", "O": "#c4651b", "s": "#f6cfa8", "S": "#e3ae85", "b": "#3b6fd8", "B": "#2a52a8", "n": "#7a4b2a", "N": "#9c6a40", "e": "#2f9e55", "E": "#21763f", "c": "#9fb6c8", "C": "#7690a6", "d": "#3d2f63", "D": "#2a1f47"};
-  var ART = {"dunno_m": [".............kkkkk..............", "............kyyyyyk.............", "...........kyykkkyyk............", "............kk...kyyk...........", ".................kyyk...........", ".................kyyk...........", "................kyyk............", "...............kyyk.............", "..............kyyk..............", "..............kyyk..............", "..............kyyk..............", "..............kYYk..............", "............kkkYYkkk............", ".........kkkddddddddkkk.........", "........kddddddddddddddk........", ".......kddddddddddddddddk.......", "......kddddpppdddddddddddk......", ".....kdddpppppddddddddddddk.....", "....kdddppkpppddddddddkddddk....", "...kddddpppkkdddddddkkddddddk...", "...kddddddrYrkdddddrYrddddddk...", "...kddddddrrrddddddrrrddddddk...", "...kddddddddddddddddddddddddk...", "...kddddddddddddddddddddddddk...", "...kddddddkwkwkwkwkwkwkdddddk...", "....kDDDDdkrrrrrrrrrrrkDDDDk....", "...kdkDDDDkwkwkwkwkwkwkDDDkdk...", "..kddddDDDDDDddddddDDDDDDddddk..", "..kddddkDDDDDDDDDDDDDDDDkddddk..", ".kddkkk.kDDDDDDDDDDDDDDk.kkkddk.", "..kk.....kkkDDDDDDDDkkk.....kk..", "............kkkkkkkk............"], "bumped_m": ["................................", "................................", "................................", "...........k........k...........", "..........kok......kok..........", "..........kook....kook..........", "..........koookkkkoook..........", "..........kooooooooook..........", "....kkk..kooooooooooook..kkk....", "...koookkooooooooooooookkoook...", "....koooooooyyoooooooooooook....", ".....koooooyyyooooooooooook.....", ".....koookyyyyoooooooookook.....", ".....koooykkyyoooooookkoook.....", "....koooyyyykkoooookkooooook....", "..kkkooooorrroooooorrroooookkk..", ".koooooooorrroooooorrrooooooook.", ".kooooooooooooooooooooooooooook.", "..kkkooooooooooooooooooooookkk..", ".kooooooooooooooooooooooooooook.", "kooooooookwkwkwkwkwkwkwkoooooook", "kooooooOOkrrrrrrrrrrrrrkOooooook", "kooooooOOkkkkkkkkkkkkkkkOooooook", "kOooooOoOkwkwkwkwkwkwkwkoOooooOk", ".kOOOOokkOOOOOOOOOOOOOOkkoOOOOk.", "..kkkkk..kOOOOOOOOOOOOk..kkkkk..", "..........kooOOOOOOook..........", "..........koookkkkoook..........", "..........kook....kook..........", "..........kok......kok..........", "...........k........k...........", "................................"], "left_out_m": ["................................", "................................", ".............kkkkkk.............", "..........kkkcccccckkk..........", ".........kcccccccccccck.........", "........kcccccccccccccck........", ".......kccccwwcccccccccck.......", "......kccccwwwccccccccccck......", ".....kccccwwwwcccccccccccck.....", ".....kcccwwwwwcccccccccccck.....", "....kcccwkkkkcccccckkkkcccck....", "....kcccckkkkcccccckkkkcccck....", "....kcccckkkkcccccckkkkcccck....", "....kcccckkrkcccccckkrkccccck...", "....kcccckkkkcccccckkkkccccck...", "....kcccckkkkcccccckkkkccccck...", "....kccccccccccccccccccccccck...", "....kccccccccccccccccccccccck...", "....kcccccccckkkkkkccccccccck...", "....kCCCCCCCkCCCCCCkCCCCCCCCk...", "....kCCCCCCCCCCCCCCCCCCCCCCCk...", "....kCCCCCCCCCCCCCCCCCCCCCCCk...", "....kCCCCCkCCCCCCCCCCCkCCCCCk...", ".....kCCCk.kCCCkkkCCCk.kCCCk....", ".....kCCCk.kCCCk.kCCCk.kCCCk....", "......kCk...kCk...kCk...kCk.....", "......kCk...kCk...kCk...kCk.....", "......kk.....k.....k.....k......", "....kkCk....................k...", "...kCCk...................kkCk..", "....kk...................kCCk...", "..........................kk...."], "teased_m": ["................................", "................................", "................................", ".....kk..kk..kk..kk..kk..kk.....", "....kggkkggkkggkkggkkggkkggk....", "..k.kggkkggkkggkkggkkggkkggk.k..", ".krkkggkkggkkggkkggkkggkkggkkrk.", "..krkggkkggkggggggggkggkkggkrk..", "...kggggggggggggggggggggggggk...", "...kggggggggggggggggggggggggk...", "....kkggggggGgggggggggggggkk....", "....kgggggGGGggggggggggggggk....", "...kggggGGGGGgggggggggggggggk...", "..kggggkGGGGGggggggggggggkgggk..", "..kggggGkkGGGggggggggggkkggggk..", ".kggggGGGGkkgggggggggkkgggggggk.", ".kggggggrrrrgggggggggrrrrgggggk.", ".kggggggrrrrgggggggggrrrrgggggk.", ".kggggggggggggggggggggggggggggk.", ".kggggggggggggggggggggggggggggk.", ".kggggggggggggggggggggggggggggk.", "..kggggkwkwkwkwkwkwkwkwkwkgggk..", "..kqqqqkrrrrrrrrrrrrrrrrrkqqqk..", "...kqqqkkkkkkkkkkkkkkkkkkkqqk...", "....kqqkwkwkwkwkwkwkwkwkwkqk....", ".....kqqqqqqqqqqqqqqqqqqqqk.....", "......kqqqqqqqqqqqqqqqqqqk......", ".......kkqqqqqqqqqqqqqqkk.......", ".........kkkqqqqqqqqkkk.........", "............kkkkkkkk............", "................................", "................................"], "presentation_m": ["................................", "................................", "................................", "............kkkkkkkk............", "..kkkkkkkkkkddddddddkkkkkkkkkk..", ".kDDDDDDDDDDDDDDDDDDDDDDDDDDDDk.", ".kDDDDDDDDDDDDDDDDDDDDDDDDDDDDk.", "..kkkdddddddwwwwwwwwdddddddkkk..", "...kdddddwwwwwwwwwrwwwwdddddk...", "..kdddddwwrwwwwwwwrwwwwwdddddk..", "..kddddwwwwrwwrrrrrwwwwwwddddk..", ".kddddwwwwwwrrrrrrrrwwwwrwddddk.", ".kdddwwwwwwrrrrrrrrrrwrrwwwdddk.", "kdddwwrwwwwrrrkkkkrrrrrwwwwwdddk", "kdddwwwrrrrrrkwwkkkrrrwwwwwwdddk", "kdddwwwwwwrrrkkkkkkrrrwwwwwwdddk", "kdddwwwwwwrrrkkkkkkrrrwrrrrrdddk", "kdddwwwwwwrrrkkkkkkrrrwwwwwwdddk", "kdddwwwrrrwRRrkkkkrRRwwwwwwwdddk", ".kdddWrWWwwRRRrrrrRRRrrWWWWdddk.", ".kDDDDWWWWWwRRRRRRRRwWrrWWDDDDk.", "..kDDDDWWWWWrwRRRRwWWWWWrDDDDk..", "..kDDDDDWWWrrWWWWrrWWWWWDDDDDk..", "...kDDDDDWWrWWWWWWrWWWWDDDDDk...", "..kkkDDDDDDDWWWWWWrWDDDDDDDkkk..", ".kDDDDDDDDDDDDDDDDDDDDDDDDDDDDk.", ".kDDDDDDDDDDDDDDDDDDDDDDDDDDDDk.", "..kkkkkkkkkkDDDDDDDDkkkkkkkkkk..", "............kkkkkkkk............", "................................", "................................", "................................"], "fight_near_m": ["..................kkkkkk........", "................kkggggggkk......", ".......kkkkkk.kkggggggggggkk....", ".....kkggggggkggggGgggggggggk...", "....kggggggggggggGGgggggggggk...", "...kgggGggggggggGGGggggggggggk..", "..kgggGGgggggggGGGGgggggggggggk.", "..kggGGGggggggggggggggggggggggk.", ".kggGGGgggggggggggggggggggggggk.", ".kgggggggkggggggggggggkgggggggk.", ".kggggggggkkggggggggkkggggggggk.", ".kgggggggrrrgggggggrrrggggggggk.", "..kggggggrrrgggggggrrrgggggggk..", "..kggggggggggggggggggggggggggk..", "..kggggggggggggggggggggggggggk..", "..kggggggggkwkwkwkwkwkgggggggk..", "...kqqqqqggkrrrrrrrrrkgqqqqqk...", "....kqqqqqqkwkwkwkwkwkqqqqqk....", ".....kkqqqqqqqqqqqqqqqqqqkk.....", ".......kkkkqqqqqqqqqqkkkk.......", "........kyyyykkkkkkkkyyyyk......", ".......kyyyyk......kyyyyk.......", ".......kyyyyk......kyyyk........", "......kyyyyk......kyyykkk.......", "......kyyykkk....kyyyyyyyk......", ".....kyyyyyyyk....kkkyyyk.......", "......kkkyyyk.......kyyk........", ".......kyyyk........kyk.........", ".......kyyk........kyk..........", ".......kyk..........k...........", "......kyk.......................", ".......k........................"], "stranger_m": ["................................", "..............kkkk..............", "............kkddddkk............", "...........kddddddddk...........", "..........kddddddddddk..........", "..........kddddddddddk..........", ".........kddddddddddddk.........", ".........kddddddddddddk.........", ".........kddrrrdddrrrdk.........", ".........kddrrrdddrrrdk.........", ".........kddddddddddddk.........", ".........kDDDddddddDDDk.........", "..........kDDddddddDDk..........", ".........kkDDrDddDrDDkk.........", "........kdddddrrrrdddddk........", "........kddddddddddddddk........", ".......kddddddddddddddddk.......", ".......kDDddddddddddddDDk.......", "......kDDDDddddddddddDDDDk......", ".....kDDDDDddddddddddDDDDDk.....", ".....kDDDDddddddddddddDDDDk.....", "....kDDDDddddddddddddddDDDDk....", "...kDDDDddddddddddddddddDDDDk...", "..kDDDDddddddddddddddddddDDDDk..", "...kDDddddddddddddddddddddDDk...", "....kkddddddddddddddddddddkk....", "....kddddddddddddddddddddddk....", "....kddddddddddddddddddddddk....", "....kddddddddddddddddddddddk....", "...kddddddddddddddddddddddddk...", "...kddddddddddddddddddddddddk...", "....kkkkkkkkkkkkkkkkkkkkkkkk...."], "dunno_r": ["................................", "................................", "......kkkkkkkkkkkkkkkkkkkk......", ".....kwwwwwwwwwwwwwwwwWWWWk.....", ".....kwwwwwwwwwwwwwwwwWWWWk.....", ".....kwwwwwwwwwwwwwwwwWWWWk.....", ".....kwwwwwwwwwwwwwwwwWWWWk.....", ".....kwwwGGGGGGGGGGGGGGwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwGGGGGGGGGGGGGGwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwGGGGGGGGGGGGGGwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwbbbwwwwk.....", ".....kwwwwwwwwwwwwbwwwbwwwk.....", ".....kwwwGGGGGGwwwwwwwbwwwk.....", ".....kwwwwwwwwwwwwwwwbwwwwk.....", ".....kwwwwwwwwwwwwwwbwwwwwk.....", ".....kwwwwwwwwwwwwwwbwwwwwk.....", ".....kwwwGGGGGGwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwbwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kWWWWWWWWWWWWWWWWWWWWk.....", ".....kWWWWWWWWWWWWWWWWWWWWk.....", "......kkkkkkkkkkkkkkkkkkkk......", "................................", "................................"], "bumped_r": ["................................", "................................", "..............kkkk..............", "............kknnnnkk............", "...........knNnnnnnnk......k....", "..........knnnnnnNnnnk....kkk...", ".........knnnnnnnnnnnnk..kkk....", "........knnnnnnnnnnnnnnk..k.....", "........knnnnnnnnnnnnnnk....kk..", "....kk.knnnnnssssssnnnnnk.kkkkk.", "...kssk.kssssssssssssssk.ksskk..", "...kssskksssksssssskssskksssk...", "...kssskksssksssssskssskksssk...", "....kssskssssssssssssssksssk....", "....kssskSSRssssssssRSSksssk....", ".....kssskSSSSssssSSSSksssk.....", "......ksskkSSSSkrkSSSkkssk......", "......kssskkSSSkrkSSkksssk......", ".......ksskeeeeeeeeeekssk.......", ".......kssseeeeeeeeeesssk.......", "........ksseeeeeeeeeessk........", ".........keeeeeeeeeeeek.........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", ".......kEEEEEEEEEEEEEEEEk.......", ".......kEEEEEEEEEEEEEEEEk.......", "........keeeeeeeeeeeeeek........", ".........kkkkkkkkkkkkkk.........", "................................"], "left_out_r": ["................................", "................................", "................................", "................................", "................................", "................................", ".....kkkkkk..........kkkkkk.....", "....knnnnnnk........kyyyyyyk....", "...knnNnnnnnk......kyyYyyyyyk...", "..knnnnnnNnnnk....kyyyyyyYyyyk..", ".knnnnnnnnnnnnk..kyyyyyyyyyyyyk.", ".knnnnnnnnnnnnk..kyyyyyyyyyyyyk.", ".kssssssssssssk..kssssssssssssk.", ".kssskssssksssk..kssskssssksssk.", ".kssskssssksssk..kssskssssksssk.", "..kSSssssssSSk....kSSssssssSSk..", "..kSRSkssskRSk....kSRSkssskRSk..", "...kSSrrrrrSk......kSSrrrrrSk...", "....koSrrrok........kbSrrrbk....", "...kooooooook......kbbbbbbbbk...", "..kooooooooook....kbbbbbbbbbbk..", "..kooooooooook....kbbbbbbbbbbk..", "..kooooooooook....kbbbbbbbbbbk..", "..kooooooooookkkkkkbbbbbbbbbbk..", ".koooooooooooorrrrbbbbbbbbbbbbk.", ".kooooooooooorwrrrrbbbbbbbbbbbk.", ".kOOOOOOOOOOOrrrrrrBBBBBBBBBBBBk", ".kOOOOOOOOOOOrrrrrrBBBBBBBBBBBBk", "..kkkkkkkkkkkRRrrRRkkkkkkkkkkkk.", ".............kRRRRk.............", "..............kkkk..............", "................................"], "teased_r": ["................................", "................................", "................................", "................................", "................................", "................................", "................................", "......kkkkkk........kkkkkk......", ".....knnnnnnk......kkkkkkkk.....", "....knnNnnnnnk....kkkgkkkkkk....", "...knnnnnnNnnnk..kkkkkkkgkkkk...", "..knnnnnnnnnnnnkkkkkkkkkkkkkkk..", "..knnnnnnnnnnnnkkkkkkkkkkkkkkk..", "..ksssssssssssskkssssssssssssk..", "..ksssksssskssskkssskssssksssk..", "..ksssksssskssskkssskssssksssk..", "...kSSssssssSSk..kSSssssssSSk...", "...kSRSkssskRSk..kSRSkssskRSk...", "....kSSrrrrrSk....kSSrrrrrSk....", ".....kgSrrrgk......kPSrrrPk.....", "....kggggggggk....kPPPPPPPPk....", "...kggggggggggk..kPPPPPPPPPPk...", "...kggggggggggk..kPPPPPPPPPPk...", "...kggggggggggk..kPPPPPPPPPPk...", "...kggggggggggk..kPPPPPPPPPPk...", "..kggggggggggggkkPPPPPPPPPPPPk..", "..kggggggggggggkkPPPPPPPPPPPPk..", "..kqqqqqqqqqqqqqkpppppppppppppk.", "..kqqqqqqqqqqqqqkpppppppppppppk.", "...kkkkkkkkkkkkk.kkkkkkkkkkkkk..", "................................", "................................"], "presentation_r": ["................................", "................................", "................................", "................................", "................................", "................................", "................................", "................................", "..............kkkk..............", "............kkkkkkkk............", "...........kkkgkkkkkk...........", "....kkkk..kkkkkkgkkkkk..kkkk....", "...knnnnk.kkkkkkkkkkkk.kyyyyk...", "..knNnnnnkkkkksssskkkkkyYyyyyk..", ".knnnnNnnnksskssssksskyyyyYyyyk.", "knnnnnnnnnnssksssskssyyyyyyyyyyk", "knnssssssnnSSssssssSSyyssssssyyk", "kssksssskssSRSssssSRSssksssskssk", "ksskssssksskSSSkSkSSkssksssskssk", "kSSssssssSSkkeSSkSekkSSssssssSSk", ".kRSSkskSRkkeeeeeeeekkRSSkskSRk.", "..kSSSkSSkkeeeeeeeeeekkSSSkSSk..", "..kbbbbbbkkeeeeeeeeeekkooooook..", ".kbbbbbbbbkeeeeeeeeeekooooooook.", ".kbbbbbbbbkeeeeeeeeeekooooooook.", "kbbbbbbbbbbeeeeeeeeeeooooooooook", "kbbbbbbbbbEEEEEEEEEEEooooooooook", "kbbbbbbbbbEEEEEEEEEEEooooooooook", "BBBBBBBBBBBkkkkkkkkkOOOOOOOOOOOk", "BBBBBBBBBBBk.......kOOOOOOOOOOOk", "kkkkkkkkkkk.........kkkkkkkkkkk.", "................................"], "fight_near_r": ["................................", "................................", "...............kkk..............", "..............kyyyk.............", ".............kyyyk..............", ".............kyyyk..............", "......kkkkkk.kyykk..kkkkkk......", "....kkgkkkkkkyyyyykkNnnnnnkk....", "...kkkkkkkgkkkkyyknnnnnnNnnnk...", "..kkkkkkkkkkkkkyknnnnnnnnnnnnk..", "..kkkkkkkkkkkkykknnnnnnnnnnnnk..", "..kkkkkkkkkkkkkkknnknnnnnnknnk..", ".kkksskssssksskknnssksssskssnnk.", ".kssssksssskssssssssksssskssssk.", ".kssssksssskssssssssksssskssssk.", "..ksssssssssssskkssssssssssssk..", "..kSSRssssssRSSkkSSRssssssRSSk..", "...kSSSskkkSSSk..kSSSskkkSSSk...", "....kSSkSSSkSk....kSSkSSSkSk....", "k...krSSSSSSrkk..kkgSSSSSSgk...k", "skkkrrrrrrrsssskksggggggggggkkks", "sssssrrrrrrssssssssgggggggggssss", "sssssrrrrrrrrssssssgggggggggssss", "kkkrrrrrrrrrrrrkkggggggggggggkkk", "..krrrrrrrrrrrrkkggggggggggggk..", "..krrrrrrrrrrrrkkggggggggggggk..", "..krrrrrrrrrrrrkkggggggggggggk..", ".kRRRRRRRRRRRRRRqqqqqqqqqqqqqqk.", ".kRRRRRRRRRRRRRRqqqqqqqqqqqqqqk.", ".krrrrrrrrrrrrrrggggggggggggggk.", "..kkkkkkkkkkkkkkkkkkkkkkkkkkkk..", "................................"], "stranger_r": [".............kkkkkk.............", "...........kkddddddkk...........", ".........kkddddddddddkk.........", "........kddddddddddddddk........", "........kddddddddddddddk........", ".......kkddddddddddddddkk.......", "......kddddddddddddddddddk......", ".......kGddddddddddddddGk.......", ".......kGGGddddddddddGGGk.......", ".......kssskkkddddkkksssk.......", ".......kssksksksskskskssk.......", ".......kssksksksskskskssk.......", "........ksskkksssskkkssk........", "........kSSRssssssssRSSk........", "........kSSSSssssssSSSSk........", ".........kSSSSSkSkSSSSk.........", "..........kSSSSSkSSSSk..........", "..........kqqSSSSSSqqk..........", ".........kqqqqqqqqqqqqk.........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", ".......kDDDDDDDDDDDDDDDDk.......", ".......kDDDDDDDDDDDDDDDDk.......", ".......kqqqqqqqqqqqqqqqqk.......", "........kkkkkkkkkkkkkkkk........", "................................"], "hero": ["................................", "..............kkkk..............", "............kknnnnkk............", "..........kknNnnnnnnkk..........", ".........knnnnnnnNnnnnk.........", ".........knnnnnnnnnnnnk.........", "........knnnnnnnnnnnnnnk........", ".......knnnnnnnnnnnnnnnnk.......", ".......knnnnnnssssnnnnnnk.......", ".......kssssssssssssssssk.......", ".......kssssksssssskssssk.......", ".......kssssksssssskssssk.......", "........kssssssssssssssk........", "........kSSRssssssssRSSk........", "........kSSSSssssssSSSSk........", ".........kSSSSSkSkSSSSk.........", "..........kSSSSSkSSSSk..........", "..........kbbSSSSSSbbk..........", ".........kbbbbbbbbbbbbk.........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", ".......kBBBBBBBBBBBBBBBBk.......", ".......kBBBBBBBBBBBBBBBBk.......", ".......kbbbbbbbbbbbbbbbbk.......", "........kkkkkkkkkkkkkkkk........", "................................"], "teacher": ["................................", "..............kkkk..............", "............kkGGGGkk............", "..........kkGgGGGGGGkk..........", ".........kGGGGGGGgGGGGk.........", ".........kGGGGGGGGGGGGk.........", "........kGGGGGGGGGGGGGGk........", ".......kGGGGGGGGGGGGGGGGk.......", ".......kGGGGGGssssGGGGGGk.......", ".......kssskkksssskkksssk.......", ".......kssksksksskskskssk.......", ".......kssksksksskskskssk.......", "........ksskkksssskkkssk........", "........kSSRssssssssRSSk........", "........kSSSSssssssSSSSk........", ".........kSSSSSkSkSSSSk.........", "..........kSSSSSkSSSSk..........", "..........keeSSSSSSeek..........", ".........keeeeeeeeeeeek.........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", ".......kEEEEEEEEEEEEEEEEk.......", ".......kEEEEEEEEEEEEEEEEk.......", ".......keeeeeeeeeeeeeeeek.......", "........kkkkkkkkkkkkkkkk........", "................................"], "friend": ["................................", "................................", "................................", "................................", "................................", "................................", "................................", "......kkkkkk........kkkkkk......", ".....kyyyyyyk......knnnnnnk.....", "....kyyYyyyyyk....knnNnnnnnk....", "...kyyyyyyYyyyk..knnnnnnNnnnk...", "..kyyyyyyyyyyyykknnnnnnnnnnnnk..", "..kyyyyyyyyyyyykknnnnnnnnnnnnk..", "..ksssssssssssskkssssssssssssk..", "..ksssksssskssskkssskssssksssk..", "..ksssksssskssskkssskssssksssk..", "...kSSssssssSSk..kSSssssssSSk...", "...kSRSkssskRSk..kSRSkssskRSk...", "....kSSrrrrrSk....kSSrrrrrSk....", ".....koSrrrok......kbSrrrbk.....", "....kooooooook....kbbbbbbbbk....", "...kooooooooook..kbbbbbbbbbbk...", "...kooooooooook..kbbbbbbbbbbk...", "...kooooooooook..kbbbbbbbbbbk...", "...kooooooooook..kbbbbbbbbbbk...", "..kooooooooooookkbbbbbbbbbbbbk..", "..kooooooooooookkbbbbbbbbbbbbk..", "..kOOOOOOOOOOOOOkBBBBBBBBBBBBBk.", "..kOOOOOOOOOOOOOkBBBBBBBBBBBBBk.", "...kkkkkkkkkkkkk.kkkkkkkkkkkkk..", "................................", "................................"], "family": ["................................", "................................", ".........kkkk...................", ".......kkkkkkkk.................", "......kkgkkkkkkk................", ".....kkkkkkkgkkkk...............", "....kkkkkkkkkkkkkk..............", "...kkkkkkkkkkkkkkkk.............", "...kkkkkkkkkkkkkkkk.............", "..kkkkkksssssskkkkkk............", "...kssssssssssssssk.............", "...kssskssssssksssk.............", "...kssskssssssksssk....kk.......", "...kssssssssssssssk..kknnkk.....", "...kSSRssssssssRSSk.knNnnnnk....", "....kSSSSssssSSSSk.knnnnNnnnk...", ".....kSSSSkSkSSSk.knnnnnnnnnnk..", "......kSSSSkSSSk..knnssssssnnk..", ".....kPPPPPPPPPPk.kssskssskssk..", "....kPPPPPPPPPPPPkkssskssskssk..", "....kPPPPPPPPPPPPk.kSSssssSSk...", "....kPPPPPPPPPPPPk..kRSkSkSRk...", "...kPPPPPPPPPPPPPPk.kbSSkSbk....", "...kPPPPPPPPPPPPPPkkbbbbbbbbk...", "...kPPPPPPPPPPPPPPkkbbbbbbbbk...", "...kPPPPPPPPPPPPPPkkbbbbbbbbk...", "...kPPPPPPPPPPPPPPkkbbbbbbbbk...", "..kppppppppppppppppkbbbbbbbbk...", "..kppppppppppppppppBBBBBBBBBBk..", "...kPPPPPPPPPPPPPPkBBBBBBBBBBk..", "....kkkkkkkkkkkkkk.kkkkkkkkkk...", "................................"], "book": ["................................", "................................", "......................kkk.......", ".....................kyyyk......", ".....................kyyyk......", ".....................kyyyk......", "............kkkkkkkk.kyyyk......", "......kkkkkkrrrRRrrrkkyyyk......", "...kkkrrrrrrrrrRRrrrrryyyrkkk...", "..krrrrrrrwwwwwRRwwwwwyyyrrrrk..", "..krrwwwwwwwwwwRRwwwwwyyywwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwGGGGwRRwwGGGGwwwwrrk..", "..krrwwGGGGwwwwRRwwwwwGGGGwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwGGGGwRRwwGGGGwwwwrrk..", "..krrwwGGGGwwwwRRwwwwwGGGGwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwGGGGwRRwwGGGGwwwwrrk..", "..krrwwGGGGwwwwRRwwwwwGGGGwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwwwwrrRRrrwwwwwwwwrrk..", "..krrwwwrrrrrrrRRrrrrrrrwwwrrk..", "..krrrrrrrrrkkkRRkkkrrrrrrrrrk..", "..krrrkkkkkk..kRRk..kkkkkkrrrk..", "...kkk.........kk.........kkk...", "................................", "................................", "................................", "................................"]};
+  var ART = {"dunno_m": [".............kkkkk..............", "............kyyyyyk.............", "...........kyykkkyyk............", "............kk...kyyk...........", ".................kyyk...........", ".................kyyk...........", "................kyyk............", "...............kyyk.............", "..............kyyk..............", "..............kyyk..............", "..............kyyk..............", "..............kYYk..............", "............kkkYYkkk............", ".........kkkddddddddkkk.........", "........kddddddddddddddk........", ".......kddddddddddddddddk.......", "......kddddpppdddddddddddk......", ".....kdddpppppddddddddddddk.....", "....kdddppkpppddddddddkddddk....", "...kddddpppkkdddddddkkddddddk...", "...kddddddrYrkdddddrYrddddddk...", "...kddddddrrrddddddrrrddddddk...", "...kddddddddddddddddddddddddk...", "...kddddddddddddddddddddddddk...", "...kddddddkwkwkwkwkwkwkdddddk...", "....kDDDDdkrrrrrrrrrrrkDDDDk....", "...kdkDDDDkwkwkwkwkwkwkDDDkdk...", "..kddddDDDDDDddddddDDDDDDddddk..", "..kddddkDDDDDDDDDDDDDDDDkddddk..", ".kddkkk.kDDDDDDDDDDDDDDk.kkkddk.", "..kk.....kkkDDDDDDDDkkk.....kk..", "............kkkkkkkk............"], "bumped_m": ["................................", "................................", "................................", "...........k........k...........", "..........kok......kok..........", "..........kook....kook..........", "..........koookkkkoook..........", "..........kooooooooook..........", "....kkk..kooooooooooook..kkk....", "...koookkooooooooooooookkoook...", "....koooooooyyoooooooooooook....", ".....koooooyyyooooooooooook.....", ".....koookyyyyoooooooookook.....", ".....koooykkyyoooooookkoook.....", "....koooyyyykkoooookkooooook....", "..kkkooooorrroooooorrroooookkk..", ".koooooooorrroooooorrrooooooook.", ".kooooooooooooooooooooooooooook.", "..kkkooooooooooooooooooooookkk..", ".kooooooooooooooooooooooooooook.", "kooooooookwkwkwkwkwkwkwkoooooook", "kooooooOOkrrrrrrrrrrrrrkOooooook", "kooooooOOkkkkkkkkkkkkkkkOooooook", "kOooooOoOkwkwkwkwkwkwkwkoOooooOk", ".kOOOOokkOOOOOOOOOOOOOOkkoOOOOk.", "..kkkkk..kOOOOOOOOOOOOk..kkkkk..", "..........kooOOOOOOook..........", "..........koookkkkoook..........", "..........kook....kook..........", "..........kok......kok..........", "...........k........k...........", "................................"], "left_out_m": ["................................", "................................", ".............kkkkkk.............", "..........kkkcccccckkk..........", ".........kcccccccccccck.........", "........kcccccccccccccck........", ".......kccccwwcccccccccck.......", "......kccccwwwccccccccccck......", ".....kccccwwwwcccccccccccck.....", ".....kcccwwwwwcccccccccccck.....", "....kcccwkkkkcccccckkkkcccck....", "....kcccckkkkcccccckkkkcccck....", "....kcccckkkkcccccckkkkcccck....", "....kcccckkrkcccccckkrkccccck...", "....kcccckkkkcccccckkkkccccck...", "....kcccckkkkcccccckkkkccccck...", "....kccccccccccccccccccccccck...", "....kccccccccccccccccccccccck...", "....kcccccccckkkkkkccccccccck...", "....kCCCCCCCkCCCCCCkCCCCCCCCk...", "....kCCCCCCCCCCCCCCCCCCCCCCCk...", "....kCCCCCCCCCCCCCCCCCCCCCCCk...", "....kCCCCCkCCCCCCCCCCCkCCCCCk...", ".....kCCCk.kCCCkkkCCCk.kCCCk....", ".....kCCCk.kCCCk.kCCCk.kCCCk....", "......kCk...kCk...kCk...kCk.....", "......kCk...kCk...kCk...kCk.....", "......kk.....k.....k.....k......", "....kkCk....................k...", "...kCCk...................kkCk..", "....kk...................kCCk...", "..........................kk...."], "teased_m": ["................................", "................................", "................................", ".....kk..kk..kk..kk..kk..kk.....", "....kggkkggkkggkkggkkggkkggk....", "..k.kggkkggkkggkkggkkggkkggk.k..", ".krkkggkkggkkggkkggkkggkkggkkrk.", "..krkggkkggkggggggggkggkkggkrk..", "...kggggggggggggggggggggggggk...", "...kggggggggggggggggggggggggk...", "....kkggggggGgggggggggggggkk....", "....kgggggGGGggggggggggggggk....", "...kggggGGGGGgggggggggggggggk...", "..kggggkGGGGGggggggggggggkgggk..", "..kggggGkkGGGggggggggggkkggggk..", ".kggggGGGGkkgggggggggkkgggggggk.", ".kggggggrrrrgggggggggrrrrgggggk.", ".kggggggrrrrgggggggggrrrrgggggk.", ".kggggggggggggggggggggggggggggk.", ".kggggggggggggggggggggggggggggk.", ".kggggggggggggggggggggggggggggk.", "..kggggkwkwkwkwkwkwkwkwkwkgggk..", "..kqqqqkrrrrrrrrrrrrrrrrrkqqqk..", "...kqqqkkkkkkkkkkkkkkkkkkkqqk...", "....kqqkwkwkwkwkwkwkwkwkwkqk....", ".....kqqqqqqqqqqqqqqqqqqqqk.....", "......kqqqqqqqqqqqqqqqqqqk......", ".......kkqqqqqqqqqqqqqqkk.......", ".........kkkqqqqqqqqkkk.........", "............kkkkkkkk............", "................................", "................................"], "presentation_m": ["................................", "................................", "................................", "............kkkkkkkk............", "..kkkkkkkkkkddddddddkkkkkkkkkk..", ".kDDDDDDDDDDDDDDDDDDDDDDDDDDDDk.", ".kDDDDDDDDDDDDDDDDDDDDDDDDDDDDk.", "..kkkdddddddwwwwwwwwdddddddkkk..", "...kdddddwwwwwwwwwrwwwwdddddk...", "..kdddddwwrwwwwwwwrwwwwwdddddk..", "..kddddwwwwrwwrrrrrwwwwwwddddk..", ".kddddwwwwwwrrrrrrrrwwwwrwddddk.", ".kdddwwwwwwrrrrrrrrrrwrrwwwdddk.", "kdddwwrwwwwrrrkkkkrrrrrwwwwwdddk", "kdddwwwrrrrrrkwwkkkrrrwwwwwwdddk", "kdddwwwwwwrrrkkkkkkrrrwwwwwwdddk", "kdddwwwwwwrrrkkkkkkrrrwrrrrrdddk", "kdddwwwwwwrrrkkkkkkrrrwwwwwwdddk", "kdddwwwrrrwRRrkkkkrRRwwwwwwwdddk", ".kdddWrWWwwRRRrrrrRRRrrWWWWdddk.", ".kDDDDWWWWWwRRRRRRRRwWrrWWDDDDk.", "..kDDDDWWWWWrwRRRRwWWWWWrDDDDk..", "..kDDDDDWWWrrWWWWrrWWWWWDDDDDk..", "...kDDDDDWWrWWWWWWrWWWWDDDDDk...", "..kkkDDDDDDDWWWWWWrWDDDDDDDkkk..", ".kDDDDDDDDDDDDDDDDDDDDDDDDDDDDk.", ".kDDDDDDDDDDDDDDDDDDDDDDDDDDDDk.", "..kkkkkkkkkkDDDDDDDDkkkkkkkkkk..", "............kkkkkkkk............", "................................", "................................", "................................"], "fight_near_m": ["..................kkkkkk........", "................kkggggggkk......", ".......kkkkkk.kkggggggggggkk....", ".....kkggggggkggggGgggggggggk...", "....kggggggggggggGGgggggggggk...", "...kgggGggggggggGGGggggggggggk..", "..kgggGGgggggggGGGGgggggggggggk.", "..kggGGGggggggggggggggggggggggk.", ".kggGGGgggggggggggggggggggggggk.", ".kgggggggkggggggggggggkgggggggk.", ".kggggggggkkggggggggkkggggggggk.", ".kgggggggrrrgggggggrrrggggggggk.", "..kggggggrrrgggggggrrrgggggggk..", "..kggggggggggggggggggggggggggk..", "..kggggggggggggggggggggggggggk..", "..kggggggggkwkwkwkwkwkgggggggk..", "...kqqqqqggkrrrrrrrrrkgqqqqqk...", "....kqqqqqqkwkwkwkwkwkqqqqqk....", ".....kkqqqqqqqqqqqqqqqqqqkk.....", ".......kkkkqqqqqqqqqqkkkk.......", "........kyyyykkkkkkkkyyyyk......", ".......kyyyyk......kyyyyk.......", ".......kyyyyk......kyyyk........", "......kyyyyk......kyyykkk.......", "......kyyykkk....kyyyyyyyk......", ".....kyyyyyyyk....kkkyyyk.......", "......kkkyyyk.......kyyk........", ".......kyyyk........kyk.........", ".......kyyk........kyk..........", ".......kyk..........k...........", "......kyk.......................", ".......k........................"], "stranger_m": ["................................", "..............kkkk..............", "............kkddddkk............", "...........kddddddddk...........", "..........kddddddddddk..........", "..........kddddddddddk..........", ".........kddddddddddddk.........", ".........kddddddddddddk.........", ".........kddrrrdddrrrdk.........", ".........kddrrrdddrrrdk.........", ".........kddddddddddddk.........", ".........kDDDddddddDDDk.........", "..........kDDddddddDDk..........", ".........kkDDrDddDrDDkk.........", "........kdddddrrrrdddddk........", "........kddddddddddddddk........", ".......kddddddddddddddddk.......", ".......kDDddddddddddddDDk.......", "......kDDDDddddddddddDDDDk......", ".....kDDDDDddddddddddDDDDDk.....", ".....kDDDDddddddddddddDDDDk.....", "....kDDDDddddddddddddddDDDDk....", "...kDDDDddddddddddddddddDDDDk...", "..kDDDDddddddddddddddddddDDDDk..", "...kDDddddddddddddddddddddDDk...", "....kkddddddddddddddddddddkk....", "....kddddddddddddddddddddddk....", "....kddddddddddddddddddddddk....", "....kddddddddddddddddddddddk....", "...kddddddddddddddddddddddddk...", "...kddddddddddddddddddddddddk...", "....kkkkkkkkkkkkkkkkkkkkkkkk...."], "dunno_r": ["................................", "................................", "......kkkkkkkkkkkkkkkkkkkk......", ".....kwwwwwwwwwwwwwwwwWWWWk.....", ".....kwwwwwwwwwwwwwwwwWWWWk.....", ".....kwwwwwwwwwwwwwwwwWWWWk.....", ".....kwwwwwwwwwwwwwwwwWWWWk.....", ".....kwwwGGGGGGGGGGGGGGwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwGGGGGGGGGGGGGGwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwGGGGGGGGGGGGGGwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwbbbwwwwk.....", ".....kwwwwwwwwwwwwbwwwbwwwk.....", ".....kwwwGGGGGGwwwwwwwbwwwk.....", ".....kwwwwwwwwwwwwwwwbwwwwk.....", ".....kwwwwwwwwwwwwwwbwwwwwk.....", ".....kwwwwwwwwwwwwwwbwwwwwk.....", ".....kwwwGGGGGGwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwbwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kWWWWWWWWWWWWWWWWWWWWk.....", ".....kWWWWWWWWWWWWWWWWWWWWk.....", "......kkkkkkkkkkkkkkkkkkkk......", "................................", "................................"], "bumped_r": ["................................", "................................", "..............kkkk..............", "............kknnnnkk............", "...........knNnnnnnnk......k....", "..........knnnnnnNnnnk....kkk...", ".........knnnnnnnnnnnnk..kkk....", "........knnnnnnnnnnnnnnk..k.....", "........knnnnnnnnnnnnnnk....kk..", "....kk.knnnnnssssssnnnnnk.kkkkk.", "...kssk.kssssssssssssssk.ksskk..", "...kssskksssksssssskssskksssk...", "...kssskksssksssssskssskksssk...", "....kssskssssssssssssssksssk....", "....kssskSSRssssssssRSSksssk....", ".....kssskSSSSssssSSSSksssk.....", "......ksskkSSSSkrkSSSkkssk......", "......kssskkSSSkrkSSkksssk......", ".......ksskeeeeeeeeeekssk.......", ".......kssseeeeeeeeeesssk.......", "........ksseeeeeeeeeessk........", ".........keeeeeeeeeeeek.........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", ".......kEEEEEEEEEEEEEEEEk.......", ".......kEEEEEEEEEEEEEEEEk.......", "........keeeeeeeeeeeeeek........", ".........kkkkkkkkkkkkkk.........", "................................"], "left_out_r": ["................................", "................................", "................................", "................................", "................................", "................................", ".....kkkkkk..........kkkkkk.....", "....knnnnnnk........kyyyyyyk....", "...knnNnnnnnk......kyyYyyyyyk...", "..knnnnnnNnnnk....kyyyyyyYyyyk..", ".knnnnnnnnnnnnk..kyyyyyyyyyyyyk.", ".knnnnnnnnnnnnk..kyyyyyyyyyyyyk.", ".kssssssssssssk..kssssssssssssk.", ".kssskssssksssk..kssskssssksssk.", ".kssskssssksssk..kssskssssksssk.", "..kSSssssssSSk....kSSssssssSSk..", "..kSRSkssskRSk....kSRSkssskRSk..", "...kSSrrrrrSk......kSSrrrrrSk...", "....koSrrrok........kbSrrrbk....", "...kooooooook......kbbbbbbbbk...", "..kooooooooook....kbbbbbbbbbbk..", "..kooooooooook....kbbbbbbbbbbk..", "..kooooooooook....kbbbbbbbbbbk..", "..kooooooooookkkkkkbbbbbbbbbbk..", ".koooooooooooorrrrbbbbbbbbbbbbk.", ".kooooooooooorwrrrrbbbbbbbbbbbk.", ".kOOOOOOOOOOOrrrrrrBBBBBBBBBBBBk", ".kOOOOOOOOOOOrrrrrrBBBBBBBBBBBBk", "..kkkkkkkkkkkRRrrRRkkkkkkkkkkkk.", ".............kRRRRk.............", "..............kkkk..............", "................................"], "teased_r": ["................................", "................................", "................................", "................................", "................................", "................................", "................................", "......kkkkkk........kkkkkk......", ".....knnnnnnk......kkkkkkkk.....", "....knnNnnnnnk....kkkgkkkkkk....", "...knnnnnnNnnnk..kkkkkkkgkkkk...", "..knnnnnnnnnnnnkkkkkkkkkkkkkkk..", "..knnnnnnnnnnnnkkkkkkkkkkkkkkk..", "..ksssssssssssskkssssssssssssk..", "..ksssksssskssskkssskssssksssk..", "..ksssksssskssskkssskssssksssk..", "...kSSssssssSSk..kSSssssssSSk...", "...kSRSkssskRSk..kSRSkssskRSk...", "....kSSrrrrrSk....kSSrrrrrSk....", ".....kgSrrrgk......kPSrrrPk.....", "....kggggggggk....kPPPPPPPPk....", "...kggggggggggk..kPPPPPPPPPPk...", "...kggggggggggk..kPPPPPPPPPPk...", "...kggggggggggk..kPPPPPPPPPPk...", "...kggggggggggk..kPPPPPPPPPPk...", "..kggggggggggggkkPPPPPPPPPPPPk..", "..kggggggggggggkkPPPPPPPPPPPPk..", "..kqqqqqqqqqqqqqkpppppppppppppk.", "..kqqqqqqqqqqqqqkpppppppppppppk.", "...kkkkkkkkkkkkk.kkkkkkkkkkkkk..", "................................", "................................"], "presentation_r": ["................................", "................................", "................................", "................................", "................................", "................................", "................................", "................................", "..............kkkk..............", "............kkkkkkkk............", "...........kkkgkkkkkk...........", "....kkkk..kkkkkkgkkkkk..kkkk....", "...knnnnk.kkkkkkkkkkkk.kyyyyk...", "..knNnnnnkkkkksssskkkkkyYyyyyk..", ".knnnnNnnnksskssssksskyyyyYyyyk.", "knnnnnnnnnnssksssskssyyyyyyyyyyk", "knnssssssnnSSssssssSSyyssssssyyk", "kssksssskssSRSssssSRSssksssskssk", "ksskssssksskSSSkSkSSkssksssskssk", "kSSssssssSSkkeSSkSekkSSssssssSSk", ".kRSSkskSRkkeeeeeeeekkRSSkskSRk.", "..kSSSkSSkkeeeeeeeeeekkSSSkSSk..", "..kbbbbbbkkeeeeeeeeeekkooooook..", ".kbbbbbbbbkeeeeeeeeeekooooooook.", ".kbbbbbbbbkeeeeeeeeeekooooooook.", "kbbbbbbbbbbeeeeeeeeeeooooooooook", "kbbbbbbbbbEEEEEEEEEEEooooooooook", "kbbbbbbbbbEEEEEEEEEEEooooooooook", "BBBBBBBBBBBkkkkkkkkkOOOOOOOOOOOk", "BBBBBBBBBBBk.......kOOOOOOOOOOOk", "kkkkkkkkkkk.........kkkkkkkkkkk.", "................................"], "fight_near_r": ["................................", "................................", "...............kkk..............", "..............kyyyk.............", ".............kyyyk..............", ".............kyyyk..............", "......kkkkkk.kyykk..kkkkkk......", "....kkgkkkkkkyyyyykkNnnnnnkk....", "...kkkkkkkgkkkkyyknnnnnnNnnnk...", "..kkkkkkkkkkkkkyknnnnnnnnnnnnk..", "..kkkkkkkkkkkkykknnnnnnnnnnnnk..", "..kkkkkkkkkkkkkkknnknnnnnnknnk..", ".kkksskssssksskknnssksssskssnnk.", ".kssssksssskssssssssksssskssssk.", ".kssssksssskssssssssksssskssssk.", "..ksssssssssssskkssssssssssssk..", "..kSSRssssssRSSkkSSRssssssRSSk..", "...kSSSskkkSSSk..kSSSskkkSSSk...", "....kSSkSSSkSk....kSSkSSSkSk....", "k...krSSSSSSrkk..kkgSSSSSSgk...k", "skkkrrrrrrrsssskksggggggggggkkks", "sssssrrrrrrssssssssgggggggggssss", "sssssrrrrrrrrssssssgggggggggssss", "kkkrrrrrrrrrrrrkkggggggggggggkkk", "..krrrrrrrrrrrrkkggggggggggggk..", "..krrrrrrrrrrrrkkggggggggggggk..", "..krrrrrrrrrrrrkkggggggggggggk..", ".kRRRRRRRRRRRRRRqqqqqqqqqqqqqqk.", ".kRRRRRRRRRRRRRRqqqqqqqqqqqqqqk.", ".krrrrrrrrrrrrrrggggggggggggggk.", "..kkkkkkkkkkkkkkkkkkkkkkkkkkkk..", "................................"], "stranger_r": [".............kkkkkk.............", "...........kkddddddkk...........", ".........kkddddddddddkk.........", "........kddddddddddddddk........", "........kddddddddddddddk........", ".......kkddddddddddddddkk.......", "......kddddddddddddddddddk......", ".......kGddddddddddddddGk.......", ".......kGGGddddddddddGGGk.......", ".......kssskkkddddkkksssk.......", ".......kssksksksskskskssk.......", ".......kssksksksskskskssk.......", "........ksskkksssskkkssk........", "........kSSRssssssssRSSk........", "........kSSSSssssssSSSSk........", ".........kSSSSSkSkSSSSk.........", "..........kSSSSSkSSSSk..........", "..........kqqSSSSSSqqk..........", ".........kqqqqqqqqqqqqk.........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", ".......kDDDDDDDDDDDDDDDDk.......", ".......kDDDDDDDDDDDDDDDDk.......", ".......kqqqqqqqqqqqqqqqqk.......", "........kkkkkkkkkkkkkkkk........", "................................"], "test_m": ["kwkk........................kkwk", ".kwwkk....................kkwwk.", "..kwwwkk................kkwwwk..", "...kwwwwkkkkkkkkkkkkkkkkwwwwk...", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwwwrrrrrrrrrrrrwwwwwk....", "....kwwrrrrrrrrrrrrrrrrrrwwk....", "....kwwrrrwwrwwrrwwrwwrrrwwk....", "....kwwwwwrrrrrrrrrrrrwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwwwkwwwwwwwwwwwkwwwwk....", "....kwwwwwwkkwwwwwwwkkwwwwwk....", "..kkkwwwwwrrrwwwwwwwrrrwwwwkkk..", ".kwwkwwwwwrrrwwwwwwwrrrwwwwkwwk.", "kwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwk", "kwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwk", "kwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwk", "kwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwk", "kwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwk", "kwwwwwwwwkwkwkwkwkwkwkwkwwwwwwwk", ".kwwkwwwwkrrrrrrrrrrrrrkwwwkwwk.", "..kkkwwwwkwkwkwkwkwkwkwkwwwkkk..", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwGGGGGGGGGGGGGGGGwwwk....", "....kWWWWWWWWWWWWWWWWWWWWWWk....", "....kWWWWWWWWWWWWWWWWWWWWWWk....", "....kWWWWWWWWWWWWWWWWWWWWWWk....", ".....kkkkkkkkkkkkkkkkkkkkkk.....", "................................", "................................"], "test_r": ["................................", ".....kkkkkkkkkkkkkkkkkkkkkk.....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwwwwwwwwwwwwWWWWrWwwk....", "....kwwwGGGGGGGGwwwWrWrWWwwk....", "....kwwwGGGGGGGGwwwWWrWWWwwk....", "....kwwwwwwwwwwwwwwWWWWWWwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwGGwGGGGGGGGGGGGwwwwk....", "....kwwwGGwwwwwwwwwwwwwwwwwk....", "....kwwwwwwGGGGGGGGwwwwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwGGwGGGGGGGGGGGGwwwwk....", "....kwwwGGwwwwwwwwwwwwwwwwwk....", "....kwwwwwwGGGGGGGGwwwwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwGGwGGGGGGGGGGGGwwwwk....", "....kwwwGGwwwwwwwwwwwwwwwwwk....", "....kwwwwwwGGGGGGGGwwwwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kwwwwwwwwwwwwwwwwwwwwwwk....", "....kWWWWWWWWWWWWWWWWWWWWWWk....", "....kWWWWWWWWWWWWWWWWWWWWWWk....", ".....kkkkkkkkkkkkkkkkkkkkkk.....", "................................"], "homework_m": ["................................", "................................", "................................", "................................", "................................", "....................kk..........", "...............kkkkkWWk.........", ".............kkWWWWWWWk.........", "............kWWWWWWWWWWk........", "............kWWWWWWWWWWk........", ".............kWWWWWWWWWkkk......", ".............kWWWWWWWWWkwwk.....", "..........kkkkWWWWWwwwwwwwk.....", "........kkwwwwWWWwwwwwwwwwwk....", ".......kwwwwwwwWWwwwwwwwwwwk....", ".......kwwkwwwwWWwwwwwkwwwwk....", "........kwwkkwwwwwwwkkwwwwwkkk..", "........kwrrrwwwwwwwrrrwwwwwWWk.", "......kkkwrrrwwwwwwwrrrWWWWWWWk.", "....kkWWWwwwwwwwwwwwwWWWWWWWWWWk", "...kWWWWWWwwwwwwwkkwwWWWWWWWWWWk", "...kWWWWWWwwWWkkkkkkkkWWWWWWWWWk", "....kWWWWWkwkwkwkwkwkwkWWWWWWWWk", "....kWWWWWkrrrrrrrrrrrkWWWWWWWWW", "....kWWWWWkwkwkwkwkwkwkWWWWWWWWW", "....kWWWWWwwwwwwwwWWWWWWWWWWWWkk", ".....kWWWWWwwwwwwwwWWWWWWWWWkk..", ".....kWWkkkwwwwwwwwWWWWWWWWWk...", "......kk..kwwwwwwwwWWWWWWWWWWk..", "..........kwwwwwwwwWWWWWWWWWWk..", "...........kwwwwwwwkWWWWWWWkk...", "...........kwwkkkkkkWWkkkkk....."], "homework_r": ["................................", "................................", "................................", "......................kkk.......", ".....................kyyyk......", ".....................kyyyk......", ".....................kyyyk......", ".....................kyyyk......", "........kkkkkkkkkkkkkkyyyk......", ".......kwwwwwwwwwwwwwwyyywk.....", ".......kwwwwwwwwwwwwwwyyywk.....", "......kkwwwwwwwwwwwwwwyyywk.....", ".....kWWwwwGGGGGGGGGGGyyywk.....", ".....kWWwwwwwwwwwwwwwwyyywk.....", ".....kWWwwwwwwwwwwwwwwwswwk.....", ".....kWWwwwGGGGGGGGGGGGswwk.....", ".....kWWwwwwwwwwwwwwwwwwwwk.....", ".....kWWwwwwwwwwwwwwwwwwwwk.....", ".....kWWwwwGGGGGGGGGGGGwwwk.....", ".....kWWwwwwwwwwwwwwwwwwwwk.....", ".....kWWwwwwwwwwwwwwwwwwwwk.....", ".....kWWwwwGGGGGGGGGGGGwwwk.....", ".....kWWwwwwwwwwwwwwwwwwwwk.....", ".....kWWwwwwwwwwwwwwwwwwwwk.....", ".....kWWwwwwwwwwwwwwwwwwwwk.....", ".....kWWWWWWWWWWWWWWWWWWkk......", ".....kWWWWWWWWWWWWWWWWWWk.......", ".....kWWWWWWWWWWWWWWWWWWk.......", "......kkkkkkkkkkkkkkkkkk........", "................................", "................................", "................................"], "forgot_item_m": ["................................", "................................", "................................", "................................", "................................", "................................", "....................kk..........", "...................kEEk.........", "..........kk.......kEEk.........", ".........kEEk......kEEk.........", ".........kEEk......kEEk.........", "....k....kEEk......kEEk.........", "...kwk...kEEk......kEEk.....k...", "....kwk..kEEkkkkkkkEEEEk...kwk..", ".....k.kkEEEEeeeeeeEEEEkk.kwk...", ".....kkeeEEEEeeeeeeEEEEeekkk....", "....keeeeeeeceeeeeeeeeeeeeek....", "...keeeeecckkkkkkkkkkeeeeeeek...", "..keeeeckkkrrkkkkkkkrrkkeeeeek..", ".keeeeckkkkrrkkkkkkkrrkkkeeeeek.", "keeeeekkkkkkkkkkkkkkkkkkkkeeeeek", "keeeeekkkkkkkkkkkkkkkkkkkkeeeeek", "keeeeeekkkkkkkkkkkkkkkkkkeeeeeek", "keeeeeeekkkkkkkkkkkkkkkkeeeeeeek", ".keeeeeeeeekkkkkkkkkkeeeeeeeeek.", "..kEEEEEeeeeeeeeeeeeeeeeEEEEEk..", "...kEEEEEEEeeeeeeeeeeEEEEEEEk...", "....kEEEEEEEEEEEEEEEEEEEEEEk....", ".....kkEEEEEEEEEEEEEEEEEEkk.....", ".......kkkkEEEEEEEEEEkkkk.......", "...........kkkkkkkkkk...........", "................................"], "forgot_item_r": ["................................", "................................", "................................", "................................", "................................", "........kkkkkkkkkkkkkkkk........", ".......kRRRRRRRRRRRRRRRRk.......", ".......kRRRRRRRRRRRRRRRRk.......", ".......kRkkkkkkkkkkkkkkRk.......", "......kkRkkkkkkkkkkkkkkRkk......", ".....krrRkkkkkkkkkkkkkkRrrk.....", ".....krrRRRRRRRRRRRRRRRRrrk.....", ".....krrrrrrrrrrrrrrrrrrrrk.....", ".....krrrrrrrrrrrrrrrrrrrrk.....", ".....krrrrrrrrrrrrrrrrrrrrk.....", ".....krrrrrrrrrrrrrrrrrrrrk.....", ".....krrrrRRRRRRRRRRRRrrrrk.....", ".....krrrrRRRRRRRRRRRRrrrrk.....", ".....krrrrRRRRyyyyRRRRrrrrk.....", ".....krrrrRRRRyyyyRRRRrrrrk.....", ".....krrrrRRRRRRRRRRRRrrrrk.....", ".....krrrrRRRRRRRRRRRRrrrrk.....", ".....krrrrrrrrrrrrrrrrrrrrk.....", ".....krrrrrrrrrrrrrrrrrrrrk.....", ".....krrrrrrrrrrrrrrrrrrrrk.....", ".....kRRRRRRRRRRRRRRRRRRRRk.....", ".....kRRRRRRRRRRRRRRRRRRRRk.....", ".....kRRRRRRRRRRRRRRRRRRRRk.....", "......kkkkkkkkkkkkkkkkkkkk......", "................................", "................................", "................................"], "friend_fight_m": ["................................", "................................", "................................", "................................", ".....kk..kk..........kk..kk.....", "....kRRkkRRk........kRRkkRRk....", "....kRRkkRRkkk....kkkRRkkRRk....", "....kRRkrRRrrrk.kkrrrRRrkRRk....", "...kRRRRRRRRrrrkkrrrRRRRRRRRk...", "....kkrrrrrrrrrkkrrrrrrrrrkk....", "....krrrrrrrrrrkrrrrrrrrrrrk....", "...krrrrrrrrrrrkrrrrrrrrrrrrk...", "...krrrrrrrrrrkkrrrrrrrrrrrrk...", "...krrrrrrrrrrkrrrrrrrrrrrrrk...", "...krrrrrrrrrrrkrrrrrrrrrrrrk...", "...krrrrykyrrrrrkrrrrykyrrrrk...", "...krrrryyyrrrrrrkrrryyyrrrrk...", "....krrrrrrrrrrrrrkrrrrrrrrk....", ".....krrrrrrrrrrrkkrrrrrrrk.....", "......krrrrrrrrrrkrrrrrrrk......", ".......krrrkwkwkwkwkwkrrk.......", "........krrkrrrrrrrrrkrk........", ".........kRkwkwkwkwkwkk.........", ".........krRRRRkkRRRRrk.........", "..........krRRRkRRRRrk..........", "...........krRRRRRRrk...........", "............kRRRRRRk............", ".............kRRRRk.............", "..............kRRk..............", "...............kk...............", "................................", "................................"], "friend_fight_r": ["................................", "................................", "................................", "................................", "................................", "................................", "................................", "................................", "......kkkkkk........kkkkkk......", ".....knnnnnnk......kyyyyyyk.....", "....knnNnnnnnk....kyyYyyyyyk....", "...knnnnnnNnnnk..kyyyyyyYyyyk...", "..knnnnnnnnnnnnkkyyyyyyyyyyyyk..", "..knnknnnnnnknnkkyykyyyyyykyyk..", "..ksssksssskssskkssskssssksssk..", "..ksssksssskssskkssskssssksssk..", "..ksssksssskssskkssskssssksssk..", "...kSSssssssSSk..kSSssssssSSk...", "...kSRSssssSRSk..kSRSssssSRSk...", "....kSSSkkkSSk....kSSSkkkSSk....", ".....kbkSSSkk......kokSSSkk.....", "....kbbbbbbbbk....kooooooook....", "...kbbbbbbbbbbk..kooooooooook...", "...kbbbbbbbbbbk..kooooooooook...", "...kbbbbbbbbbbk..kooooooooook...", "...kbbbbbbbbbbk..kooooooooook...", "..kbbbbbbbbbbbbkkooooooooooook..", "..kbbbbbbbbbbbbkkooooooooooook..", "..kBBBBBBBBBBBBBkOOOOOOOOOOOOOk.", "..kBBBBBBBBBBBBBkOOOOOOOOOOOOOk.", "...kkkkkkkkkkkkk.kkkkkkkkkkkkk..", "................................"], "misunder_m": ["................................", "................................", "................................", "................................", "................................", "................................", ".......kkkkkk......kkkkkk.......", ".....kkPPPPPPkk..kkcccccckk.....", "...kkPPPPPPPPPPkkcccccccccckk...", "..kPPPPwPPPPPPPccccwccccccccck..", "..kPPPwwPPPPPPPcccwwccccccccck..", ".kPPPwwwPPPPPPcccwwwcccccccccck.", "kPPPwwkwPPPPPckcwwkwcccccckcccck", "kPPPPPPkkPPPkkccccckkccckkccccck", "kPPPPPrrrPPGrrrGGGrrrcccrrrcccck", "kPPPPPrrrGGGrrrGGGrrrGGGrrrcccck", "kPPPPPGGGGGGGGGGGGGGGGGGGGccccck", "kPPPPGGGGGGGGGGGGGGGGGGGGGGcccck", ".kppGGGGGkkGGGGGGGGGkGGkGGGGCCk.", "..kpGGGGkGGkGGGGGGGGGkkGGGGGCk..", "..kpGGGGGGGGGGGGGGGGGGGGGGGGCk..", "...kGGGGGGGGGGGGGGGGGGGGGGGGk...", "....kGGGGGGGGGGGGGGGGGGGGGGk....", ".....kGGGGGGGGGGGGGGGGGGGGk.....", "......kkGGGGGGGGGGGGGGGGkk......", "........kkkGGGGGGGGGGkkk........", "...........kkkkkkkkkk...........", "................................", "................................", "................................", "................................", "................................"], "misunder_r": [".........kkkkkk....kkkkkk.......", ".......kkwwwwwwkk.kwwwwwwk......", "......kwwwwwwwwwwkwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwbwwwwwk....", ".....kwwwwwwwwwwwwwwwwbwwwwk....", ".....kwwwwgwgwgwwwwwwbwwwwk.....", ".....kwwwwwwwwwwwwkwwwwwwk......", "......kwwwwwwwwwwk.kkkkkk.......", ".....kkkkwwwwwwkk....kkkkkk.....", "....knnnnnnkkkk.....kkkkkkkk....", "...knnNnnnnnk......kkkgkkkkkk...", "..knnnnnnNnnnk....kkkkkkkgkkkk..", ".knnnnnnnnnnnnk..kkkkkkkkkkkkkk.", ".knnnnnnnnnnnnk..kkkkkkkkkkkkkk.", ".kssssssssssssk..kssssssssssssk.", ".kssskssssksssk..kssskssssksssk.", ".kssskssssksssk..kssskssssksssk.", "..kSSssssssSSk....kSSssssssSSk..", "..kSRSssssSRSk....kSRSssssSRSk..", "...kSSSkrkSSk......kSSSkkkSSk...", "....keSkrkek........kPSSSSPk....", "...keeeeeeeek......kPPPPPPPPk...", "..keeeeeeeeeek....kPPPPPPPPPPk..", "..keeeeeeeeeek....kPPPPPPPPPPk..", "..keeeeeeeeeek....kPPPPPPPPPPk..", "..keeeeeeeeeek....kPPPPPPPPPPk..", ".keeeeeeeeeeeek..kPPPPPPPPPPPPk.", ".keeeeeeeeeeeek..kPPPPPPPPPPPPk.", ".kEEEEEEEEEEEEEk.kpppppppppppppk", ".kEEEEEEEEEEEEEk.kpppppppppppppk", "..kkkkkkkkkkkkk...kkkkkkkkkkkkk.", "................................"], "rumor_m": ["................................", "................................", "................................", "................................", "................................", "..k..........................k..", ".kdkk.......k......k.......kkdk.", "..kddkkk...kdk....kdk...kkkddk..", "..kdddddkk.kdk....kdk.kkdddddk..", "..kdddddddkddkkkkkkddkdddddddk..", "...kddddddddddddddddddddddddk...", "...kddddddddddddddddddddddddk...", "...kddddddddddddddddddddddddk...", "....kddddddddddddddddddddddk....", "....kddddddddddddddddddddddk....", "...kddddddddrrddddrrddddddddk...", "..kdddddddddrrddddrrdddddddddk..", "..kddddddddddddddddddddddddddk..", ".kdddddkkkddddddddddddkkkdddddk.", "kddkkkk..kDDDddddddDDDk..kkkkddk", ".kk.......kDDdwdwdwDDk.......kk.", "..........kDDDDwdwDDDk..........", "...........kDDDDDDDDk...........", "............kkDDDDkk............", "..............kkkk..............", "................................", "................................", "................................", "................................", "................................", "................................", "................................"], "rumor_r": ["................................", "................................", "................................", "................................", "................................", "................................", "................................", "................................", ".......kkkkkk......kkkkkk.......", "......knnnnnnk....kyyyyyyk......", ".....knnNnnnnnk..kyyYyyyyyk.....", "....knnnnnnNnnnkkyyyyyyYyyyk....", "...knnnnnnnnnnnnyyyyyyyyyyyyk...", "...knnnnnnnnnnnssyyyyyyyyyyyk...", "...kssssssssssssssssssssssssk...", "...kssskssssksssssskssssksssk...", "...kssskssssksssssskssssksssk...", "....kSSssssssSssssSssssssSSk....", "....kSRSssssSRSssSRSssssSRSk....", ".....kSSSkSkSSkkkkSSSkSkSSk.....", "......kgSSkSgk....kPSSkSPk......", ".....kggggggggk..kPPPPPPPPk.....", "....kggggggggggkkPPPPPPPPPPk....", "....kggggggggggkkPPPPPPPPPPk....", "....kggggggggggkkPPPPPPPPPPk....", "....kggggggggggkkPPPPPPPPPPk....", "...kggggggggggggPPPPPPPPPPPPk...", "...kggggggggggggPPPPPPPPPPPPk...", "...kqqqqqqqqqqqqpppppppppppppk..", "...kqqqqqqqqqqqqpppppppppppppk..", "....kkkkkkkkkkkkkkkkkkkkkkkkk...", "................................"], "practice_m": ["................................", "................................", "................................", "............kkkkkkkk............", "..........kkeeeeeeeekk.kkkk.....", "........kkeeeeeeeeeeyykeeeekk...", ".......kyyeeeeeeeeyyyeeeeeeeek..", "......keyeeeeeeeeeyyeeeeerreeek.", ".....keeyyeeeeeeeeyeeeeeerreeek.", "....keeeyyeeeeeeeeyeeeeeeeeeeek.", "....keeeeyyeeekkkkeeEEeeeeeeEErk", "...keeeeeeyykk....kkeEEEeeEEErk.", "...keeeeeeek........keeEEEEekkrk", "..keeeeeeek..........keeeeeeekk.", "..keeeeeeek..........keeeeeeek..", "..keeeeeek............keeeeeek..", "..keeeeeek............keeeeeek..", "..kyeeeeyk............keeeeeek..", "..kyyyyyyk............keeeeeek..", "..keyyyyeek..........keeeeeeek..", "..keeeeeeek..........keeeeeeek..", "...keeeeeeek........keeeeeeek...", "...keeeeeeeekk....kkyyeeeeeek...", "....keeeeeeeeekkkkeeeyyeeeek....", "....keeeeeeeeyeeeeeeeeyyeeek....", ".....keeeeeeeyeeeeeeeeyyeek.....", "......keeeeeyyeeeeeeeeeyek......", ".......keeeyyyeeeeeeeeyyk.......", "........kkyyeeeeeeeeeekk........", "..........kkeeeeeeeekk..........", "............kkkkkkkk............", "................................"], "practice_r": ["................................", "................................", "................................", ".............kk.................", "..........kkknnkkk..............", ".........knNnnnnnnk.............", "........knnnnnnNnnnk............", ".......knnnnnnnnnnnnk.kk........", "......knnnnnnnnnnnnnnkWWk.......", "......knnnnnnnnnnnnnnkWWk.......", "......knnnnssssssnnnnkWWk.......", "......ksssssssssssssskWWk.......", "......ksssskssssskssskkWk.......", "......ksssskssssskssskWWk.......", "......kSSSssssssssSSSkWWk.......", ".......kSSRssssssSRSkkWWk.......", "........kSSSSkkkSSSk.kkWk.......", ".........kSSSSSSSSkkkssWk.......", ".........kbSSSSSSbkssssWk.......", "........kbbbbbbbbbssssWWk.......", ".......kbbbbbbbbbbsskkkWk.......", ".......kbbbbbbbbbbbbkkWWk.......", ".......kbbbbbbbbbbbbkkWWk.......", ".......kbbbbbbbbbbbbkkWWk.......", "......kbbbbbbbbbbbbbbkkk........", "......kbbbbbbbbbbbbbbk..........", "......kbbbbbbbbbbbbbbk..........", ".....kBBBBBBBBBBBBBBBk..........", ".....kBBBBBBBBBBBBBBBk..........", "......kbbbbbbbbbbbbbbk..........", ".......kkkkkkkkkkkkkk...........", "................................"], "team_m": ["................................", "................................", ".......kkkk..........kkkk.......", ".....kkooookk......kkbbbbkk.....", "....kooooooook....kbbbbbbbbk....", "...kooooooooook..kbbbbbbbbbbk...", "...kooooooooook..kbbbbbbbbbbk...", "..kooooooooooookkbbbbbbbbbbbbk..", "..kooorroorroookkbbbrrbbrrbbbk..", "..kooorroorroookkbbbrrbbrrbbbk..", "..kooooooooooookkbbbbbbbbbbbbk..", "...kOOooooooOOkkkkBBbbbbbbBBk...", "...kOOOkkkkkOOddddBBBkkkkkBBk...", "....kOOOOOOOOddddddBBBBBBBBk....", ".....kkOOOOkddddddddkBBBBkk.....", ".......kkkkkddddddddkkkkk.......", ".....kkeeeekddddddddkPPPPkk.....", "....keeeeeeeddddddddPPPPPPPk....", "...keeeeeeeeeddddddPPPPPPPPPk...", "...keeeeeeeeeeddddPPPPPPPPPPk...", "..keeeeeeeeeeeekkPPPPPPPPPPPPk..", "..keeerreerreeekkPPPrrPPrrPPPk..", "..keeerreerreeekkPPPrrPPrrPPPk..", "..keeeeeeeeeeeekkPPPPPPPPPPPPk..", "...kEEeeeeeeEEk..kppPPPPPPppk...", "...kEEEkkkkkEEk..kpppkkkkkppk...", "....kEEEEEEEEk....kppppppppk....", ".....kkEEEEkk......kkppppkk.....", ".......kkkk..........kkkk.......", "................................", "................................", "................................"], "team_r": ["................................", "................................", "................................", "...............kk...............", ".............kkkkkk.............", ".....kk.....kkgkkkkk.....kk.....", "...kknnkk..kkkkkgkkkk..kkyykk...", "..knNnnnnkkkkkkkkkkkkkkyYyyyyk..", ".knnnnNnnnkkksssssskkkyyyyYyyyk.", "knnnnnnnnnnssskssskssyyyyyyyyyyk", "knnssssssnnssskssskssyyssssssyyk", "ksssksssksskSSssssSSkssskssskssk", "ksssksssksskkRSkkkSRkssskssskssk", ".kSSssssSSk.kbSSSSbk.kSSssssSSk.", "..kRSkrkSRkkbbbbbbbbk.kRSkrkSRk.", "..koSkrkok.kbbbbbbbbk.keSkrkek..", ".kooooooookkbbbbbbbbkkeeeeeeeek.", ".kooooooookkbbbbbbbbkkeeeeeeeek.", ".kooooooookkbbbbbbbbkkeeeeeeeek.", ".kooooooookBBBBBBBBBBkeeeeeeeek.", ".kooooooookBBBBBBBBBBkeeeeeeeek.", "kOOOOOOOOOOkkkkkkkkkkEEEEEEEEEEk", "kOOOOOOOOOOnnnnnnnnnnEEEEEEEEEEk", ".kkkkknnnnnnnnnnnnnnnnnnnnkkkkk.", "...knnnnnnnnnnnnnnnnnnnnnnnnk...", "..knnnnnnnnnnnnnnnnnnnnnnnnnnk..", "..knnnnnnnnnnnnnnnnnnnnnnnnnnk..", "...kNNNNNnnnnnnnnnnnnnnNNNNNk...", "....kkNNNNNNNnnnnnnNNNNNNNkk....", "......kkkkNNNNNNNNNNNNkkkk......", "..........kkkkkkkkkkkk..........", "................................"], "hero": ["................................", "..............kkkk..............", "............kknnnnkk............", "..........kknNnnnnnnkk..........", ".........knnnnnnnNnnnnk.........", ".........knnnnnnnnnnnnk.........", "........knnnnnnnnnnnnnnk........", ".......knnnnnnnnnnnnnnnnk.......", ".......knnnnnnssssnnnnnnk.......", ".......kssssssssssssssssk.......", ".......kssssksssssskssssk.......", ".......kssssksssssskssssk.......", "........kssssssssssssssk........", "........kSSRssssssssRSSk........", "........kSSSSssssssSSSSk........", ".........kSSSSSkSkSSSSk.........", "..........kSSSSSkSSSSk..........", "..........kbbSSSSSSbbk..........", ".........kbbbbbbbbbbbbk.........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", ".......kBBBBBBBBBBBBBBBBk.......", ".......kBBBBBBBBBBBBBBBBk.......", ".......kbbbbbbbbbbbbbbbbk.......", "........kkkkkkkkkkkkkkkk........", "................................"], "teacher": ["................................", "..............kkkk..............", "............kkGGGGkk............", "..........kkGgGGGGGGkk..........", ".........kGGGGGGGgGGGGk.........", ".........kGGGGGGGGGGGGk.........", "........kGGGGGGGGGGGGGGk........", ".......kGGGGGGGGGGGGGGGGk.......", ".......kGGGGGGssssGGGGGGk.......", ".......kssskkksssskkksssk.......", ".......kssksksksskskskssk.......", ".......kssksksksskskskssk.......", "........ksskkksssskkkssk........", "........kSSRssssssssRSSk........", "........kSSSSssssssSSSSk........", ".........kSSSSSkSkSSSSk.........", "..........kSSSSSkSSSSk..........", "..........keeSSSSSSeek..........", ".........keeeeeeeeeeeek.........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", ".......kEEEEEEEEEEEEEEEEk.......", ".......kEEEEEEEEEEEEEEEEk.......", ".......keeeeeeeeeeeeeeeek.......", "........kkkkkkkkkkkkkkkk........", "................................"], "friend": ["................................", "................................", "................................", "................................", "................................", "................................", "................................", "......kkkkkk........kkkkkk......", ".....kyyyyyyk......knnnnnnk.....", "....kyyYyyyyyk....knnNnnnnnk....", "...kyyyyyyYyyyk..knnnnnnNnnnk...", "..kyyyyyyyyyyyykknnnnnnnnnnnnk..", "..kyyyyyyyyyyyykknnnnnnnnnnnnk..", "..ksssssssssssskkssssssssssssk..", "..ksssksssskssskkssskssssksssk..", "..ksssksssskssskkssskssssksssk..", "...kSSssssssSSk..kSSssssssSSk...", "...kSRSkssskRSk..kSRSkssskRSk...", "....kSSrrrrrSk....kSSrrrrrSk....", ".....koSrrrok......kbSrrrbk.....", "....kooooooook....kbbbbbbbbk....", "...kooooooooook..kbbbbbbbbbbk...", "...kooooooooook..kbbbbbbbbbbk...", "...kooooooooook..kbbbbbbbbbbk...", "...kooooooooook..kbbbbbbbbbbk...", "..kooooooooooookkbbbbbbbbbbbbk..", "..kooooooooooookkbbbbbbbbbbbbk..", "..kOOOOOOOOOOOOOkBBBBBBBBBBBBBk.", "..kOOOOOOOOOOOOOkBBBBBBBBBBBBBk.", "...kkkkkkkkkkkkk.kkkkkkkkkkkkk..", "................................", "................................"], "family": ["................................", "................................", ".........kkkk...................", ".......kkkkkkkk.................", "......kkgkkkkkkk................", ".....kkkkkkkgkkkk...............", "....kkkkkkkkkkkkkk..............", "...kkkkkkkkkkkkkkkk.............", "...kkkkkkkkkkkkkkkk.............", "..kkkkkksssssskkkkkk............", "...kssssssssssssssk.............", "...kssskssssssksssk.............", "...kssskssssssksssk....kk.......", "...kssssssssssssssk..kknnkk.....", "...kSSRssssssssRSSk.knNnnnnk....", "....kSSSSssssSSSSk.knnnnNnnnk...", ".....kSSSSkSkSSSk.knnnnnnnnnnk..", "......kSSSSkSSSk..knnssssssnnk..", ".....kPPPPPPPPPPk.kssskssskssk..", "....kPPPPPPPPPPPPkkssskssskssk..", "....kPPPPPPPPPPPPk.kSSssssSSk...", "....kPPPPPPPPPPPPk..kRSkSkSRk...", "...kPPPPPPPPPPPPPPk.kbSSkSbk....", "...kPPPPPPPPPPPPPPkkbbbbbbbbk...", "...kPPPPPPPPPPPPPPkkbbbbbbbbk...", "...kPPPPPPPPPPPPPPkkbbbbbbbbk...", "...kPPPPPPPPPPPPPPkkbbbbbbbbk...", "..kppppppppppppppppkbbbbbbbbk...", "..kppppppppppppppppBBBBBBBBBBk..", "...kPPPPPPPPPPPPPPkBBBBBBBBBBk..", "....kkkkkkkkkkkkkk.kkkkkkkkkk...", "................................"], "book": ["................................", "................................", "......................kkk.......", ".....................kyyyk......", ".....................kyyyk......", ".....................kyyyk......", "............kkkkkkkk.kyyyk......", "......kkkkkkrrrRRrrrkkyyyk......", "...kkkrrrrrrrrrRRrrrrryyyrkkk...", "..krrrrrrrwwwwwRRwwwwwyyyrrrrk..", "..krrwwwwwwwwwwRRwwwwwyyywwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwGGGGwRRwwGGGGwwwwrrk..", "..krrwwGGGGwwwwRRwwwwwGGGGwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwGGGGwRRwwGGGGwwwwrrk..", "..krrwwGGGGwwwwRRwwwwwGGGGwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwGGGGwRRwwGGGGwwwwrrk..", "..krrwwGGGGwwwwRRwwwwwGGGGwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwwwwrrRRrrwwwwwwwwrrk..", "..krrwwwrrrrrrrRRrrrrrrrwwwrrk..", "..krrrrrrrrrkkkRRkkkrrrrrrrrrk..", "..krrrkkkkkk..kRRk..kkkkkkrrrk..", "...kkk.........kk.........kkk...", "................................", "................................", "................................", "................................"], "diary": [".....................kk.........", "....................kyyk........", "....................kyyyk.......", ".......kkkkkkkkkkkkkkyyyk.......", "......kBBBbbbbbbbbbbbbyybk......", "......kBBBbbbbbbbbbbbbyyyk......", "......kBBBwwwwwwwwwwwwwyyk......", "......kBBBwwwwwwwwwwwwwyyyk.....", "......kBBBwwwwwwwwwwwwwyyyk.....", "......kBBBwwwwwwwwwwwwwbyyyk....", "......kBBBwwGGGGGGGGGwwbyyyk....", "......kBBBwwwwwwwwwwwwwbbyyk....", "......kBBBwwwwwwwwwwwwwbbyyyk...", "......kBBBwwwwwwwwwwwwwbbkyyk...", "......kBBBwwGGGGGGGGGwwbbkyyyk..", "......kBBBwwwwwwwwwwwwwbbkyyyk..", "......kBBBwwwwwwwwwwwwwbbkkyyk..", "......kBBBwwwwwwwwwwwwwbbk.kkk..", "......kBBBwwGGGGGGGGGwwbbk..k...", "......kBBBwwwwwwwwwwwwwbbk......", "......kBBBwwwwwwwwwwwwwbbk......", "......kBBBwwwwwwwwwwwwwbbk......", "......kBBBwwGGGGGGGGGwwbbk......", "......kBBBwwwwwwwwwwwwwbbk......", "......kBBBwwwwwwwwwwwwwbbk......", "......kBBBwwwwwwwwwwwwwbbk......", "......kBBBbbbbbbbbbbbbbbbk......", "......kBBBbbbbbbbbbbbbbbbk......", ".......kkkkkkkkkkkkkkkkkk.......", "................................", "................................", "................................"]};
   var N = 32, M = 3, SIZE = N + M * 2;
   function grid(key) {
     var art = ART[key], g = [];
@@ -1221,6 +1453,27 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   ART.stranger = kid(100, 186, 1.25, { mouth: 'smile', shirt: '#4a4f63', hair: '#6e7781', glasses: true }) +
     '<path d="M62 52 Q100 24 138 52 Z" fill="#3d2f63" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/><rect x="56" y="50" width="88" height="8" rx="4" fill="#3d2f63" stroke="' + LINE + '" stroke-width="4"/>';
 
+  function paper(x, y, w, h, lines) {
+    var s = '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="6" fill="#fff" stroke="' + LINE + '" stroke-width="5"/>';
+    for (var i = 0; i < lines; i++) s += '<path d="M' + (x + 14) + ' ' + (y + 22 + i * 18) + ' H' + (x + w - 16) + '" stroke="#a7b2c8" stroke-width="6" stroke-linecap="round"/>';
+    return s;
+  }
+  ART.test = paper(48, 14, 104, 160, 6) + '<circle cx="128" cy="34" r="14" fill="none" stroke="#e5484d" stroke-width="5"/><path d="M60 40 h10 M60 76 h10 M60 112 h10" stroke="' + LINE + '" stroke-width="5"/>';
+  ART.homework = paper(36, 52, 104, 120, 4) + paper(60, 30, 104, 120, 5) + '<path d="M150 20 L166 70" stroke="#e0a800" stroke-width="10" stroke-linecap="round"/><path d="M150 20 L166 70" stroke="' + LINE + '" stroke-width="2"/>';
+  ART.forgot_item = '<rect x="48" y="50" width="104" height="120" rx="16" fill="#e5484d" stroke="' + LINE + '" stroke-width="5"/><rect x="64" y="28" width="72" height="34" rx="10" fill="none" stroke="' + LINE + '" stroke-width="7"/><rect x="72" y="90" width="56" height="34" rx="6" fill="#b52a32" stroke="' + LINE + '" stroke-width="4"/><rect x="92" y="100" width="16" height="10" rx="2" fill="#ffd23f" stroke="' + LINE + '" stroke-width="3"/>' +
+    '<text x="150" y="48" font-size="34" font-weight="900" fill="#3b5bdb">?</text>';
+  ART.friend_fight = kid(62, 184, 1.0, { mouth: 'flat', shirt: '#3b6fd8' }) + kid(140, 184, 1.0, { mouth: 'flat', shirt: '#f08c3a', hair: '#d9a400' }) +
+    '<path d="M100 30 c-10 -14 -30 -6 -22 10 l22 22 22 -22 c8 -16 -12 -24 -22 -10 z" fill="#f2a0a0" stroke="' + LINE + '" stroke-width="4"/>';
+  ART.misunder = kid(56, 184, .95, { mouth: 'o', shirt: '#2f9e55' }) + kid(144, 184, .95, { mouth: 'flat', shirt: '#9b7fe0', hair: '#2a2a2a' }) +
+    '<rect x="20" y="10" width="70" height="40" rx="18" fill="#fff" stroke="' + LINE + '" stroke-width="4"/><rect x="112" y="14" width="70" height="40" rx="18" fill="#fff" stroke="' + LINE + '" stroke-width="4"/>' +
+    '<circle cx="42" cy="30" r="4" fill="' + LINE + '"/><circle cx="56" cy="30" r="4" fill="' + LINE + '"/><circle cx="70" cy="30" r="4" fill="' + LINE + '"/><path d="M140 34 q8 -14 16 0 t16 0" fill="none" stroke="#3b5bdb" stroke-width="4"/>';
+  ART.rumor = kid(70, 184, .95, { mouth: 'smile', shirt: '#5c6b8a' }) + kid(130, 184, .95, { mouth: 'smile', shirt: '#9b7fe0', hair: '#d9a400' }) +
+    '<ellipse cx="100" cy="92" rx="10" ry="14" fill="#f6cfa8" stroke="' + LINE + '" stroke-width="4"/>';
+  ART.practice = kid(84, 186, 1.15, { mouth: 'flat', shirt: '#3b6fd8' }) +
+    '<rect x="132" y="64" width="12" height="96" rx="5" fill="#f4efe2" stroke="' + LINE + '" stroke-width="4"/><circle cx="138" cy="90" r="3" fill="' + LINE + '"/><circle cx="138" cy="108" r="3" fill="' + LINE + '"/><circle cx="138" cy="126" r="3" fill="' + LINE + '"/>';
+  ART.team = '<ellipse cx="100" cy="168" rx="92" ry="18" fill="#9c6a40" stroke="' + LINE + '" stroke-width="4"/>' +
+    kid(40, 160, .72, { mouth: 'o', shirt: '#f08c3a' }) + kid(160, 160, .72, { mouth: 'o', shirt: '#2f9e55', hair: '#d9a400' }) + kid(100, 150, .75, { mouth: 'flat', shirt: '#3b6fd8', hair: '#2a2a2a' });
+
   function svg(id) {
     if (!ART[id]) return null;
     return '<svg viewBox="0 0 200 190" xmlns="http://www.w3.org/2000/svg" role="img">' + ART[id] + '</svg>';
@@ -1277,12 +1530,12 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       h('div', { class: 'nigates' }, Object.keys(S.nigate || {}).map(function (k) {
         return h('div', { class: 'chip nigate', title: '苦手意識' }, [h('span', { class: 'lbl', text: '苦手：' + D.CTX_LABEL[k] }), h('b', { text: String(S.nigate[k]) })]);
       })),
-      h('div', { class: 'floor', text: (S.row + 1) + ' / ' + S.map.length + ' だん' })
+      h('div', { class: 'floor', text: (S.acts > 1 ? (S.act + 1) + 'そう目・' : '') + Math.min(S.row + 1, S.map.rows.length) + ' / ' + S.map.rows.length + ' だん' })
     ]);
   }
 
   var selSup = null;
-  var lastDealKey = '';
+  var lastDealKey = '', lastMoyaKey = '', lastClearKey = '';
   function sprite(key, form, cls) {
     var cv = document.createElement('canvas');
     cv.className = 'px ' + (cls || '');
@@ -1312,18 +1565,47 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 
   // --- タイトル ---
   function titleScreen(saved) {
+    var fixed = Number(P.param('mode'));
+    var modes = fixed ? [] : [
+      h('button', { class: 'primary big', onclick: function () { start(1); } }, ['みじかく あそぶ', h('small', { text: '1そう（約15分）' })]),
+      h('button', { class: 'secondary big', onclick: function () { start(3); } }, ['ながく あそぶ', h('small', { text: '3そう（約45分）' })])
+    ];
     app.replaceChildren(h('main', { class: 'title' }, [
       h('h1', { text: D.TEXT.title }),
       h('p', { class: 'sub', text: '毎日の「こまった」に、どの手で こたえる？' }),
       saved ? h('button', { class: 'primary big', onclick: function () { S = saved; render(); }, text: 'つづきから' }) : null,
-      h('button', { class: saved ? 'secondary big' : 'primary big', onclick: start, text: saved ? 'はじめから' : 'はじめる' })
+      fixed ? h('button', { class: saved ? 'secondary big' : 'primary big', onclick: function () { start(fixed); }, text: saved ? 'はじめから' : 'はじめる' }) : h('div', { class: 'two' }, modes)
     ]));
   }
-  function start() {
-    var mode = Number(P.param('mode')) || 1;
-    S = E.newRun((Date.now() ^ (Math.random() * 1e9)) >>> 0, mode);
+  function start(mode) {
+    S = E.newRun((Date.now() ^ (Math.random() * 1e9)) >>> 0, mode === 3 ? 3 : 1);
     debriefPage = 0;
     save(); render();
+  }
+
+  function hearts(n) {
+    var out = [];
+    for (var i = 0; i < D.MAP.hearts; i++) out.push(h('span', { class: 'heart' + (i < n ? '' : ' lost'), text: i < n ? '♥' : '♡' }));
+    return h('span', { class: 'hearts', 'aria-label': 'ボスの ハート ' + n }, out);
+  }
+  function bossBanner() {
+    var A = D.ACTS[S.act], B = D.ENEMIES[A.boss];
+    return h('div', { class: 'bossbanner' }, [
+      h('div', { class: 'bb-act', text: (S.acts > 1 ? (S.act + 1) + 'そう目「' + A.name + '」' : '「' + A.name + '」') + 'の ボス' }),
+      h('div', { class: 'bb-name' }, [h('span', { text: B.scene }), hearts(S.hearts)]),
+      h('div', { class: 'bb-hint', text: '★の ついた 課題を 乗りこえるたびに、ボスの ハートが へって 弱くなる' })
+    ]);
+  }
+
+  // 段が 変わるとき（3層モード）
+  function actClearScreen() {
+    var A = D.ACTS[S.act];
+    return h('main', { class: 'title' }, [
+      h('h1', { text: (S.act) + 'そう目 クリア！' }),
+      h('p', { class: 'sub', text: '心の余裕が 全部 もどった。次は「' + A.name + '」' }),
+      bossBanner(),
+      h('button', { class: 'primary big', onclick: function () { act(function () { E.nextAct(S); }); }, text: '次の そうへ' })
+    ]);
   }
 
   var NODE = {
@@ -1331,21 +1613,47 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     event: { label: 'できごと', cls: 'n-event' }, rest: { label: 'ひと休み', cls: 'n-rest' }, boss: { label: 'ボス', cls: 'n-boss' }
   };
 
-  // --- マップ ---
+  // --- マップ（線で つながった 分かれ道） ---
+  var MX = 150, MY = 58, MW = 4 * MX, MH = (D.MAP.rows + 1) * MY;
+  function nodeXY(r, col) { return [col * MX + MX / 2, MH - (r + 0.5) * MY]; }
   function mapScreen() {
-    var rows = S.map.map(function (row, r) {
-      return h('div', { class: 'maprow' + (r === S.row ? ' now' : r < S.row ? ' past' : '') }, [
-        h('span', { class: 'rownum', text: r === S.map.length - 1 ? 'さいご' : (r + 1) + 'だん目' })
-      ].concat(row.map(function (k, c) {
-        var n = NODE[k];
-        return h('button', {
-          class: 'node ' + n.cls, disabled: r !== S.row,
-          onclick: function () { act(function () { E.chooseNode(S, c); }); }
-        }, [n.label]);
-      })));
-    }).reverse();
+    var ok = E.reachable(S), m = S.map;
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + MW + ' ' + MH); svg.setAttribute('class', 'maplines');
+    var bossR = m.rows.length - 1;
+    function line(a, b, cls) {
+      var l = document.createElementNS(ns, 'line');
+      l.setAttribute('x1', a[0]); l.setAttribute('y1', a[1]); l.setAttribute('x2', b[0]); l.setAttribute('y2', b[1]);
+      l.setAttribute('class', cls); svg.appendChild(l);
+    }
+    m.edges.forEach(function (e) {
+      var cls = 'ml' + (e.r === S.row - 1 && e.from === S.pos ? ' next' : e.r < S.row - 1 ? ' past' : '');
+      line(nodeXY(e.r, e.from), nodeXY(e.r + 1, e.to), cls);
+    });
+    m.rows[bossR - 1].forEach(function (n) { line(nodeXY(bossR - 1, n.col), nodeXY(bossR, 1.5), 'ml' + (S.row === bossR && S.pos === n.col ? ' next' : '')); });
+    var nodes = [];
+    m.rows.forEach(function (row, r) {
+      row.forEach(function (n, i) {
+        var xy = nodeXY(r, n.col), here = r === S.row && ok.indexOf(i) >= 0;
+        var E0 = n.enemy && D.ENEMIES[n.enemy];
+        var label = NODE[n.kind].label;
+        var sub = E0 ? (E0.kind === 'danger' ? 'あぶない場面' : E0.scene) : '';
+        nodes.push(h('button', {
+          class: 'mnode ' + NODE[n.kind].cls + (here ? ' here' : '') + (r < S.row ? ' past' : '') + (n.related ? ' rel' : ''),
+          style: 'left:' + (xy[0] / MW * 100) + '%;top:' + (xy[1] / MH * 100) + '%',
+          disabled: !here,
+          onclick: function () { act(function () { E.chooseNode(S, i); }); }
+        }, [h('b', { text: (n.related ? '★' : '') + label }), sub ? h('small', { text: sub }) : null]));
+      });
+    });
     var notice = S.notice; S.notice = null;
-    return h('main', { class: 'map' }, [notice ? h('p', { class: 'praise', text: notice }) : null, itemSlots(false), h('p', { class: 'hint', text: '次に 行くところを えらぼう' })].concat(rows));
+    return h('main', { class: 'map' }, [
+      bossBanner(),
+      notice ? h('p', { class: 'praise', text: notice }) : null,
+      h('div', { class: 'maprow2' }, [itemSlots(false), h('p', { class: 'hint', text: '光っている マスから 次に 行くところを えらぼう' })]),
+      h('div', { class: 'mapbox' }, [svg].concat(nodes))
+    ]);
   }
 
   // --- 戦い ---
@@ -1357,6 +1665,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     if (c.guard) effects.push(h('span', { class: 'fx guard' }, ['ゆとり ' + (p.guard != null ? p.guard : c.guard)]));
     if (c.heal) effects.push(h('span', { class: 'fx heal' }, ['余裕 +' + c.heal]));
     if (c.draw) effects.push(h('span', { class: 'fx' }, ['1まい 引く']));
+    if (c.clearMoya) effects.push(h('span', { class: 'fx reveal' }, ['モヤモヤを けす']));
     if (c.organize) effects.push(h('span', { class: 'fx reveal' }, ['整理する']));
     if (c.escape) effects.push(h('span', { class: 'fx reveal' }, ['その場を はなれる']));
     if (c.distance) effects.push(h('span', { class: 'fx reveal' }, ['いきおいを おさめる']));
@@ -1393,7 +1702,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
     var bubble = h('section', { class: 'bubble k-' + en.kind }, [
       h('div', { class: 'ekind', text: (en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
-      h('h2', { class: 'ename', text: en.name }),
+      h('h2', { class: 'ename' }, [en.name, en.kind === 'boss' ? hearts(S.hearts) : null]),
       h('div', { class: 'meter hp' }, [
         h('span', { class: 'lbl', text: '問題の大きさ' }),
         h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + hpPct + '%' })]),
@@ -1405,7 +1714,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     ]);
     var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(en.id, en.form), en.form, 'mon')]);
     if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(en.id)) { monster.innerHTML = SST_ILLUST.svg(en.id); }
-    var hero = h('div', { class: 'hero' }, [
+    var hero = h('div', { class: 'hero' + (b.guard ? ' shield' : '') }, [
       sprite('hero', 2, 'me'),
       h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: 'ゆとり' }), h('b', { text: String(b.guard) })])
     ]);
@@ -1434,7 +1743,16 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var end = h('button', { class: 'primary endturn', onclick: function () { act(function () { E.endTurn(S); }); }, text: 'ターンを おわる' });
     var piles = h('div', { class: 'pile draw', text: '山札 ' + b.draw.length });
     var disc = h('div', { class: 'pile disc', text: 'すて札 ' + b.discard.length });
-    return h('main', { class: 'battle' }, [stage, h('div', { class: 'row' }, [energy, msgs, help, end]), h('div', { class: 'handrow' }, [piles, hand, disc])]);
+    var moyaN = b.msgs.filter(function (m) { return m.tag === 'curse' || m.tag === 'worry'; }).length;
+    var moyaKey = dealKey + ':' + b.msgs.length;
+    var flies = [];
+    if (moyaN && moyaKey !== lastMoyaKey) {
+      for (var mi = 0; mi < moyaN; mi++) flies.push(h('div', { class: 'moyafly', style: 'animation-delay:' + (mi * 180) + 'ms', text: 'モヤモヤ' }));
+    }
+    lastMoyaKey = moyaKey;
+    var clears = b.msgs.some(function (m) { return m.tag === 'clear'; }) && moyaKey !== lastClearKey ? [h('div', { class: 'moyaclear', text: 'すっきり！' })] : [];
+    if (clears.length) lastClearKey = moyaKey;
+    return h('main', { class: 'battle' }, flies.concat(clears, [stage, h('div', { class: 'row' }, [energy, msgs, help, end]), h('div', { class: 'handrow' }, [piles, hand, disc])]));
   }
 
   // --- 報酬 ---
@@ -1468,7 +1786,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   function restScreen() {
     if (removing) {
       return h('main', { class: 'rest' }, [
-        h('h2', { text: '手放す（卒業する）カードを えらぶ' }),
+        h('h2', { text: '自分を 見つめ直す：もう 使わない カードを 1まい えらぶ' }),
         h('div', { class: 'choices small' }, S.deck.map(function (id, i) {
           var el = cardView(E.card(id), { showCtx: true });
           el.addEventListener('click', function () { removing = false; act(function () { E.rest(S, 'remove', i); }); });
@@ -1494,8 +1812,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       h('h2', { text: 'ひと休み' }),
       equipPanel,
       h('div', { class: 'two' }, [
-        h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['休む', h('small', { text: '心の余裕を ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' 回ふく' })]),
-        h('button', { class: 'secondary big', onclick: function () { removing = true; render(); } }, ['手放す', h('small', { text: 'いらない くせを 1つ 卒業する' })])
+        h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['休む', h('small', { text: '心の余裕を ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' 回ふく。「お家の人に そうだんする」カードが もらえる' })]),
+        h('button', { class: 'secondary big', onclick: function () { removing = true; render(); } }, ['自分を 見つめ直す', h('small', { text: 'いらない くせを 1つ 卒業する' })])
       ])
     ]);
   }
@@ -1676,6 +1994,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     else if (S.phase === 'reward') screen = rewardScreen();
     else if (S.phase === 'rest') screen = restScreen();
     else if (S.phase === 'event') screen = eventScreen();
+    else if (S.phase === 'actclear') screen = actClearScreen();
     else screen = endScreen();
     app.replaceChildren(topBar(), screen);
     app.setAttribute('data-phase', S.phase);

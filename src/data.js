@@ -30,7 +30,7 @@
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 1.5, resist: 0.5, anxiety: 0.6,
-    restHeal: 0.3, dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 1.7, stressScale: 1.45,
+    restHeal: 0.3, dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 2.6, stressScale: 1.85,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -87,6 +87,25 @@
     call_adult: { name: '近くの 大人を よぶ', line: '「たすけてください！」と 大きな声で 言う。', type: 'relate', judge: 'good', style: 'distance', cost: 0, escape: true, trust: 1 },
     run_now: { name: 'すぐに にげる', line: '安全な ところまで 走る。', type: 'act', judge: 'good', style: 'distance', cost: 0, escape: true },
     say_no_stranger: { name: '「行きません」と ことわる', line: '知らない人には ついて行かない。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 8 },
+    review_notes: { name: '見直しを する', line: '名前・計算・書きわすれを たしかめる。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 9, organize: true },
+    plan_time: { name: '時間を 決めて やる', line: '「5時から 20分 やる」と 決める。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 6, draw: 1 },
+    put_off: { name: 'あとで やる…', line: 'テレビを 見てから…と 先のばし。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 9, chance: 'high', trust: -1, curse: true },
+    say_honest: { name: '正直に 言う', line: '「ノートを わすれました」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 9, trust: 1 },
+    borrow: { name: 'となりに かりる', line: '「えんぴつ、かしてくれる？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 8, chance: 'high', req: { trust: 5 } },
+    hide_it: { name: 'だまって かくす', line: 'わすれたことを だまっておく。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 8, chance: 'high', trust: -1, curse: true },
+    tell_feeling: { name: '自分の 気もちを つたえる', line: '「あのとき、悲しかったんだ」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'mid', fail: 'apologize' },
+    ignore_back: { name: 'むし し返す', line: 'こっちも 口を きかない。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 9, chance: 'high', trust: -1, curse: true },
+    ask_meaning: { name: '「どういう いみ？」と 聞く', line: '「それって、どういう いみ？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, organize: true },
+    not_join: { name: '話に のらない', line: '「わたしは いいや」と はなれる。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 7, solve: 4 },
+    spread: { name: 'ほかの子に 言いふらす', line: '「ねえ、聞いて！ あの子がね…」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -2, curse: true },
+    practice_again: { name: 'もう一回 れんしゅう', line: '「もう一回 やってみよう」', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 9, chance: 'mid', fail: 'ask_tip' },
+    ask_tip: { name: 'コツを 聞く', line: '「どうやったら うまく できる？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high' },
+    quit_it: { name: 'もう やめる', line: '「どうせ できないし」', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 9, chance: 'high', trust: -1, curse: true },
+    listen_all: { name: 'みんなの 意見を 聞く', line: '「一人ずつ 言ってみよう」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, organize: true },
+    vote: { name: '多数決に しよう', line: '「手を あげて 決めよう」', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'mid', fail: 'listen_all' },
+    force_own: { name: '自分の 意見を おしつける', line: '「ぜったい こっちが いい！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -2, curse: true },
+    consult_family: { name: 'お家の人に そうだんする', line: '「今日 こんなことが あってね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, heal: 6, guard: 4 },
+    sukkiri: { name: '気もちを 話して すっきり', line: 'もやもやを 言葉にして だれかに 話す。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 3, clearMoya: true, exhaust: true },
     ugokenai: { name: '動けない', line: '心の余裕が なくなって、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     wameku: { name: 'わめく', line: 'ぎゃーっと 大声で わめく。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -2, curse: true },
     junk_advice: { name: '「気にしなきゃ いいじゃん」', line: '友だちの アドバイス。でも、気になるものは 気になる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 1 },
@@ -103,6 +122,7 @@
     teacher: { name: '先生に そうだん', line: '「先生、聞いてほしいことが あります」', note: 'この場面で 先生に すすめられた カードが 手札に入る（戦いのあと 報酬にも出る）。状きょうも 1つ 整理される' },
     friend: { name: '友だちに そうだん', line: '「ねえ、どう思う？」', note: '心の余裕 +5。友だちの アドバイスが カードになる（ときどき 役に立たないことも）', heal: 5 },
     family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', note: '心の余裕 +10', heal: 10 },
+    diary: { name: '日記を 書く', line: '今日の ことを ノートに 書く。', note: 'モヤモヤを 1まい デッキから けす。心の余裕 +3', heal: 3, purgeMoya: true },
     book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', note: '心の余裕 +4、手札の モヤモヤを すてる', heal: 4, clearMoya: true }
   };
   // 先生がすすめるカード（場面ごと）、友だちのアドバイス（junk はハズレ）
@@ -115,7 +135,7 @@
   var FORMS = { stressMul: [1, 0.8, 0.6], organizeStat: 2 };
 
   var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'keep_distance', 'breathe', 'talk', 'okoru', 'run_away'];
-  var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply'];
+  var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply', 'plan_time', 'sukkiri', 'review_notes'];
 
   // pass: そのターン数を乗りこえると、課題は時間とともに過ぎ去る（報酬なし。leave なら モヤモヤが のこる）。
   //   からかい・発表には付けない：放っておいても過ぎ去らない問題があることを残すため
@@ -164,6 +184,67 @@
     }
   };
 
+  // ===== 層ごとの ボスと 関連する課題 =====
+  ENEMIES.test = {
+    forms: ['100点の 大まじん', 'むずかしそうな テスト用紙', 'いつもの 小テスト'],
+    ctx: 'study', scene: 'テスト', kind: 'boss', hp: 50,
+    moves: [{ t: 'stress', n: 9, say: '時間が どんどん へっていく' }, { t: 'worry', say: '「わからない 問題が ある…」' }, { t: 'stress', n: 11, say: 'まわりの えんぴつの 音が 気になる' }, { t: 'grow', n: 2, say: 'あせりが 大きくなる' }],
+    weak: ['think'], resist: [], backfire: [], situ: ['review_notes', 'breathe_first', 'give_up'],
+    other: '先生：「さいごまで あきらめずに 見直したね」'
+  };
+  ENEMIES.homework = {
+    forms: ['しゅくだい 大なだれ', 'つみ上がった プリント', '今日の 宿題 2まい'],
+    ctx: 'study', scene: '宿題の 山', kind: 'normal', hp: 26,
+    moves: [{ t: 'stress', n: 6, say: '「まだ こんなに ある…」' }, { t: 'grow', n: 2, say: 'ねる時間が 近づく' }, { t: 'stress', n: 7, say: 'あそびたい 気もちが じゃまをする' }],
+    weak: ['think', 'act'], resist: [], backfire: [], situ: ['plan_time', 'put_off'],
+    other: 'お家の人：「先に やって えらいね」'
+  };
+  ENEMIES.forgot_item = {
+    forms: ['なくしものの ぬま', '空っぽの ランドセル', 'ノートを わすれた 朝'],
+    ctx: 'study', scene: 'わすれもの', kind: 'normal', hp: 18, pass: { turns: 3, say: '一日 なんとか すごした。でも、言えないままだった。', leave: true },
+    moves: [{ t: 'stress', n: 6, say: '「どうしよう…」' }, { t: 'stress', n: 6, say: 'じゅぎょうが 始まる' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['say_honest', 'borrow', 'hide_it'],
+    other: '先生：「言いに来てくれて ありがとう。次から 気をつけようね」'
+  };
+  ENEMIES.friend_fight = {
+    forms: ['ギザギザ ハートの 竜', '目を 合わせない 友だち', 'なかなおり したい 友だち'],
+    ctx: 'conflict', scene: '友だちと 大げんか', kind: 'boss', hp: 55,
+    moves: [{ t: 'stress', n: 9, say: '口を きいて くれない' }, { t: 'grow', n: 3, say: 'ほかの子も まきこまれる' }, { t: 'stress', n: 10, say: 'さびしくて むかむかする' }, { t: 'worry', say: '「もう 友だちじゃ ないのかな」' }],
+    weak: [], resist: ['relate'], backfire: ['impulse'], situ: ['tell_feeling', 'keep_distance', 'ignore_back'],
+    view: { truth: 'benign', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.8 },
+    other: '友だち：「じつは こっちも あやまりたかった」'
+  };
+  ENEMIES.misunder = {
+    forms: ['もやもや 二面ぐも', 'ちがう話を している 二人', '言い方の ちがい'],
+    ctx: 'conflict', scene: 'かんちがい', kind: 'normal', hp: 24,
+    moves: [{ t: 'stress', n: 7, say: '「なんで そんなこと 言うの」' }, { t: 'grow', n: 2, say: '話が どんどん ずれていく' }],
+    weak: [], resist: ['relate'], backfire: ['impulse'], situ: ['ask_meaning', 'okoru'],
+    view: { truth: 'benign', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.6 },
+    other: '友だち：「あ、そういう いみじゃ なかったんだ！」'
+  };
+  ENEMIES.rumor = {
+    forms: ['ひそひそ こうもり', 'こそこそ 話す 子たち', 'ただの うわさ話'],
+    ctx: 'tease', scene: 'かげ口を 聞いた', kind: 'normal', hp: 24,
+    moves: [{ t: 'stress', n: 7, say: '聞こえないように 話している' }, { t: 'worry', say: '「自分の ことかも…」' }, { t: 'stress', n: 8, say: 'うわさが 広がっていく' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['not_join', 'tell_teacher', 'spread'],
+    other: '先生：「話に のらずに いてくれて ありがとう」'
+  };
+  ENEMIES.practice = {
+    forms: ['しっぱい ループ大へび', '何度も つまずく 練習', 'あと少しの 練習'],
+    ctx: 'stage', scene: '練習が うまくいかない', kind: 'normal', hp: 28,
+    moves: [{ t: 'stress', n: 7, say: 'また まちがえた' }, { t: 'grow', n: 2, say: '本番が 近づく' }, { t: 'stress', n: 8, say: '「みんなは できてるのに」' }],
+    weak: ['act'], resist: [], backfire: [], situ: ['practice_again', 'quit_it'],
+    other: '先生：「くり返し 練習したから、できるように なったね」'
+  };
+  ENEMIES.team = {
+    forms: ['バラバラ 四つ頭', '言い合う グループ', '意見が ちがう だけの なかま'],
+    ctx: 'join', scene: 'グループで 意見が 合わない', kind: 'normal', hp: 30,
+    moves: [{ t: 'stress', n: 7, say: 'みんな 自分の 意見を ゆずらない' }, { t: 'grow', n: 2, say: '時間が なくなっていく' }, { t: 'stress', n: 8, say: '声が 大きくなる' }],
+    weak: [], resist: ['impulse'], backfire: ['impulse'], situ: ['listen_all', 'vote', 'force_own'],
+    view: { truth: 'benign', weak: ['relate', 'think'], resist: [], backfire: ['impulse'], stressMul: 0.7 },
+    other: 'グループの子：「みんなの 意見が 入って よかった」'
+  };
+
   // あぶない場面（ときどき 課題の代わりに出る）。戦って勝つのは ほぼ無理で、はなれる・にげる・大人をよぶ が正解
   ENEMIES.fight_near = {
     forms: ['あばれる 大あらし', 'もめている 上級生たち', 'ケンカ中の 上級生'],
@@ -200,6 +281,23 @@
         { label: '見なかったことにする', effects: {}, result: 'そのまま 席にもどった。' }
       ]
     },
+    library: {
+      title: '図書室で 本を 見つけた',
+      text: '休み時間に 図書室へ 行ったら、気になる 本が 3さつ あった。',
+      options: [
+        { label: '『気もちの ことば じてん』を 読む', effects: { addCard: 'sukkiri' }, result: '気もちを 言葉に すると すっきりする、と 書いてあった。' },
+        { label: '『べんきょうの コツ』を 読む', effects: { addCard: 'plan_time' }, result: '時間を 決めると 集中できる、と わかった。' },
+        { label: '『友だちと なかよく』を 読む', effects: { addCard: 'thanks' }, result: '「ありがとう」の 言い方が いろいろ のっていた。' }
+      ]
+    },
+    family_talk: {
+      title: '夕ごはんの 時間',
+      text: 'お家の人が「今日は どうだった？」と 聞いてくれた。',
+      options: [
+        { label: '今日 あったことを 話す', effects: { addCard: 'consult_family', yoyu: 6 }, result: '話したら 気もちが 軽くなった。' },
+        { label: '「ふつう」とだけ 言う', effects: {}, result: 'そのまま ごはんを 食べた。' }
+      ]
+    },
     second_chance: {
       title: 'やり直しのチャンス',
       text: 'この前 言い合いになった子と、ろうかで 二人きりになった。',
@@ -212,14 +310,13 @@
   };
 
   // お試し版：4段＋ボス。各段は2マスから1つ選ぶ
+  // 1層＝7段＋ボス。課題の半分以上は ボスに 関連する課題（related）。関連する課題を 乗りこえるたびに ボスの ハートが へる
   var ACTS = [
-    {
-      name: '教室',
-      rows: [['battle', 'battle'], ['battle', 'event'], ['elite', 'event'], ['rest', 'battle']],
-      normals: ['dunno', 'bumped', 'left_out'], dangers: ['fight_near', 'stranger'], elites: ['teased'], boss: 'presentation',
-      events: ['forgot', 'friend_trouble']
-    }
+    { name: '教室', boss: 'test', related: ['dunno', 'homework', 'forgot_item'], others: ['bumped', 'left_out'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['forgot', 'friend_trouble', 'library', 'family_talk'] },
+    { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['friend_trouble', 'library', 'family_talk'] },
+    { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['library', 'family_talk', 'friend_trouble'] }
   ];
+  var MAP = { rows: 7, cols: 4, paths: 3, relatedShare: 0.5, hearts: 3, heartHp: 0.15, heartStress: 0.1, actHeal: 1 };
 
   var TEXT = {
     title: 'こころの 冒険',
@@ -230,7 +327,7 @@
     stressIntrude: '心の余裕が へって、「カッとなる」が 手札に まざった。'
   };
 
-  var DATA = { FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
+  var DATA = { MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
   else root.SST_DATA = DATA;
 })(this);
