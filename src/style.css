@@ -229,3 +229,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .moyaclear { position: absolute; z-index: 20; left: 50%; top: 40%; transform: translate(-50%, -50%); font-family: var(--display); font-size: 2rem; color: #fff; text-shadow: 0 3px 0 var(--good);
   animation: clearpop .9s ease-out both; pointer-events: none; }
 @keyframes clearpop { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.6); } 30% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -80%); } }
+.moyafly.inject { background: #c92a2a; box-shadow: 0 0 16px 6px rgba(201,42,42,.6); animation-name: injectfly; }
+@keyframes injectfly { 0% { transform: scale(.4); opacity: 0; } 25% { transform: scale(1.2); opacity: 1; } 100% { left: 45%; top: 80%; transform: scale(.5); opacity: 0; } }
+.troublebadge { background: #c92a2a; color: #fff; font-family: var(--display); padding: 4px 14px; border-radius: 999px; border: 3px solid var(--line); }
+.event { padding-top: 20px; }

@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 4;
+  var ENGINE_VER = 5;
 
   // --- 乱数 ---
   function rand(s) {
@@ -38,7 +38,7 @@
       trust: D.PLAYER.trustStart,
       stats: { think: 0, act: 0, relate: 0 },
       deck: D.STARTER.slice(), nigate: {}, items: D.SUPPORT_RULES.start.slice(), equip: D.SUPPORT_RULES.start.slice(),
-      usedNormals: [], usedEvents: [],
+      usedNormals: [], usedEvents: [], trouble: null,
       map: null, battle: null, reward: null, event: null,
       log: [], result: null
     };
@@ -151,6 +151,12 @@
     s.row++;
     s.phase = 'map';
     s.battle = null; s.reward = null; s.event = null;
+    if (s.trouble) {
+      var id = s.trouble; s.trouble = null;
+      s.event = { id: id, done: null, interrupt: true };
+      s.phase = 'event';
+      log(s, { k: 'event', id: id, trouble: true });
+    }
     return s;
   }
 
@@ -190,7 +196,7 @@
   function addToHand(s, h) {
     var b = s.battle;
     if (b.hand.length < handLimit(s)) { b.hand.push(h); return true; }
-    if (h.id === 'kattonaru') b.exhaust.push(h); else b.discard.push(h);
+    if (h.id === 'kattonaru' || h.id === 'panic') b.exhaust.push(h); else b.discard.push(h);
     msg(s, '手札が いっぱいで「' + card(h.id).name + '」は すて札へ。', 'bench');
     return false;
   }
@@ -218,12 +224,15 @@
       D.ENEMIES[b.enemy.id].situ.forEach(function (id) { addToHand(s, { id: id, temp: true }); });
     }
     if (b.frozen) {
-      b.hand.forEach(function (h) { b.discard.push(h); });
+      b.hand.forEach(function (h) { if (!h.temp || h.id !== 'panic') b.discard.push(h); });
       b.hand = [{ id: 'ugokenai', temp: true }];
       b.energy = 0;
       msg(s, '心の余裕が なくなって、動けない…（このまま 時間が すぎるのを まつ）', 'stress');
       return;
     }
+    var pn = b.hand.filter(function (x) { return x.id === 'panic' && !x.fresh; }).length;
+    b.hand.forEach(function (x) { delete x.fresh; });
+    if (pn) addToHand(s, { id: 'panic', temp: true });
     drawCards(s, Math.max(0, handLimit(s) - b.hand.length));
     if (s.yoyu < s.maxYoyu * D.RULES.stressThreshold) {
       addToHand(s, { id: 'kattonaru', temp: true });
@@ -320,12 +329,18 @@
     var b = s.battle, h = b.hand.splice(i, 1)[0], c = card(h.id), st = statOf(c), en = b.enemy;
     b.energy -= c.cost;
     if (st) b.usage[st]++;
-    if (c.type === 'calm') b.calm = true;
+    if (c.type === 'calm') {
+      b.calm = true;
+      var pi = b.hand.findIndex(function (x) { return x.id === 'panic'; });
+      if (pi >= 0) { b.exhaust.push(b.hand.splice(pi, 1)[0]); msg(s, '落ちついて、パニックが 1つ おさまった。', 'clear'); }
+    }
 
     var ok = c.chance ? rand(s) < D.CHANCE[c.chance].p : true;
     var entry = { k: 'play', card: h.id, enemy: en.id, ok: ok, judge: c.judge, style: c.style, temp: !!h.temp, revealedBefore: en.revealed };
 
     if (c.trust) addTrust(s, c.trust, h.id, c.trust > 0);
+    var tr = D.TROUBLE_OF[h.id];
+    if (tr && (!s.trouble || D.TROUBLE_RANK.indexOf(tr) < D.TROUBLE_RANK.indexOf(s.trouble))) s.trouble = tr;
 
     if (ok) {
       if (c.organize) organize(s);
@@ -411,6 +426,10 @@
     } else if (mv.t === 'grow') {
       en.str += mv.n;
       msg(s, mv.say + '（問題の いきおい +' + mv.n + '）', 'grow');
+    } else if (mv.t === 'inject') {
+      addToHand(s, { id: mv.card, temp: true, fresh: true });
+      msg(s, mv.say, 'inject');
+      b.msgs[b.msgs.length - 1].card = card(mv.card).name;
     } else if (mv.t === 'worry') {
       b.discard.push({ id: 'moyamoya', temp: true });
       msg(s, mv.say + '（この戦いの間 モヤモヤが まざる）', 'worry');
@@ -432,16 +451,21 @@
     if (s.phase !== 'battle') throw new Error('not battle');
     var b = s.battle;
     b.msgs = [];
-    var moya = 0;
+    var moya = 0, keep = [], panics = 0;
     b.hand.forEach(function (h) {
       if (h.id === 'moyamoya') moya++;
+      if (card(h.id).retain) { keep.push(h); if (h.id === 'panic') panics++; return; }
       if (h.id === 'kattonaru') b.exhaust.push(h); else b.discard.push(h);
     });
+    b.hand = keep;
+    if (panics) {
+      hurt(s, panics * D.RULES.panicDrain);
+      msg(s, 'パニックで 心の余裕 −' + panics * D.RULES.panicDrain + '。このままだと パニックが ふえる！', 'worry');
+    }
     if (moya) {
       hurt(s, moya * D.RULES.moyaDrain);
       msg(s, 'モヤモヤが 気になって 心の余裕 −' + moya * D.RULES.moyaDrain, 'curse');
     }
-    b.hand = [];
     var wasFrozen = b.frozen;
     enemyAct(s);
     if (wasFrozen) {
@@ -663,6 +687,7 @@
   }
   function leaveEvent(s) {
     if (s.phase !== 'event' || s.event.done == null) throw new Error('event not done');
+    if (s.event.interrupt) { s.phase = 'map'; s.event = null; return s; }
     return advance(s);
   }
 

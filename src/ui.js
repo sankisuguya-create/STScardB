@@ -259,11 +259,12 @@
     var end = h('button', { class: 'primary endturn', onclick: function () { act(function () { E.endTurn(S); }); }, text: 'ターンを おわる' });
     var piles = h('div', { class: 'pile draw', text: '山札 ' + b.draw.length });
     var disc = h('div', { class: 'pile disc', text: 'すて札 ' + b.discard.length });
-    var moyaN = b.msgs.filter(function (m) { return m.tag === 'curse' || m.tag === 'worry'; }).length;
+    var flyMsgs = b.msgs.filter(function (m) { return m.tag === 'curse' || m.tag === 'worry' || m.tag === 'inject'; });
+    var moyaN = flyMsgs.length;
     var moyaKey = dealKey + ':' + b.msgs.length;
     var flies = [];
     if (moyaN && moyaKey !== lastMoyaKey) {
-      for (var mi = 0; mi < moyaN; mi++) flies.push(h('div', { class: 'moyafly', style: 'animation-delay:' + (mi * 180) + 'ms', text: 'モヤモヤ' }));
+      for (var mi = 0; mi < moyaN; mi++) flies.push(h('div', { class: 'moyafly' + (flyMsgs[mi].tag === 'inject' ? ' inject' : ''), style: 'animation-delay:' + (mi * 180) + 'ms', text: flyMsgs[mi].card || 'モヤモヤ' }));
     }
     lastMoyaKey = moyaKey;
     var clears = b.msgs.some(function (m) { return m.tag === 'clear'; }) && moyaKey !== lastClearKey ? [h('div', { class: 'moyaclear', text: 'すっきり！' })] : [];
@@ -338,6 +339,7 @@
   function eventScreen() {
     var ev = D.EVENTS[S.event.id], done = S.event.done;
     return h('main', { class: 'event' }, [
+      ev.trouble ? h('div', { class: 'troublebadge', text: 'トラブル（さっきの 行動の あとで 起きた）' }) : null,
       h('h2', { text: ev.title }),
       h('p', { class: 'story', text: ev.text }),
       done == null
@@ -396,6 +398,9 @@
     });
     sm.escapes.filter(function (e) { return e.ok; }).forEach(function (e) {
       items.push(h('li', { class: 'unlock' }, [h('b', { text: '「' + D.ENEMIES[e.enemy].scene + '」から はなれて、安全を 守れた' }), h('span', { text: 'たたかうだけが 正解じゃない。場面に 合わせて えらべるのが 大事な力。' })]));
+    });
+    S.log.filter(function (e) { return e.k === 'choice' && D.EVENTS[e.id] && D.EVENTS[e.id].trouble && e.i === 0; }).forEach(function (e) {
+      items.push(h('li', { class: 'unlock' }, [h('b', { text: 'トラブルの あと、正直に 話して やり直せた' }), h('span', { text: 'まちがえても、話して あやまれば やり直せる。それも 大事な力。' })]));
     });
     sm.nigate.forEach(function (e) {
       items.push(h('li', {}, [h('b', { text: '「' + D.CTX_LABEL[e.ctx] + '」が 苦手に なった（' + e.to + '）' }), h('span', { text: '心の余裕が なくなる前に、休む・きょりを おく・だれかに そうだん しよう。' })]));

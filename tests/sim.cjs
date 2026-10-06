@@ -31,6 +31,7 @@ function rank(c, pol, s) {
   if (p.weak) bonus += 2;
   if (p.backfire && pol !== POLICIES.impulse) bonus -= 5;
   if (c.type === 'calm' && D.ENEMIES[s.battle.enemy.id].anxiety && !s.battle.calm) bonus += 4;
+  if (c.type === 'calm' && s.battle.hand.some((h) => h.id === 'panic')) bonus += 6;
   return (10 - r) * 10 + bonus;
 }
 
@@ -85,7 +86,7 @@ function runOne(seed, polName, mode) {
       else E.rest(s, 'rest');
     } else if (s.phase === 'event') {
       const opts = D.EVENTS[s.event.id].options;
-      let i = Math.min(pol.event, opts.length - 1);
+      let i = Math.min(D.EVENTS[s.event.id].trouble ? (pol.event ? 1 : 0) : pol.event, opts.length - 1);
       while (i > 0 && !E.optionOpen(s, opts[i])) i--;
       E.chooseEvent(s, i); E.leaveEvent(s);
     }

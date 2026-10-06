@@ -30,7 +30,7 @@
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 2.0, resist: 0.35, anxiety: 0.6,
-    restHeal: 0.3, dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 5, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 2.8,
+    restHeal: 0.3, dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 5, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 2.6,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -106,6 +106,9 @@
     force_own: { name: '自分の 意見を おしつける', line: '「ぜったい こっちが いい！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
     consult_family: { name: 'お家の人に そうだんする', line: '「今日 こんなことが あってね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, heal: 6, guard: 4 },
     sukkiri: { name: '気もちを 話して すっきり', line: 'もやもやを 言葉にして だれかに 話す。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 3, clearMoya: true, exhaust: true },
+    panic: { name: 'パニック', line: '頭が ぐるぐるして 何も 考えられない。手札に のこり、毎ターン ふえる。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true, retain: true, split: true },
+    tataku: { name: 'たたく', line: 'カッとして 手が 出る。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -3, curse: true },
+    warukuchi: { name: '悪口を 言い返す', line: '「そっちだって ○○じゃん！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 9, chance: 'high', trust: -2, curse: true },
     ugokenai: { name: '動けない', line: '心の余裕が なくなって、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     wameku: { name: 'わめく', line: 'ぎゃーっと 大声で わめく。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
     junk_advice: { name: '「気にしなきゃ いいじゃん」', line: '友だちの アドバイス。でも、気になるものは 気になる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 1 },
@@ -134,6 +137,15 @@
   // 整理するカード（organize）で1つずつ現実に近づき、いきおいが弱まる。かしこさが organizeStat 以上なら 1 から始まる
   var FORMS = { stressMul: [1, 0.8, 0.6], organizeStat: 2 };
 
+  // 問題行動（しょうどうカード）と、そのあと 道に 関係なく 起きる トラブル。強い順
+  var TROUBLE_OF = {
+    tataku: 'trouble_hit', hit_back: 'trouble_hit',
+    spread: 'trouble_rumor', warukuchi: 'trouble_rumor',
+    okoru: 'trouble_yell', wameku: 'trouble_yell', kattonaru: 'trouble_yell', force_own: 'trouble_yell',
+    sulk: 'trouble_withdraw', hide_it: 'trouble_withdraw', put_off: 'trouble_withdraw', ignore_back: 'trouble_withdraw', give_up: 'trouble_withdraw', quit_it: 'trouble_withdraw'
+  };
+  var TROUBLE_RANK = ['trouble_hit', 'trouble_rumor', 'trouble_yell', 'trouble_withdraw'];
+
   var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'keep_distance', 'breathe', 'talk', 'okoru', 'run_away'];
   var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply', 'plan_time', 'sukkiri', 'review_notes'];
 
@@ -154,7 +166,7 @@
       forms: ['ドンッと ぶつかる かいぶつ', 'わざと ぶつかってきた？ あの子', 'よそ見して ぶつかっただけ'],
       ctx: 'conflict', scene: 'ろうかで ぶつかられた', name: 'わざと ぶつかられた？', kind: 'normal', hp: 20,
       pass: { turns: 3, say: '時間がたって、気にならなくなった。' },
-      moves: [{ t: 'stress', n: 7, say: 'むかむかしてくる' }, { t: 'stress', n: 8, say: '「わざとだ」と思えてくる' }],
+      moves: [{ t: 'inject', card: 'tataku', say: '手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 7, say: 'むかむかしてくる' }, { t: 'stress', n: 8, say: '「わざとだ」と思えてくる' }],
       weak: [], resist: ['relate'], backfire: [], situ: ['ask_ok', 'tell_hurt', 'watch_them', 'hit_back'],
       view: { truth: 'benign', name: 'よそ見して ぶつかっただけ', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.5 },
       other: 'ぶつかった子：「あっ、ごめん！ 前を見てなかった」'
@@ -170,15 +182,15 @@
     teased: {
       forms: ['チクチクことばの むれ', 'わらっている 子たち', 'くり返し からかわれている'],
       ctx: 'tease', scene: 'からかわれた', name: 'からかわれた', kind: 'elite', hp: 36,
-      moves: [{ t: 'stress', n: 7, say: '同じことを また言われる' }, { t: 'grow', n: 3, say: 'まわりも わらいはじめる' }, { t: 'stress', n: 9, say: '学校に 行きたくなくなる' }],
+      moves: [{ t: 'inject', card: 'warukuchi', say: '言い返したく なる（悪口が まざる）' }, { t: 'stress', n: 7, say: '同じことを また言われる' }, { t: 'grow', n: 3, say: 'まわりも わらいはじめる' }, { t: 'stress', n: 9, say: '学校に 行きたくなくなる' }],
       weak: [], resist: [], backfire: ['impulse'], situ: ['say_stop', 'tell_teacher', 'wameku'],
       view: { truth: 'hostile', name: 'くり返し からかわれている', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 1 },
       other: 'あとで 先生：「話してくれて よかった。一人で かかえなくて いいんだよ」'
     },
     presentation: {
       forms: ['見つめる 大目玉', 'こっちを見る みんな', 'ふつうに 聞いている クラスの みんな'],
-      ctx: 'stage', scene: 'みんなの前で 発表', name: 'みんなの前で 発表', kind: 'boss', hp: 48, anxiety: true,
-      moves: [{ t: 'stress', n: 8, say: '心ぞうが どきどきする' }, { t: 'worry', say: '「まちがえたら どうしよう」' }, { t: 'stress', n: 11, say: 'みんなが こっちを見る' }, { t: 'grow', n: 2, say: '声が 小さくなってくる' }],
+      ctx: 'stage', scene: 'みんなの前で 発表', name: 'みんなの前で 発表', kind: 'boss', hp: 42, anxiety: true,
+      moves: [{ t: 'stress', n: 7, say: '心ぞうが どきどきする' }, { t: 'inject', card: 'panic', say: '頭が まっ白に なりそう（パニックが まざる）' }, { t: 'stress', n: 9, say: 'みんなが こっちを見る' }, { t: 'worry', say: '「まちがえたら どうしよう」' }, { t: 'grow', n: 2, say: '声が 小さくなってくる' }],
       weak: ['think'], resist: [], backfire: [], situ: ['read_memo', 'breathe_first', 'friend_face', 'give_up'],
       other: '聞いていた子：「さいごまで 言えてて すごかった」'
     }
@@ -187,8 +199,8 @@
   // ===== 層ごとの ボスと 関連する課題 =====
   ENEMIES.test = {
     forms: ['100点の 大まじん', 'むずかしそうな テスト用紙', 'いつもの 小テスト'],
-    ctx: 'study', scene: 'テスト', kind: 'boss', hp: 50,
-    moves: [{ t: 'stress', n: 9, say: '時間が どんどん へっていく' }, { t: 'worry', say: '「わからない 問題が ある…」' }, { t: 'stress', n: 11, say: 'まわりの えんぴつの 音が 気になる' }, { t: 'grow', n: 2, say: 'あせりが 大きくなる' }],
+    ctx: 'study', scene: 'テスト', kind: 'boss', hp: 42,
+    moves: [{ t: 'stress', n: 7, say: '時間が どんどん へっていく' }, { t: 'inject', card: 'panic', say: '頭が まっ白に なりそう（パニックが まざる）' }, { t: 'stress', n: 9, say: 'まわりの えんぴつの 音が 気になる' }, { t: 'worry', say: '「わからない 問題が ある…」' }],
     weak: ['think'], resist: [], backfire: [], situ: ['review_notes', 'breathe_first', 'give_up'],
     other: '先生：「さいごまで あきらめずに 見直したね」'
   };
@@ -209,7 +221,7 @@
   ENEMIES.friend_fight = {
     forms: ['ギザギザ ハートの 竜', '目を 合わせない 友だち', 'なかなおり したい 友だち'],
     ctx: 'conflict', scene: '友だちと 大げんか', kind: 'boss', hp: 55,
-    moves: [{ t: 'stress', n: 9, say: '口を きいて くれない' }, { t: 'grow', n: 3, say: 'ほかの子も まきこまれる' }, { t: 'stress', n: 10, say: 'さびしくて むかむかする' }, { t: 'worry', say: '「もう 友だちじゃ ないのかな」' }],
+    moves: [{ t: 'inject', card: 'tataku', say: '手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 9, say: '口を きいて くれない' }, { t: 'grow', n: 3, say: 'ほかの子も まきこまれる' }, { t: 'stress', n: 10, say: 'さびしくて むかむかする' }, { t: 'worry', say: '「もう 友だちじゃ ないのかな」' }],
     weak: [], resist: ['relate'], backfire: ['impulse'], situ: ['tell_feeling', 'keep_distance', 'ignore_back'],
     view: { truth: 'benign', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.8 },
     other: '友だち：「じつは こっちも あやまりたかった」'
@@ -225,7 +237,7 @@
   ENEMIES.rumor = {
     forms: ['ひそひそ こうもり', 'こそこそ 話す 子たち', 'ただの うわさ話'],
     ctx: 'tease', scene: 'かげ口を 聞いた', kind: 'normal', hp: 24,
-    moves: [{ t: 'stress', n: 7, say: '聞こえないように 話している' }, { t: 'worry', say: '「自分の ことかも…」' }, { t: 'stress', n: 8, say: 'うわさが 広がっていく' }],
+    moves: [{ t: 'inject', card: 'warukuchi', say: '言い返したく なる（悪口が まざる）' }, { t: 'stress', n: 7, say: '聞こえないように 話している' }, { t: 'worry', say: '「自分の ことかも…」' }, { t: 'stress', n: 8, say: 'うわさが 広がっていく' }],
     weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['not_join', 'tell_teacher', 'spread'],
     other: '先生：「話に のらずに いてくれて ありがとう」'
   };
@@ -249,14 +261,14 @@
   ENEMIES.fight_near = {
     forms: ['あばれる 大あらし', 'もめている 上級生たち', 'ケンカ中の 上級生'],
     ctx: 'danger', scene: '上級生の ケンカに まきこまれそう', kind: 'danger', hp: 80, escapeOk: true,
-    moves: [{ t: 'stress', n: 11, say: 'どなり声が 近づいてくる' }, { t: 'grow', n: 4, say: 'まわりも さわぎはじめる' }, { t: 'stress', n: 13, say: 'おされて ころびそう' }],
+    moves: [{ t: 'inject', card: 'panic', say: '頭が まっ白に なりそう（パニックが まざる）' }, { t: 'stress', n: 11, say: 'どなり声が 近づいてくる' }, { t: 'grow', n: 4, say: 'まわりも さわぎはじめる' }, { t: 'stress', n: 13, say: 'おされて ころびそう' }],
     weak: [], resist: ['relate', 'think', 'act'], backfire: ['impulse'], situ: ['call_adult', 'run_now'],
     other: '先生：「はなれて 知らせてくれて ありがとう。あぶない ところに 入らなかったのは 正しい」'
   };
   ENEMIES.stranger = {
     forms: ['あまい声の かげ', '知らない 大人？', '帰り道で 声をかけてきた 知らない人'],
     ctx: 'danger', scene: '知らない人に さそわれた', kind: 'danger', hp: 80, escapeOk: true,
-    moves: [{ t: 'stress', n: 10, say: '「いいもの あげるよ」と 近づいてくる' }, { t: 'grow', n: 4, say: 'うでを つかまれそう' }, { t: 'stress', n: 12, say: 'まわりに だれも いない' }],
+    moves: [{ t: 'inject', card: 'panic', say: '頭が まっ白に なりそう（パニックが まざる）' }, { t: 'stress', n: 10, say: '「いいもの あげるよ」と 近づいてくる' }, { t: 'grow', n: 4, say: 'うでを つかまれそう' }, { t: 'stress', n: 12, say: 'まわりに だれも いない' }],
     weak: [], resist: ['relate', 'think', 'act'], backfire: ['impulse'], situ: ['say_no_stranger', 'run_now', 'call_adult'],
     other: 'お家の人：「にげて すぐ 話してくれて、本当に よかった」'
   };
@@ -298,6 +310,39 @@
         { label: '「ふつう」とだけ 言う', effects: {}, result: 'そのまま ごはんを 食べた。' }
       ]
     },
+    trouble_hit: {
+      title: 'トラブル：先生に よばれた', trouble: true,
+      text: 'さっき 手が 出てしまった ことで、先生に よばれた。相手の子も 来ている。',
+      options: [
+        { label: '何が あったか 正直に 話して、あやまる', effects: { trust: 2, addCard: 'apologize' }, result: '先生：「話してくれて ありがとう。次は 手が 出る前に、はなれるか 先生を よぼうね」。相手の子とも なかなおりできた。' },
+        { label: '「むこうが 先に やった」と 言う', effects: { trust: -1, curse: 1 }, result: '先生：「どちらの 話も 聞くね」。でも、自分のしたことは 残ったままだ。' },
+        { label: 'だまって 下を 向く', effects: { curse: 1 }, result: '先生が 待ってくれたけど、何も 言えなかった。' }
+      ]
+    },
+    trouble_yell: {
+      title: 'トラブル：クラスの 空気が 悪くなった', trouble: true,
+      text: '大きな声を 出したことで、まわりの 子が びっくりしている。先生が「どうしたの？」と 来てくれた。',
+      options: [
+        { label: '気もちを 話して、「大きな声を 出して ごめん」と 言う', effects: { trust: 2, addCard: 'name_feeling' }, result: '先生：「おこった 気もちは 大事。つたえ方を いっしょに 考えよう」' },
+        { label: '「べつに」と 言って はなれる', effects: { trust: -1, curse: 1 }, result: 'しばらく だれも 話しかけて こなかった。' }
+      ]
+    },
+    trouble_rumor: {
+      title: 'トラブル：うわさが 広がった', trouble: true,
+      text: '言ったことが 広がって、相手の子が ないている。先生が 二人を よんで 話を 聞いてくれる。',
+      options: [
+        { label: '言ったことを みとめて、あやまる', effects: { trust: 2, addCard: 'not_join' }, result: '先生：「言葉は 消せないけど、あやまる ことは できる。よく 言えたね」' },
+        { label: '「みんなも 言ってた」と 言う', effects: { trust: -2, curse: 1 }, result: '先生：「みんなの ことじゃなく、自分の ことを 考えよう」' }
+      ]
+    },
+    trouble_withdraw: {
+      title: '先生が 声を かけてくれた', trouble: true,
+      text: '一人で かかえこんでいる ようすに、先生が 気づいて「何か あった？」と 聞いてくれた。',
+      options: [
+        { label: 'こまっていることを 話す', effects: { trust: 1, addCard: 'consult', yoyu: 6 }, result: '先生：「話してくれて ありがとう。いっしょに 考えよう」' },
+        { label: '「だいじょうぶです」と 言う', effects: {}, result: '先生：「いつでも 話してね」と 言ってくれた。' }
+      ]
+    },
     second_chance: {
       title: 'やり直しのチャンス',
       text: 'この前 言い合いになった子と、ろうかで 二人きりになった。',
@@ -327,7 +372,7 @@
     stressIntrude: '心の余裕が へって、「カッとなる」が 手札に まざった。'
   };
 
-  var DATA = { MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
+  var DATA = { TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
   else root.SST_DATA = DATA;
 })(this);

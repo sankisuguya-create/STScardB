@@ -205,7 +205,7 @@ test('心の余裕が0：ゲームは終わらず「動けない」になり、�
     const E0 = D.ENEMIES[s.battle.enemy.id];
     if (E0.kind !== 'danger') continue;
     s.yoyu = 1;
-    E.endTurn(s);
+    for (let k = 0; k < 4 && !s.battle.frozen; k++) E.endTurn(s);
     assert.notStrictEqual(s.phase, 'end');
     assert.ok(s.battle.frozen);
     assert.deepStrictEqual(s.battle.hand.map((h) => h.id), ['ugokenai']);
@@ -297,4 +297,39 @@ test('手札は 5まい＋かしこさ まで。あふれた カードは すて
   s.battle.hand.splice(0, 1);
   E.playCard(s, s.battle.hand.length - 1);
   assert.ok(s.battle.hand.length <= 5);
+});
+
+test('パニック：手札に のこり 毎ターン ふえる。整えるカードで 1まい 消える', () => {
+  const s = E.newRun(4, 1); E.chooseNode(s, E.reachable(s)[0]);
+  if (s.phase !== 'battle') return;
+  s.yoyu = 999; s.maxYoyu = 999;
+  s.battle.hand = [{ id: 'panic', temp: true }];
+  E.endTurn(s);
+  if (s.phase !== 'battle') return;
+  assert.ok(s.battle.hand.filter((h) => h.id === 'panic').length >= 2);
+  s.battle.hand.push({ id: 'breathe', temp: true }); s.battle.energy = 3;
+  const n = s.battle.hand.filter((h) => h.id === 'panic').length;
+  E.playCard(s, s.battle.hand.length - 1);
+  assert.strictEqual(s.battle.hand.filter((h) => h.id === 'panic').length, n - 1);
+});
+
+test('問題行動を えらぶと、次に 道と関係なく トラブルが 起き、そのあと 同じ段の マップに もどる', () => {
+  for (let seed = 1; seed < 200; seed++) {
+    const s = E.newRun(seed, 1); E.chooseNode(s, E.reachable(s)[0]);
+    if (s.phase !== 'battle' || D.ENEMIES[s.battle.enemy.id].kind === 'danger') continue;
+    s.battle.hand.push({ id: 'tataku', temp: true });
+    E.playCard(s, s.battle.hand.length - 1);
+    s.battle && (s.battle.enemy.hp = 0);
+    if (s.phase === 'battle') { s.battle.hand.push({ id: 'try_it', temp: true }); s.battle.energy = 3; E.playCard(s, s.battle.hand.length - 1); }
+    if (s.phase !== 'reward') continue;
+    E.pickReward(s, null);
+    assert.strictEqual(s.phase, 'event');
+    assert.strictEqual(s.event.id, 'trouble_hit');
+    const row = s.row;
+    E.chooseEvent(s, 0); E.leaveEvent(s);
+    assert.strictEqual(s.phase, 'map'); assert.strictEqual(s.row, row);
+    assert.ok(s.deck.includes('apologize'));
+    return;
+  }
+  assert.fail();
 });
