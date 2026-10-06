@@ -336,9 +336,12 @@
       }
       if (c.solve) {
         var n = solveAmount(s, c);
+        var bf = en.backfire.indexOf(c.type) >= 0;
+        if (bf) n = Math.round(n * D.RULES.backfireSolve);
         en.hp -= n; entry.solve = n;
-        if (en.backfire.indexOf(c.type) >= 0) {
+        if (bf) {
           en.str += D.RULES.backfireGrow;
+          en.regrow = (en.regrow || 0) + Math.ceil(n * D.RULES.backfireRegrow);
           entry.backfire = D.RULES.backfireGrow;
           msg(s, '「' + c.name + '」で その場は おさまった。でも あとで こじれて、問題の いきおい +' + D.RULES.backfireGrow + '。', 'backfire');
         }
@@ -379,6 +382,7 @@
   // 心の余裕は0より下がらない。下がった分は「動けない」中の つらさとして数える
   function hurt(s, dmg) {
     var b = s.battle;
+    if (b) b.taken = (b.taken || 0) + dmg;
     if (dmg > s.yoyu) {
       if (b) b.deficit = (b.deficit || 0) + (dmg - s.yoyu);
       s.yoyu = 0;
@@ -391,6 +395,11 @@
 
   function enemyAct(s) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    if (en.regrow && en.hp > 0) {
+      en.hp = Math.min(en.maxHp, en.hp + en.regrow);
+      msg(s, 'こじれて、問題が また ' + en.regrow + ' 大きくなった。', 'backfire');
+      en.regrow = 0;
+    }
     var mv = E.moves[en.mi % E.moves.length];
     en.mi++;
     if (mv.t === 'stress') {
@@ -476,7 +485,7 @@
 
   function winBattle(s, passed, escaped) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
-    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, passed: !!passed, escaped: !!escaped, turns: b.turn });
+    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, passed: !!passed, escaped: !!escaped, turns: b.turn, taken: b.taken || 0 });
     if (passed && E.pass.leave) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'pass:' + en.id }); }
     var statsBefore = { think: s.stats.think, act: s.stats.act, relate: s.stats.relate };
     Object.keys(D.STATS).forEach(function (st) {
