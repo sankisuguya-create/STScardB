@@ -12,6 +12,8 @@ const POLICIES = {
   // がまん：がまん・受け身を先に。関わるカードは使わない
   passive: { order: ['passive', 'neutral'], reward: (c) => c.type === 'calm', rest: 'rest', event: 2 },
   // 適応：ふだんは向社会的、あぶない場面では はなれる・にげる、からかいでは きっぱり／先生
+  // 自力：向社会的だが 助けを もとめない（相談カード・アイテムを 使わない）
+  selfreliant: { order: ['good', 'neutral'], reward: (c) => c.judge === 'good' && !c.help, rest: 'remove-impulse', event: 0, noHelp: true },
   adaptive: { order: ['good', 'neutral'], reward: (c) => c.judge === 'good', rest: 'remove-impulse', event: 0, adaptive: true }
 };
 
@@ -23,6 +25,7 @@ function rank(c, pol, s) {
   if (c.escape && !(pol.adaptive && danger)) r = -1;
   if (c.escape && pol.adaptive && danger) return 1000;
   if (c.distance && !pol.adaptive) r = -1;
+  if (c.help && pol.noHelp) r = -1;
   if (r < 0) return -1;
   // 同じ順位の中では、見方を変えるカード・効く種類を先に
   let bonus = 0;
@@ -49,7 +52,7 @@ function useSupports(s) {
 }
 
 function playTurn(s, pol) {
-  useSupports(s);
+  if (!pol.noHelp) useSupports(s);
   for (let guard = 0; guard < 30 && s.phase === 'battle'; guard++) {
     let best = -1, bestScore = -1;
     s.battle.hand.forEach((h, i) => {

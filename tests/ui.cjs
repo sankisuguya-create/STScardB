@@ -19,7 +19,7 @@ const fs = require('node:fs');
   async function snap(name) { if (!shot[name]) { shot[name] = 1; await page.screenshot({ path: path.join(out, name + '.png') }); } }
   await snap('00-title');
   await page.tap('button.primary');
-  await snap('00b-hero'); await page.tap('.herocard >> nth=' + Math.floor(Math.random() * 4));
+  await snap('00b-hero'); await page.tap('.herocard >> nth=' + Math.floor(Math.random() * 5));
   let overflow = [];
   for (let step = 0; step < 1500; step++) {
     const phase = await page.getAttribute('#app', 'data-phase');

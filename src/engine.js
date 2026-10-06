@@ -39,7 +39,7 @@
       yoyu: HERO.maxYoyu, maxYoyu: HERO.maxYoyu,
       trust: D.PLAYER.trustStart,
       stats: { think: HERO.stats.think, act: HERO.stats.act, relate: HERO.stats.relate },
-      deck: D.STARTER.concat(HERO.cards || []), nigate: {}, items: D.SUPPORT_RULES.start.slice(), equip: D.SUPPORT_RULES.start.slice(),
+      deck: D.STARTER.concat(HERO.cards || []), nigate: {}, items: (HERO.items || D.SUPPORT_RULES.start).slice(), equip: (HERO.items || D.SUPPORT_RULES.start).slice(),
       usedNormals: [], usedEvents: [], trouble: null,
       map: null, battle: null, reward: null, event: null,
       log: [], result: null
@@ -180,6 +180,8 @@
     if (f && s.yoyu < s.maxYoyu * f.pinch) n = Math.ceil(n * f.healMul);
     s.yoyu = Math.min(s.maxYoyu, s.yoyu + n);
   }
+  // 助けを もとめる カード・アイテムが 強くなる 主人公（キトリ）
+  function helpBoost(s, c) { var H = D.HEROES[s.hero]; return (H && H.helpBoost && c && c.help) ? H.helpBoost : 1; }
   function heroMod(s, E) { var H = D.HEROES[s.hero]; return (H && H.ctxMod && H.ctxMod[E.ctx]) || 1; }
   function bossHp(s, E) {
     var hp = E.hp * D.RULES.hpScale * heroMod(s, E);
@@ -330,7 +332,7 @@
     if (en.weak.indexOf(c.type) >= 0) m *= D.RULES.weak;
     if (en.resist.indexOf(c.type) >= 0) m *= D.RULES.resist;
     if (D.ENEMIES[en.id].anxiety && !b.calm) m *= D.RULES.anxiety;
-    return Math.round(n * m);
+    return Math.round(n * m * helpBoost(s, c));
   }
 
   // カードの効き方を画面に出すための見積もり（乱数は使わない）
@@ -359,7 +361,8 @@
     }
 
     var okP = c.chance ? D.CHANCE[c.chance].p : 1;
-    if (st && s.stats[st] < 0) okP -= D.PLAYER.weakFail * -s.stats[st];
+    var Hh = D.HEROES[s.hero];
+    if (st && s.stats[st] < 0 && !(c.help && Hh && Hh.helpSafe)) okP -= D.PLAYER.weakFail * -s.stats[st];
     var ok = okP >= 1 ? true : rand(s) < okP;
     var entry = { k: 'play', card: h.id, enemy: en.id, ok: ok, judge: c.judge, style: c.style, temp: !!h.temp, revealedBefore: en.revealed };
 
@@ -395,8 +398,8 @@
           msg(s, '「' + c.name + '」で その場は おさまった。でも あとで こじれて、問題の いきおい +' + D.RULES.backfireGrow + '。', 'backfire');
         }
       }
-      if (c.guard) b.guard += c.guard + (st ? s.stats[st] : 0);
-      if (c.heal) heal(s, c.heal);
+      if (c.guard) b.guard += Math.round((c.guard + (st ? s.stats[st] : 0)) * helpBoost(s, c));
+      if (c.heal) heal(s, Math.round(c.heal * helpBoost(s, c)));
       if (c.draw) drawCards(s, c.draw);
       if (c.judge === 'impulse' && !entry.backfire) msg(s, '「' + c.name + '」で すっきりした。でも…', 'impulse');
     } else {
@@ -618,10 +621,12 @@
     var u = D.SUPPORTS[id], b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
     b.usedItems[id] = 1;
     msg(s, '「' + u.name + '」', 'ally');
-    if (u.heal) heal(s, u.heal);
+    var ib = (D.HEROES[s.hero] && D.HEROES[s.hero].helpBoost) || 1;
+    if (u.heal) heal(s, Math.round(u.heal * ib));
     if (id === 'teacher') {
       var tc = D.TEACHER_CARDS[E.ctx];
       addToHand(s, { id: tc, temp: true }); b.teacherCard = tc;
+      if (ib > 1) { addToHand(s, { id: 'consult', temp: true }); msg(s, '先生が じっくり 話を 聞いてくれた（カードが もう1まい）。', 'next'); }
       msg(s, '先生の すすめ：「' + card(tc).name + '」が 手札に 入った。', 'next');
       organize(s);
     }

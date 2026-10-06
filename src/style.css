@@ -302,7 +302,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 
 /* 主人公を えらぶ */
 .heroes { gap: 14px; }
-.herogrid { display: grid; grid-template-columns: repeat(4, minmax(0, 220px)); gap: 14px; }
+.herogrid { display: grid; grid-template-columns: repeat(5, minmax(0, 210px)); gap: 12px; }
 .herocard { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px; background: var(--paper); color: var(--ink); }
 .herocard .hpic { width: 112px; height: 112px; }
 .hname { font-family: var(--display); font-size: 1.5rem; font-weight: 400; }
@@ -323,3 +323,4 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .chance.c-weak { color: var(--bad); font-weight: 800; }
 .mnode { min-height: 36px; padding: 1px 6px; }
 .mnode b { font-size: .88rem; }
+.hmsg { background: #e7f5ec; color: var(--good); border-radius: 8px; padding: 2px 6px; font-weight: 700; }

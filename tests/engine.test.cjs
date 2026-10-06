@@ -426,3 +426,18 @@ test('マップの 線は 分かれ道と 合流を ふくむ', () => {
   }
   assert.ok(merges > 60 && splits > 60, merges + ' ' + splits);
 });
+
+test('キトリ：全部 苦手。相談カードと アイテムが 強く、相談カードは にがてでも 失敗しない', () => {
+  const s = E.newRun(1, 1, 'kitori');
+  assert.deepStrictEqual(s.stats, { think: -1, act: -1, relate: -1 });
+  assert.deepStrictEqual(s.equip, ['teacher', 'friend', 'family']);
+  let n = 0, ng = 0;
+  for (let seed = 1; seed < 300; seed++) {
+    const t = E.newRun(seed, 1, 'kitori'); E.chooseNode(t, E.reachable(t)[0]);
+    if (t.phase !== 'battle') continue;
+    t.battle.hand.push({ id: 'consult', temp: true }); t.battle.energy = 3;
+    E.playCard(t, t.battle.hand.length - 1);
+    n++; if (!t.log.filter((e) => e.k === 'play').pop().ok) ng++;
+  }
+  assert.ok(ng / n < 0.3, String(ng / n));
+});

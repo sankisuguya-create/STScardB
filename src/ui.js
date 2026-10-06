@@ -106,6 +106,7 @@
         h('b', { class: 'hname', text: H.name }),
         h('small', { text: H.note }),
         h('div', { class: 'hstats' }, ['think', 'act', 'relate'].map(stat).concat([h('span', { class: 'hs' }, ['心の余裕 ', h('b', { text: String(H.maxYoyu) })])])),
+        H.message ? h('small', { class: 'hmsg', text: H.message }) : null,
         h('small', { class: 'hgood', text: 'とくいな場面：' + H.good }),
         h('small', { class: 'hbad', text: 'にがてな場面：' + H.bad }),
         h('small', { class: 'hcard', text: '★レア：' + (H.cards.filter(function (id) { return E.card(id).adv; }).map(cardName).join('') || 'なし（成長して 手に入れる）') })

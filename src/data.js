@@ -61,9 +61,9 @@
     name_feeling: { name: '気もちを 言葉にする', line: '「いま、ちょっと くやしい」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 7, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
 
     // --- 場面カード（その戦いの間だけ手札に入る） ---
-    say_dunno: { name: '「わからない」と言う', line: '「ここが わかりません」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 8, chance: 'high' },
-    ask_next: { name: 'となりの人に 聞く', line: '「ここ、どうやった？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'mid', fail: 'ask_teacher' },
-    ask_teacher: { name: '先生に 聞く', line: '「先生、ここを 教えてください」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high', ctx: ['study', 'stage'] },
+    say_dunno: { name: '「わからない」と言う', line: '「ここが わかりません」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 8, chance: 'high', help: true },
+    ask_next: { name: 'となりの人に 聞く', line: '「ここ、どうやった？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'mid', fail: 'ask_teacher', help: true },
+    ask_teacher: { name: '先生に 聞く', line: '「先生、ここを 教えてください」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high', ctx: ['study', 'stage'], help: true },
     skip_it: { name: 'とばして 次へ', line: 'わからない問題は あとで。', type: 'think', judge: 'neutral', style: 'passive', cost: 1, guard: 4, solve: 2 },
 
     ask_ok: { name: '「だいじょうぶ？」と聞く', line: '「だいじょうぶ？ いま、ぶつかったよね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, organize: true, chance: 'high' },
@@ -74,17 +74,17 @@
     let_me_in: { name: '「入れて」と言う', line: '「ねえ、入れて！」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'mid', fail: 'next_time' },
     next_time: { name: '「次は 入れてね」', line: '「じゃあ、次は 入れてね」', type: 'relate', judge: 'good', style: 'assertive', cost: 0, solve: 5, chance: 'high' },
     invite_other: { name: 'ほかの遊びに さそう', line: '「おにごっこ しない？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, trust: 1, chance: 'high' },
-    consult: { name: '先生に そうだんする', line: '「先生、ちょっと 聞いてほしいことが あります」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high', ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
+    consult: { name: '先生に そうだんする', line: '「先生、ちょっと 聞いてほしいことが あります」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high', ctx: ['study', 'conflict', 'join', 'tease', 'stage'], help: true },
     sulk: { name: 'ひとりで すねる', line: 'もういいよ、と はなれる。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 1, guard: 8, chance: 'high', trust: -1, curse: true },
 
     say_stop: { name: '「いやだ」と はっきり言う', line: '「それ、いやだから やめて」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 9, chance: 'mid', fail: 'walk_away' },
     walk_away: { name: 'その場を はなれる', line: 'だまって 先生の近くへ 行く。', type: 'act', judge: 'good', style: 'assertive', cost: 0, guard: 6, chance: 'high' },
-    tell_teacher: { name: '先生に つたえる', line: '「何回も 言われて こまっています」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'high', organize: true, ctx: ['conflict', 'tease', 'danger'] },
+    tell_teacher: { name: '先生に つたえる', line: '「何回も 言われて こまっています」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'high', organize: true, ctx: ['conflict', 'tease', 'danger'], help: true },
 
     read_memo: { name: 'メモを見ながら 話す', line: '書いておいたことを 読む。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 9, chance: 'high' },
     breathe_first: { name: '深こきゅうして 始める', line: 'すって、はいて、「はじめます」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 6 },
     friend_face: { name: '友だちの顔を見る', line: 'うなずいてくれる子を さがす。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 5, solve: 5, req: { trust: 6 } },
-    call_adult: { name: '近くの 大人を よぶ', line: '「たすけてください！」と 大きな声で 言う。', type: 'relate', judge: 'good', style: 'distance', cost: 0, escape: true, trust: 1 },
+    call_adult: { name: '近くの 大人を よぶ', line: '「たすけてください！」と 大きな声で 言う。', type: 'relate', judge: 'good', style: 'distance', cost: 0, escape: true, trust: 1, help: true },
     run_now: { name: 'すぐに にげる', line: '安全な ところまで 走る。', type: 'act', judge: 'good', style: 'distance', cost: 0, escape: true },
     say_no_stranger: { name: '「行きません」と ことわる', line: '知らない人には ついて行かない。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 8 },
     review_notes: { name: '見直しを する', line: '名前・計算・書きわすれを たしかめる。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 9, organize: true, ctx: ['study'] },
@@ -99,12 +99,12 @@
     not_join: { name: '話に のらない', line: '「わたしは いいや」と はなれる。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 7, solve: 4 },
     spread: { name: 'ほかの子に 言いふらす', line: '「ねえ、聞いて！ あの子がね…」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
     practice_again: { name: 'もう一回 れんしゅう', line: '「もう一回 やってみよう」', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 9, chance: 'mid', fail: 'ask_tip' },
-    ask_tip: { name: 'コツを 聞く', line: '「どうやったら うまく できる？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high' },
+    ask_tip: { name: 'コツを 聞く', line: '「どうやったら うまく できる？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high', help: true },
     quit_it: { name: 'もう やめる', line: '「どうせ できないし」', type: 'impulse', judge: 'impulse', style: 'passive', cost: 1, guard: 9, chance: 'high', trust: -1, curse: true },
     listen_all: { name: 'みんなの 意見を 聞く', line: '「一人ずつ 言ってみよう」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, organize: true },
     vote: { name: '多数決に しよう', line: '「手を あげて 決めよう」', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'mid', fail: 'listen_all' },
     force_own: { name: '自分の 意見を おしつける', line: '「ぜったい こっちが いい！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
-    consult_family: { name: 'お家の人に そうだんする', line: '「今日 こんなことが あってね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, heal: 6, guard: 4, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
+    consult_family: { name: 'お家の人に そうだんする', line: '「今日 こんなことが あってね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, heal: 6, guard: 4, ctx: ['study', 'conflict', 'join', 'tease', 'stage'], help: true },
     sukkiri: { name: '気もちを 話して すっきり', line: 'もやもやを 言葉にして だれかに 話す。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 3, clearMoya: true, exhaust: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
     panic: { name: 'パニック', line: '頭が ぐるぐるして 何も 考えられない。使えず、手札を ふさぐ。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     tataku: { name: 'たたく', line: 'カッとして 手が 出る。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -3, curse: true },
@@ -124,7 +124,7 @@
     self_check: { name: 'ふり返って 次に 生かす', line: '「さっきは ここが よくなかった。次は こうしよう」', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 7, draw: 2, req: { think: 4, relate: 2 }, adv: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
     ally_up: { name: '味方を つくる', line: '「いっしょに いてくれる？」と たのんで、そばに いてもらう。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 12, trust: 1, req: { relate: 4 }, adv: true, ctx: ['conflict', 'join', 'tease', 'stage'] },
     listen_deep: { name: 'じっくり 話を 聞く', line: '口を はさまずに、さいごまで 聞く。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 12, organize: true, req: { relate: 5 }, adv: true, ctx: ['conflict', 'join', 'tease'] },
-    ask_well: { name: '上手に 助けを たのむ', line: '「ここが こまってるから、ここだけ 手伝って」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 8, draw: 2, req: { relate: 4, think: 2 }, adv: true, ctx: ['study', 'join', 'stage', 'conflict'] },
+    ask_well: { name: '上手に 助けを たのむ', line: '「ここが こまってるから、ここだけ 手伝って」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 8, draw: 2, req: { relate: 4, think: 2 }, adv: true, ctx: ['study', 'join', 'stage', 'conflict'], help: true },
     routine: { name: '毎日 コツコツ', line: '少しずつ、毎日 つづける。', type: 'act', judge: 'good', style: 'assertive', cost: 0, solve: 7, energy: 1, req: { act: 4 }, adv: true, ctx: ['study', 'stage'] },
     brave_step: { name: '勇気を 出して 一歩', line: 'こわいけど、自分から 一歩 前に 出る。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 16, chance: 'mid', growFail: true, req: { act: 5 }, adv: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
     safe_route: { name: '安全な 道を えらぶ', line: '人の 多い 明るい 道を 通って、大人の いる ところへ。', type: 'act', judge: 'good', style: 'distance', cost: 0, escape: true, heal: 6, req: { act: 4 }, adv: true, ctx: ['danger'] },
@@ -180,7 +180,11 @@
       ctxMod: { study: 1.0, conflict: 1.6, join: 1.6, tease: 1.5, stage: 0.6, danger: 0.65 }, good: '発表・練習・あぶない場面', bad: '友だち・からかい' },
     hayatsu: { name: 'ハヤツ', note: '何でも できるが、一度 つまずくと なかなか 立ち直れない', stats: { think: 2, act: 2, relate: 2 }, maxYoyu: 50, cards: ['sort_out'], look: 'hayatsu',
       ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.0, stage: 1.0, danger: 1.0 }, good: 'どれも とくい', bad: 'ピンチに 弱い（マイナスカードに 弱い）',
-      fragile: { pinch: 0.4, healMul: 0.5, frozenRecover: 0.05, nigateMul: 2, moyaMul: 2, panicDrain: 3, stressThreshold: 0.45, slumpBattles: 3, slumpPanic: 2 } }
+      fragile: { pinch: 0.4, healMul: 0.5, frozenRecover: 0.05, nigateMul: 2, moyaMul: 2, panicDrain: 3, stressThreshold: 0.45, slumpBattles: 3, slumpPanic: 2 } },
+    kitori: { name: 'キトリ', note: '何を やっても うまく いかない。でも、まわりを たよる ことは できる', stats: { think: -1, act: -1, relate: -1 }, maxYoyu: 40, cards: ['consult', 'consult_family'], look: 'kitori',
+      ctxMod: { study: 1.5, conflict: 1.5, join: 1.5, tease: 1.5, stage: 1.5, danger: 1.5 }, good: 'まわりを たよる こと（相談カード・アイテムが 強い）', bad: 'ぜんぶの 場面',
+      items: ['teacher', 'friend', 'family'], helpBoost: 1.35, helpSafe: true,
+      message: 'こういう 人も いる。たよる ことは 弱さじゃない。' }
   };
 
 
