@@ -1,0 +1,1698 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>こころの冒険</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
+<style>
+/* 見た目レベル3：ドットの舞台（案A）＋ 課題から出る吹き出しの文字盤。
+   色は役割ごとのトークン。種類・状態は色だけでなく文字でも出す */
+:root {
+  --bg: #e9ecf3; --ink: #1c2230; --sub: #5b6578; --line: #12172a; --paper: #fffdf7; --panel: #ffffff;
+  --stage-top: #283153; --stage-bot: #3d4a7d; --floor: #4b5a92;
+  --primary: #2f6fe4; --primary-ink: #fff; --gold: #ffd23f;
+  --good: #1a7f37; --bad: #c4262e; --warn: #9a6700;
+  --think: #3b5bdb; --act: #e0661b; --relate: #2b8a3e; --calm: #0c8599; --impulse: #c92a2a; --basic: #6e7781; --curse: #5f3dc4;
+  --yoyu: #27a35a; --hp: #e8692a;
+  --radius: 10px; --shadow: 0 4px 0 var(--line);
+  --display: "DotGothic16", "BIZ UDGothic", "Hiragino Sans", monospace;
+  --body: "M PLUS Rounded 1c", "Hiragino Sans", "Yu Gothic UI", "BIZ UDPGothic", "Noto Sans JP", sans-serif;
+  font-family: var(--body);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-size: 16px; -webkit-tap-highlight-color: transparent; }
+#app { display: flex; flex-direction: column; height: 100vh; max-width: 1366px; margin: 0 auto; }
+h1, h2, h3 { margin: .3em 0; font-family: var(--display); font-weight: 400; }
+button { font: inherit; border-radius: var(--radius); border: 3px solid var(--line); background: var(--panel); color: var(--ink); padding: 10px 18px; min-height: 48px; cursor: pointer; touch-action: manipulation; box-shadow: var(--shadow); transition: transform .08s; }
+button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--line); }
+button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+button.primary { background: var(--primary); color: var(--primary-ink); font-family: var(--display); font-size: 1.15rem; }
+button.secondary { background: var(--panel); color: var(--primary); font-weight: 800; }
+button:disabled { opacity: .45; cursor: default; box-shadow: none; }
+button.big { font-size: 1.3rem; min-width: 220px; min-height: 76px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+button small { font-size: .85rem; font-family: var(--body); }
+.hint { color: var(--sub); margin: 4px 0; }
+.lbl { font-size: .78rem; color: var(--sub); margin-right: 6px; }
+canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+
+/* 上の帯 */
+.top { display: flex; align-items: center; gap: 10px; padding: 6px 14px; background: var(--line); color: #fff; flex-wrap: wrap; }
+.top .lbl { color: #b8c2dc; }
+.meter { display: flex; align-items: center; gap: 6px; min-width: 250px; }
+.meter .bar { flex: 1; height: 16px; background: rgba(0,0,0,.3); border: 2px solid var(--line); border-radius: 4px; overflow: hidden; min-width: 120px; }
+.top .meter .bar { border-color: #fff; }
+.meter .fill { height: 100%; background: var(--yoyu); transition: width .35s; }
+.meter.low .fill { background: var(--bad); animation: pulse 1s steps(2) infinite; }
+.meter.low b::after { content: " ！"; color: #ff8a8a; }
+.meter.hp .fill { background: var(--hp); }
+.chip { display: inline-flex; align-items: baseline; padding: 3px 10px; border: 2px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--ink); }
+.chip b { font-size: 1.1rem; font-family: var(--display); font-weight: 400; }
+.chip .lbl { color: var(--sub); }
+.stats { display: flex; gap: 6px; }
+.chip.st-think { box-shadow: inset 0 -4px 0 var(--think); } .chip.st-act { box-shadow: inset 0 -4px 0 var(--act); } .chip.st-relate { box-shadow: inset 0 -4px 0 var(--relate); }
+.floor { margin-left: auto; font-family: var(--display); }
+
+main { flex: 1; overflow: auto; padding: 10px 14px; }
+.title { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: linear-gradient(var(--stage-top), var(--stage-bot)); color: #fff; }
+.title h1 { font-size: 3rem; text-shadow: 0 4px 0 var(--line); }
+.sub { color: #d6dcf0; font-size: 1.1rem; }
+
+/* マップ */
+.map { display: flex; flex-direction: column; gap: 12px; align-items: center; background: linear-gradient(var(--stage-top), var(--stage-bot)); color: #fff; }
+.map .hint { color: #d6dcf0; }
+.maprow { display: flex; align-items: center; gap: 16px; }
+.maprow.past { opacity: .35; }
+.maprow .rownum { width: 72px; color: #b8c2dc; text-align: right; font-family: var(--display); }
+.node { min-width: 180px; min-height: 64px; font-size: 1.15rem; font-family: var(--display); }
+.maprow.now .node:not(:disabled) { animation: bob 1.4s steps(2) infinite; }
+.n-battle { background: #ffe3cf; } .n-elite { background: #ffd0d0; } .n-event { background: #dbe4ff; } .n-rest { background: #d3f5df; } .n-boss { background: #e5dbff; }
+
+/* 戦い：舞台 */
+.battle { display: flex; flex-direction: column; gap: 6px; padding: 0; overflow: hidden; }
+.stage { position: relative; height: 340px; flex: none; background: linear-gradient(var(--stage-top) 0 74%, var(--floor) 74%); border-bottom: 4px solid var(--line); display: grid; grid-template-columns: 220px 1fr 300px; align-items: end; padding: 0 22px 16px; gap: 10px; }
+.items { position: absolute; left: 16px; top: 12px; display: flex; gap: 8px; align-items: flex-start; z-index: 2; }
+.item { width: 64px; height: 64px; min-height: 0; padding: 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--paper); }
+.item canvas { width: 40px; height: 40px; }
+.item .iname { font-size: 9px; line-height: 1.1; font-weight: 700; }
+.item.selected { background: var(--gold); transform: translateY(-3px); }
+.item.used { opacity: .35; filter: grayscale(1); }
+.item.empty { width: 64px; height: 64px; border: 3px dashed #8d98bd; border-radius: var(--radius); }
+.itemtip { max-width: 320px; background: var(--paper); border: 3px solid var(--line); border-radius: var(--radius); padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; font-size: .85rem; box-shadow: var(--shadow); }
+.hero { grid-column: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.hero canvas.me { width: 140px; height: 140px; }
+.chip.guard.on { background: #cfe6ff; }
+.monster { grid-column: 3; justify-self: center; }
+.monster canvas.mon { width: 260px; height: 260px; animation: bob 1.6s steps(2) infinite; }
+.monster.f1 canvas.mon { animation: bob 1.6s steps(2) infinite, flick 1.2s steps(2) infinite; }
+.monster.f2 canvas.mon { animation: none; }
+.bubble { grid-column: 2; align-self: center; justify-self: center; width: 100%; max-width: 640px; position: relative; background: var(--paper); border: 3px solid var(--line); border-radius: 14px; padding: 10px 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 4px; }
+.bubble::before { content: ""; position: absolute; right: -22px; top: 46%; border: 11px solid transparent; border-left: 11px solid var(--line); }
+.bubble::after { content: ""; position: absolute; right: -15px; top: calc(46% + 2px); border: 9px solid transparent; border-left: 9px solid var(--paper); }
+.bubble.k-elite { box-shadow: 0 4px 0 var(--impulse); } .bubble.k-boss { box-shadow: 0 4px 0 var(--curse); }
+.ekind { font-size: .82rem; color: var(--sub); }
+.ename { font-size: 1.6rem; margin: 0; }
+.intent b { font-size: 1.05rem; }
+.passin { font-size: .9rem; color: var(--calm); font-weight: 800; }
+.passin.no { color: var(--sub); font-weight: 500; }
+.forms { display: flex; gap: 4px; }
+.fstep { font-size: .75rem; padding: 1px 8px; border: 2px solid var(--line); border-radius: 999px; color: var(--sub); }
+.fstep.on { background: var(--calm); color: #fff; }
+.unsure-note, .note { font-size: .85rem; color: var(--warn); }
+.row { display: flex; align-items: center; gap: 12px; padding: 0 14px; }
+.orb { width: 70px; height: 70px; flex: none; border-radius: 50%; background: var(--gold); border: 4px solid var(--line); box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.orb b { font-family: var(--display); font-size: 1.4rem; font-weight: 400; line-height: 1; }
+.orb small { font-size: .7rem; }
+.msgs { flex: 1; min-width: 0; min-height: 48px; }
+.msgs p { margin: 1px 0; font-size: .92rem; }
+.m-fail, .m-backfire, .m-curse, .m-stress { color: var(--bad); }
+.m-next, .m-reveal, .m-ally { color: var(--good); font-weight: 700; }
+.m-bench { color: var(--sub); }
+.endturn { min-width: 180px; }
+.handrow { flex: 1; display: grid; grid-template-columns: 72px 1fr 72px; align-items: start; gap: 6px; padding: 0 10px 8px; min-height: 0; }
+.pile { width: 64px; height: 88px; border: 3px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); display: flex; align-items: flex-end; justify-content: center; font-size: .72rem; color: #fff; padding-bottom: 4px; text-align: center; }
+.pile.draw { background: repeating-linear-gradient(45deg, #5b6fb5 0 6px, #4a5ea3 6px 12px); }
+.pile.disc { background: repeating-linear-gradient(45deg, #7a6aa8 0 6px, #6b5b99 6px 12px); }
+.hand { display: flex; justify-content: center; align-items: flex-start; gap: 0; min-width: 0; padding-top: 18px; }
+
+/* カード */
+.card { position: relative; flex: 0 1 152px; min-width: 104px; height: 196px; margin: 0 -4px; background: var(--paper); border: 3px solid var(--line); border-radius: var(--radius); padding: 8px 9px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; user-select: none; box-shadow: var(--shadow);
+  transform: translateY(var(--lift, 0)) rotate(var(--rot, 0deg)); transition: transform .15s; }
+.card::before { content: ""; height: 7px; border-radius: 3px; background: var(--basic); order: -1; margin-top: 4px; }
+.card.selected { transform: translateY(-22px) rotate(0deg) scale(1.06); z-index: 3; box-shadow: 0 8px 0 var(--line); }
+.card.off { filter: saturate(.3); opacity: .7; }
+.card.temp { border-style: dashed; }
+.card.deal { animation: deal .42s cubic-bezier(.2,.9,.3,1.15) both; }
+.card .cost { position: absolute; top: -14px; left: -10px; width: 32px; height: 32px; border-radius: 50%; background: var(--gold); border: 3px solid var(--line); display: grid; place-items: center; font-family: var(--display); font-size: 1rem; }
+.ctype { font-size: .72rem; color: var(--sub); text-align: right; order: -2; }
+.cname { font-weight: 800; font-size: .98rem; line-height: 1.25; }
+.cline { font-size: .78rem; color: var(--sub); line-height: 1.35; }
+.fxs { display: flex; flex-wrap: wrap; gap: 3px; margin-top: auto; }
+.fx { font-size: .74rem; font-weight: 700; padding: 0 5px; border-radius: 5px; border: 2px solid var(--line); background: var(--panel); }
+.fx.bad { color: var(--bad); border-color: var(--bad); }
+.fx.trust, .fx.reveal { color: var(--good); border-color: var(--good); }
+.chance { font-size: .7rem; color: var(--warn); }
+.tags { display: flex; gap: 3px; flex-wrap: wrap; }
+.tag { font-size: .7rem; padding: 0 5px; border-radius: 5px; border: 2px solid var(--sub); }
+.tag.good { color: var(--good); border-color: var(--good); }
+.tag.bad { color: var(--bad); border-color: var(--bad); }
+.lock { font-size: .74rem; color: var(--bad); font-weight: 800; }
+.ctx { font-size: .7rem; color: var(--sub); }
+.t-think::before { background: var(--think); } .t-act::before { background: var(--act); } .t-relate::before { background: var(--relate); }
+.t-calm::before { background: var(--calm); } .t-impulse::before { background: var(--impulse); } .t-curse::before { background: var(--curse); }
+.t-curse { background: repeating-linear-gradient(45deg, var(--paper) 0 8px, #ece6f7 8px 16px); }
+
+/* 報酬・休み・できごと */
+.reward, .rest, .event { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.choices { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; padding-top: 14px; }
+.choices .card { flex: none; width: 176px; height: auto; min-height: 210px; margin: 0; transform: none; }
+.choices.small .card { width: 140px; min-height: 160px; }
+.other { background: var(--panel); border: 3px solid var(--line); border-radius: var(--radius); padding: 8px 14px; max-width: 760px; box-shadow: var(--shadow); }
+.supoffer { display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--paper); border: 3px solid var(--relate); border-radius: var(--radius); padding: 8px 16px; box-shadow: var(--shadow); }
+.supoffer canvas { width: 60px; height: 60px; }
+.two { display: flex; gap: 24px; }
+.equip { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.equiplist { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.eq { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 130px; }
+.eq canvas { width: 48px; height: 48px; }
+.eq.on { background: #d3f5df; }
+.eq small { color: var(--sub); }
+.story { font-size: 1.15rem; max-width: 760px; }
+.opts { display: flex; flex-direction: column; gap: 10px; min-width: 420px; }
+.opt { text-align: left; font-size: 1.05rem; display: flex; flex-direction: column; align-items: flex-start; }
+.result { font-size: 1.1rem; background: var(--panel); padding: 10px 14px; border-radius: var(--radius); border: 3px solid var(--line); }
+
+/* 振り返り */
+.end { max-width: 900px; margin: 0 auto; width: 100%; }
+.verdict { font-size: 1.6rem; text-align: center; font-family: var(--display); }
+.verdict.won { color: var(--good); }
+.growlist { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.growlist li { background: var(--panel); border: 3px solid var(--line); box-shadow: inset 6px 0 0 var(--relate); padding: 8px 12px 8px 18px; border-radius: 8px; display: flex; flex-direction: column; }
+.growlist li.unlock { box-shadow: inset 6px 0 0 var(--primary); }
+.growlist b { font-size: 1.1rem; }
+.praise { background: var(--panel); border: 3px solid var(--good); padding: 8px 12px; border-radius: var(--radius); font-weight: 800; color: var(--ink); }
+.trustbox { margin-top: 10px; }
+.trustchart { width: 100%; max-width: 520px; height: 120px; background: var(--panel); border: 3px solid var(--line); border-radius: var(--radius); }
+.trustchart .tline { fill: none; stroke: var(--primary); stroke-width: 3; }
+.trustchart circle.up { fill: var(--good); } .trustchart circle.down { fill: var(--bad); } .trustchart circle.flat { fill: var(--sub); }
+.grad { color: var(--good); font-weight: 700; }
+.reveals s { color: var(--sub); }
+.reveals small { display: block; color: var(--sub); }
+.grid4 { display: grid; grid-template-columns: 110px 1fr 1fr; gap: 8px; }
+.gh { font-weight: 800; text-align: center; align-self: end; }
+.gh.side { align-self: center; text-align: right; }
+.cell { background: var(--panel); border: 3px solid var(--line); border-radius: var(--radius); padding: 10px; min-height: 110px; }
+.cell small { display: block; color: var(--sub); }
+.cell .num { font-size: 1.6rem; font-family: var(--display); }
+.cell.g-ng { box-shadow: inset 0 -6px 0 var(--good); }
+.cell.i-ok { box-shadow: inset 0 -6px 0 var(--warn); }
+.nav { display: flex; justify-content: space-between; align-items: center; margin: 16px 0; }
+.dots { color: var(--sub); font-family: var(--display); }
+
+@keyframes bob { 50% { transform: translateY(-6px); } }
+@keyframes flick { 50% { filter: drop-shadow(0 0 6px #7a32c8); } }
+@keyframes pulse { 50% { opacity: .55; } }
+@keyframes deal { from { transform: translate(-60vw, 40px) rotate(-25deg) scale(.4); opacity: 0; } to { transform: translateY(var(--lift, 0)) rotate(var(--rot, 0deg)); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+.monster.f2 svg { width: 280px; height: 266px; display: block; animation: appear .35s ease-out both; }
+@keyframes appear { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+.nigates { display: flex; gap: 6px; }
+.chip.nigate { box-shadow: inset 0 -4px 0 var(--curse); }
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// カード・課題・できごと・文面の正本。数値と文面はここだけで定義する。
+// 対象：小学3年。漢字は3年までの配当に寄せ、迷う字はひらがなにする。
+(function (root) {
+  'use strict';
+
+  var STATS = {
+    think: { name: 'かしこさ', verb: '考える' },
+    act: { name: '行動', verb: '動く' },
+    relate: { name: 'なかま力', verb: '関わる' }
+  };
+
+  var CTX_LABEL = { study: 'べんきょう', conflict: 'ぶつかり合い', join: '遊び・なかま', tease: 'からかい', stage: '発表', danger: 'あぶない場面' };
+
+  var TYPE_LABEL = {
+    think: '考える', act: '動く', relate: '関わる', calm: '整える',
+    impulse: 'しょうどう', basic: 'きほん', curse: 'モヤモヤ'
+  };
+
+  // うまくいきやすさ（3段階）。児童には段階を見せず「失敗するかも」とだけ出す（段階の言い分けが分かりにくかったため）
+  var CHANCE = {
+    high: { p: 0.8, label: '失敗するかも' },
+    mid: { p: 0.6, label: '失敗するかも' },
+    low: { p: 0.35, label: '失敗するかも' }
+  };
+
+  var PLAYER = { maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
+
+  var RULES = {
+    stressThreshold: 0.3,      // 心の余裕がこの割合未満でカッとなるが手札にまざる
+    growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
+    trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
+    weak: 1.5, resist: 0.5, anxiety: 0.6,
+    restHeal: 0.3, dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 3, moyaDrain: 2, allyTrust: 7, allyGuard: 6, hpScale: 1.7, stressScale: 1.45,
+    rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
+  };
+
+  // ctx: そのカードが合う場面。書いていないカードはどの場面でも使える。合わない場面では、その戦いの間 山札から外す
+  // judge: good=向社会的・アサーティブ・整える／impulse=しょうどう／neutral=きほん
+  // style: 振り返りのアサーション3分類（aggressive/passive/assertive）
+  var CARDS = {
+    // --- 初期デッキ ---
+    try_it: { name: 'トライする', line: 'とにかく 一度 やってみる。', type: 'act', judge: 'neutral', style: 'assertive', cost: 1, solve: 5, ctx: ['study', 'join', 'stage'] },
+    endure: { name: 'がまんする', line: 'ぐっと こらえる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 5 },
+    breathe: { name: '深こきゅう', line: 'ゆっくり 3回 いきをすう。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 4, draw: 1 },
+    talk: { name: '話してみる', line: '「ねえ、ちょっといい？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 4 },
+    keep_distance: { name: 'きょりを おく', line: '「ちょっと はなれて、頭を ひやそう」', type: 'calm', judge: 'good', style: 'distance', cost: 1, guard: 6, distance: true },
+    run_away: { name: 'その場を はなれる（にげる）', line: 'あぶないと 思ったら、すぐに その場を はなれる。', type: 'act', judge: 'good', style: 'distance', cost: 1, escape: true },
+    okoru: { name: '怒る', line: '「もう、なんなの！」と どなる。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 9, chance: 'high', trust: -1, curse: true },
+
+    // --- 報酬で手に入るカード ---
+    write_plan: { name: 'やることを紙に書く', line: '1. 2. 3. と じゅんばんに書く。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 4, draw: 1, ctx: ['study', 'stage'] },
+    their_view: { name: '相手の気もちを考える', line: '「あの子は どう思ったかな？」', type: 'think', judge: 'good', style: 'assertive', cost: 1, guard: 4, organize: true, ctx: ['conflict', 'join', 'tease'] },
+    start_now: { name: 'すぐ取りかかる', line: 'あとまわしに しない。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 8, ctx: ['study', 'stage'] },
+    move_body: { name: '体を動かして 気分てんかん', line: '休み時間に 外で走る。', type: 'act', judge: 'good', style: 'assertive', cost: 1, heal: 5, exhaust: true },
+    together: { name: '「いっしょにやろう」', line: '「いっしょにやろう」と 声をかける。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, trust: 1, chance: 'high', ctx: ['study', 'join'] },
+    thanks: { name: '「ありがとう」を つたえる', line: '「さっきは ありがとう」', type: 'relate', judge: 'good', style: 'assertive', cost: 0, guard: 3, trust: 1 },
+    apologize: { name: 'あやまる', line: '「さっきは ごめんね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 3, trust: 2, ctx: ['conflict', 'join'] },
+    lead: { name: 'みんなを まとめる', line: '「じゃあ、じゅんばんに 言っていこう」', type: 'relate', judge: 'good', style: 'assertive', cost: 2, solve: 14, chance: 'mid', req: { relate: 2, trust: 6 }, ctx: ['study', 'join'] },
+    sort_out: { name: '状きょうを 整理する', line: '「何が あった？ 自分は どうしたい？」と 書き出す。', type: 'think', judge: 'good', style: 'assertive', cost: 1, guard: 3, draw: 1, organize: true },
+    firm_reply: { name: 'きっぱり 言い返す', line: '「そういうことは 言わないで」と 目を見て 言う。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'mid', fail: 'walk_away', ctx: ['conflict', 'tease'] },
+    name_feeling: { name: '気もちを 言葉にする', line: '「いま、ちょっと くやしい」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 7 },
+
+    // --- 場面カード（その戦いの間だけ手札に入る） ---
+    say_dunno: { name: '「わからない」と言う', line: '「ここが わかりません」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 8, chance: 'high' },
+    ask_next: { name: 'となりの人に 聞く', line: '「ここ、どうやった？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'mid', fail: 'ask_teacher' },
+    ask_teacher: { name: '先生に 聞く', line: '「先生、ここを 教えてください」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high' },
+    skip_it: { name: 'とばして 次へ', line: 'わからない問題は あとで。', type: 'think', judge: 'neutral', style: 'passive', cost: 1, guard: 4, solve: 2 },
+
+    ask_ok: { name: '「だいじょうぶ？」と聞く', line: '「だいじょうぶ？ いま、ぶつかったよね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, organize: true, chance: 'high' },
+    watch_them: { name: '相手の ようすを見る', line: 'あわてている？ わらっている？', type: 'think', judge: 'good', style: 'assertive', cost: 1, guard: 3, organize: true },
+    tell_hurt: { name: '「いたかったよ」と つたえる', line: '「いたかったよ。気をつけてね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 8, chance: 'high' },
+    hit_back: { name: 'やり返す', line: 'どんっと おし返す。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -2, curse: true },
+
+    let_me_in: { name: '「入れて」と言う', line: '「ねえ、入れて！」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'mid', fail: 'next_time' },
+    next_time: { name: '「次は 入れてね」', line: '「じゃあ、次は 入れてね」', type: 'relate', judge: 'good', style: 'assertive', cost: 0, solve: 5, chance: 'high' },
+    invite_other: { name: 'ほかの遊びに さそう', line: '「おにごっこ しない？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, trust: 1, chance: 'high' },
+    consult: { name: '先生に そうだんする', line: '「先生、ちょっと 聞いてほしいことが あります」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 7, chance: 'high' },
+    sulk: { name: 'ひとりで すねる', line: 'もういいよ、と はなれる。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 8, chance: 'high', trust: -1, curse: true },
+
+    say_stop: { name: '「いやだ」と はっきり言う', line: '「それ、いやだから やめて」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 9, chance: 'mid', fail: 'walk_away' },
+    walk_away: { name: 'その場を はなれる', line: 'だまって 先生の近くへ 行く。', type: 'act', judge: 'good', style: 'assertive', cost: 0, guard: 6, chance: 'high' },
+    tell_teacher: { name: '先生に つたえる', line: '「何回も 言われて こまっています」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 10, chance: 'high', organize: true },
+
+    read_memo: { name: 'メモを見ながら 話す', line: '書いておいたことを 読む。', type: 'think', judge: 'good', style: 'assertive', cost: 1, solve: 9, chance: 'high' },
+    breathe_first: { name: '深こきゅうして 始める', line: 'すって、はいて、「はじめます」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 6 },
+    friend_face: { name: '友だちの顔を見る', line: 'うなずいてくれる子を さがす。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 5, solve: 5, req: { trust: 6 } },
+    call_adult: { name: '近くの 大人を よぶ', line: '「たすけてください！」と 大きな声で 言う。', type: 'relate', judge: 'good', style: 'distance', cost: 0, escape: true, trust: 1 },
+    run_now: { name: 'すぐに にげる', line: '安全な ところまで 走る。', type: 'act', judge: 'good', style: 'distance', cost: 0, escape: true },
+    say_no_stranger: { name: '「行きません」と ことわる', line: '知らない人には ついて行かない。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 8 },
+    ugokenai: { name: '動けない', line: '心の余裕が なくなって、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
+    wameku: { name: 'わめく', line: 'ぎゃーっと 大声で わめく。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -2, curse: true },
+    junk_advice: { name: '「気にしなきゃ いいじゃん」', line: '友だちの アドバイス。でも、気になるものは 気になる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 1 },
+    give_up: { name: '「やっぱり やめる」', line: 'だまって すわってしまう。', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 12, chance: 'high', trust: -1, curse: true },
+
+    // --- ストレスで入りこむカード・モヤモヤ ---
+    kattonaru: { name: 'カッとなる', line: '頭が まっ白になって 大声を出す。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 12, chance: 'high', trust: -2, curse: true, exhaust: true },
+    moyamoya: { name: 'モヤモヤ', line: 'あのときのことが 気になって 手につかない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true }
+  };
+
+  // アイテム（支え）：つけている（equip）ものは、戦いごとに1回ずつ使える。元気は使わない。なくならない。
+  // つけられるのは slots まで。ひと休みで、持っているものと入れかえられる
+  var SUPPORTS = {
+    teacher: { name: '先生に そうだん', line: '「先生、聞いてほしいことが あります」', note: 'この場面で 先生に すすめられた カードが 手札に入る（戦いのあと 報酬にも出る）。状きょうも 1つ 整理される' },
+    friend: { name: '友だちに そうだん', line: '「ねえ、どう思う？」', note: '心の余裕 +5。友だちの アドバイスが カードになる（ときどき 役に立たないことも）', heal: 5 },
+    family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', note: '心の余裕 +10', heal: 10 },
+    book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', note: '心の余裕 +4、手札の モヤモヤを すてる', heal: 4, clearMoya: true }
+  };
+  // 先生がすすめるカード（場面ごと）、友だちのアドバイス（junk はハズレ）
+  var TEACHER_CARDS = { study: 'ask_teacher', conflict: 'consult', join: 'consult', tease: 'tell_teacher', stage: 'breathe_first', danger: 'call_adult' };
+  var FRIEND_CARDS = ['together', 'thanks', 'invite_other', 'name_feeling', 'firm_reply', 'sort_out'];
+  var SUPPORT_RULES = { slots: 3, start: ['teacher'], rewardChance: 0.3, junkChance: 0.3 };
+
+  // 課題の3つの姿：0=こわい かいぶつ／1=現実の姿＋ぶきみな オーラ／2=ふつうの 現実。
+  // 整理するカード（organize）で1つずつ現実に近づき、いきおいが弱まる。かしこさが organizeStat 以上なら 1 から始まる
+  var FORMS = { stressMul: [1, 0.8, 0.6], organizeStat: 2 };
+
+  var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'keep_distance', 'breathe', 'talk', 'okoru', 'run_away'];
+  var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply'];
+
+  // pass: そのターン数を乗りこえると、課題は時間とともに過ぎ去る（報酬なし。leave なら モヤモヤが のこる）。
+  //   からかい・発表には付けない：放っておいても過ぎ去らない問題があることを残すため
+  // moves: stress=心の余裕を n へらす／grow=問題が大きくなる（以後の stress に +n）／worry=モヤモヤを1まい まぜる
+  // forms: 3つの姿の名前。view: いちばん現実の姿（2）になった時に わかる ほんとう（相性が変わる）
+  var ENEMIES = {
+    dunno: {
+      forms: ['ハテナ だいまじん', 'むずかしそうな プリント', 'わからない 1問'],
+      ctx: 'study', scene: 'わからない問題', name: 'わからない問題', kind: 'normal', hp: 24,
+      pass: { turns: 5, say: 'じゅぎょうが おわった。でも、わからないままだ。', leave: true },
+      moves: [{ t: 'stress', n: 6, say: 'あせってくる' }, { t: 'grow', n: 2, say: 'どんどん むずかしく見えてくる' }, { t: 'stress', n: 7, say: 'まわりが すすんでいく' }],
+      weak: ['relate', 'think'], resist: [], situ: ['say_dunno', 'ask_next', 'skip_it'],
+      other: 'となりの子：「聞いてくれたら、すぐ 教えたのに」'
+    },
+    bumped: {
+      forms: ['ドンッと ぶつかる かいぶつ', 'わざと ぶつかってきた？ あの子', 'よそ見して ぶつかっただけ'],
+      ctx: 'conflict', scene: 'ろうかで ぶつかられた', name: 'わざと ぶつかられた？', kind: 'normal', hp: 20,
+      pass: { turns: 3, say: '時間がたって、気にならなくなった。' },
+      moves: [{ t: 'stress', n: 7, say: 'むかむかしてくる' }, { t: 'stress', n: 8, say: '「わざとだ」と思えてくる' }],
+      weak: [], resist: ['relate'], backfire: [], situ: ['ask_ok', 'tell_hurt', 'watch_them', 'hit_back'],
+      view: { truth: 'benign', name: 'よそ見して ぶつかっただけ', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.5 },
+      other: 'ぶつかった子：「あっ、ごめん！ 前を見てなかった」'
+    },
+    left_out: {
+      forms: ['ひとりぼっちの きり', '入れてくれない グループ？', '人数が ちょうどの 遊び'],
+      ctx: 'join', scene: '遊びに 入れない', name: '遊びに 入れない', kind: 'normal', hp: 28,
+      pass: { turns: 4, say: '休み時間が おわった。さびしさは 少し のこった。', leave: true },
+      moves: [{ t: 'stress', n: 6, say: 'さびしくなる' }, { t: 'worry', say: '「きらわれてる？」と考えてしまう' }, { t: 'stress', n: 8, say: '休み時間が おわっていく' }],
+      weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['let_me_in', 'invite_other', 'sulk'],
+      other: '遊んでいた子：「人数が ちょうどだったから、気づかなかった」'
+    },
+    teased: {
+      forms: ['チクチクことばの むれ', 'わらっている 子たち', 'くり返し からかわれている'],
+      ctx: 'tease', scene: 'からかわれた', name: 'からかわれた', kind: 'elite', hp: 36,
+      moves: [{ t: 'stress', n: 7, say: '同じことを また言われる' }, { t: 'grow', n: 3, say: 'まわりも わらいはじめる' }, { t: 'stress', n: 9, say: '学校に 行きたくなくなる' }],
+      weak: [], resist: [], backfire: ['impulse'], situ: ['say_stop', 'tell_teacher', 'wameku'],
+      view: { truth: 'hostile', name: 'くり返し からかわれている', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 1 },
+      other: 'あとで 先生：「話してくれて よかった。一人で かかえなくて いいんだよ」'
+    },
+    presentation: {
+      forms: ['見つめる 大目玉', 'こっちを見る みんな', 'ふつうに 聞いている クラスの みんな'],
+      ctx: 'stage', scene: 'みんなの前で 発表', name: 'みんなの前で 発表', kind: 'boss', hp: 48, anxiety: true,
+      moves: [{ t: 'stress', n: 8, say: '心ぞうが どきどきする' }, { t: 'worry', say: '「まちがえたら どうしよう」' }, { t: 'stress', n: 11, say: 'みんなが こっちを見る' }, { t: 'grow', n: 2, say: '声が 小さくなってくる' }],
+      weak: ['think'], resist: [], backfire: [], situ: ['read_memo', 'breathe_first', 'friend_face', 'give_up'],
+      other: '聞いていた子：「さいごまで 言えてて すごかった」'
+    }
+  };
+
+  // あぶない場面（ときどき 課題の代わりに出る）。戦って勝つのは ほぼ無理で、はなれる・にげる・大人をよぶ が正解
+  ENEMIES.fight_near = {
+    forms: ['あばれる 大あらし', 'もめている 上級生たち', 'ケンカ中の 上級生'],
+    ctx: 'danger', scene: '上級生の ケンカに まきこまれそう', kind: 'danger', hp: 80, escapeOk: true,
+    moves: [{ t: 'stress', n: 11, say: 'どなり声が 近づいてくる' }, { t: 'grow', n: 4, say: 'まわりも さわぎはじめる' }, { t: 'stress', n: 13, say: 'おされて ころびそう' }],
+    weak: [], resist: ['relate', 'think', 'act'], backfire: ['impulse'], situ: ['call_adult', 'run_now'],
+    other: '先生：「はなれて 知らせてくれて ありがとう。あぶない ところに 入らなかったのは 正しい」'
+  };
+  ENEMIES.stranger = {
+    forms: ['あまい声の かげ', '知らない 大人？', '帰り道で 声をかけてきた 知らない人'],
+    ctx: 'danger', scene: '知らない人に さそわれた', kind: 'danger', hp: 80, escapeOk: true,
+    moves: [{ t: 'stress', n: 10, say: '「いいもの あげるよ」と 近づいてくる' }, { t: 'grow', n: 4, say: 'うでを つかまれそう' }, { t: 'stress', n: 12, say: 'まわりに だれも いない' }],
+    weak: [], resist: ['relate', 'think', 'act'], backfire: ['impulse'], situ: ['say_no_stranger', 'run_now', 'call_adult'],
+    other: 'お家の人：「にげて すぐ 話してくれて、本当に よかった」'
+  };
+
+  // effects: trust / yoyu / addCard / curse / growth(stat)
+  var EVENTS = {
+    forgot: {
+      title: 'わすれものに 気づいた朝',
+      text: '教室について、算数のノートを わすれたことに 気づいた。',
+      options: [
+        { label: '先生に 正直に言う', effects: { trust: 1, support: 'teacher' }, result: '「言いに来てくれて ありがとう」と言われた。' },
+        { label: 'となりの子に 紙を 一まい もらう', req: { trust: 5 }, effects: { yoyu: 6 }, result: '「いいよ」と すぐ 貸してくれた。' },
+        { label: 'だまっておく', effects: { curse: 1 }, result: 'じゅぎょう中、ずっと 気になってしまった。' }
+      ]
+    },
+    friend_trouble: {
+      title: '友だちが こまっている',
+      text: '給食のあと、友だちが 牛にゅうを こぼして こまっている。',
+      options: [
+        { label: '「手つだおうか？」と言う', effects: { trust: 2, yoyu: -4, addCard: 'together', support: 'friend' }, result: 'いっしょに ふいた。「ありがとう」と言われた。' },
+        { label: '先生を よびに行く', effects: { trust: 1 }, result: '先生が ぞうきんを 持ってきてくれた。' },
+        { label: '見なかったことにする', effects: {}, result: 'そのまま 席にもどった。' }
+      ]
+    },
+    second_chance: {
+      title: 'やり直しのチャンス',
+      text: 'この前 言い合いになった子と、ろうかで 二人きりになった。',
+      lowTrustOnly: true,
+      options: [
+        { label: '「この前は ごめんね」と言う', effects: { trust: 3, support: 'friend' }, result: '「ううん、こっちこそ」と言ってくれた。' },
+        { label: 'あいさつだけ する', effects: { trust: 1 }, result: '「おはよう」と 返ってきた。' }
+      ]
+    }
+  };
+
+  // お試し版：4段＋ボス。各段は2マスから1つ選ぶ
+  var ACTS = [
+    {
+      name: '教室',
+      rows: [['battle', 'battle'], ['battle', 'event'], ['elite', 'event'], ['rest', 'battle']],
+      normals: ['dunno', 'bumped', 'left_out'], dangers: ['fight_near', 'stranger'], elites: ['teased'], boss: 'presentation',
+      events: ['forgot', 'friend_trouble']
+    }
+  ];
+
+  var TEXT = {
+    title: 'こころの 冒険',
+    lose: 'つかれちゃった。でも、ナイストライ！',
+    win: 'さいごまで たどりついた！',
+    failCause: ['今日は タイミングが 合わなかった。', '相手の じゅんびが まだだった。', 'こういう日も ある。'],
+    curseGained: 'モヤモヤが デッキに 入った。',
+    stressIntrude: '心の余裕が へって、「カッとなる」が 手札に まざった。'
+  };
+
+  var DATA = { FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
+  if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
+  else root.SST_DATA = DATA;
+})(this);
+
+// ゲームの規則。状態と操作から次の状態を作る。DOM・保存には触れない。
+// 乱数は状態に持つ（同じシード・同じ操作なら同じ結果になる）。
+(function (root) {
+  'use strict';
+  var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
+
+  var ENGINE_VER = 3;
+
+  // --- 乱数 ---
+  function rand(s) {
+    s.rng = (s.rng + 0x6D2B79F5) | 0;
+    var t = s.rng;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+  function pick(s, arr) { return arr[Math.floor(rand(s) * arr.length)]; }
+  function shuffle(s, arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(rand(s) * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function card(id) { return D.CARDS[id]; }
+  function fits(id, ctx) { var c = D.CARDS[id]; return !c.ctx || !ctx || c.ctx.indexOf(ctx) >= 0; }
+  function statOf(c) { return D.STATS[c.type] ? c.type : null; }
+
+  function log(s, e) { e.floor = s.floor; s.log.push(e); }
+
+  // --- 開始 ---
+  function newRun(seed, mode) {
+    var s = {
+      ver: ENGINE_VER, seed: seed >>> 0, rng: seed >>> 0, mode: mode || 1,
+      phase: 'map', act: 0, floor: 0, row: 0,
+      yoyu: D.PLAYER.maxYoyu, maxYoyu: D.PLAYER.maxYoyu,
+      trust: D.PLAYER.trustStart,
+      stats: { think: 0, act: 0, relate: 0 },
+      deck: D.STARTER.slice(), nigate: {}, items: D.SUPPORT_RULES.start.slice(), equip: D.SUPPORT_RULES.start.slice(),
+      usedNormals: [], usedEvents: [],
+      map: null, battle: null, reward: null, event: null,
+      log: [], result: null
+    };
+    s.map = buildMap(s);
+    log(s, { k: 'trust', d: 0, v: s.trust, why: 'start' });
+    return s;
+  }
+
+  function buildMap(s) {
+    var act = D.ACTS[s.act];
+    return act.rows.map(function (row) { return row.slice(); }).concat([['boss']]);
+  }
+
+  // --- 条件 ---
+  function meetsReq(s, c) {
+    if (!c.req) return true;
+    for (var k in c.req) {
+      if (k === 'trust') { if (s.trust < c.req.trust) return false; }
+      else if ((s.stats[k] || 0) < c.req[k]) return false;
+    }
+    return true;
+  }
+  function reqShort(s, c) {
+    if (!c.req) return null;
+    var out = [];
+    for (var k in c.req) {
+      var have = k === 'trust' ? s.trust : (s.stats[k] || 0);
+      if (have < c.req[k]) out.push({ k: k, need: c.req[k] - have });
+    }
+    return out.length ? out : null;
+  }
+
+  function canPlay(s, i) {
+    var b = s.battle; if (!b || s.phase !== 'battle') return false;
+    var h = b.hand[i]; if (!h) return false;
+    var c = card(h.id);
+    if (c.unplayable) return false;
+    if (c.cost > b.energy) return false;
+    return meetsReq(s, c);
+  }
+
+  // --- マップ ---
+  function chooseNode(s, col) {
+    if (s.phase !== 'map') throw new Error('not map');
+    var kind = s.map[s.row][col];
+    if (!kind) throw new Error('bad node');
+    s.floor++;
+    var act = D.ACTS[s.act];
+    if (kind === 'battle' && act.dangers && rand(s) < D.RULES.dangerChance) {
+      startBattle(s, pick(s, act.dangers));
+    } else if (kind === 'battle') {
+      var pool = act.normals.filter(function (e) { return s.usedNormals.indexOf(e) < 0; });
+      if (!pool.length) pool = act.normals.slice();
+      var eid = pick(s, pool); s.usedNormals.push(eid);
+      startBattle(s, eid);
+    } else if (kind === 'elite') startBattle(s, pick(s, act.elites));
+    else if (kind === 'boss') startBattle(s, act.boss);
+    else if (kind === 'event') startEvent(s);
+    else if (kind === 'rest') { s.phase = 'rest'; }
+    s.nodeKind = kind;
+    return s;
+  }
+
+  function advance(s) {
+    s.row++;
+    s.phase = 'map';
+    s.battle = null; s.reward = null; s.event = null;
+    return s;
+  }
+
+  // --- 戦い ---
+  function startBattle(s, eid) {
+    var E = D.ENEMIES[eid];
+    var en = {
+      id: eid, name: E.forms[0], form: 0, hp: Math.round(E.hp * D.RULES.hpScale), maxHp: Math.round(E.hp * D.RULES.hpScale), kind: E.kind, str: 0, mi: 0,
+      revealed: false, weak: E.weak.slice(), resist: E.resist.slice(),
+      backfire: (E.backfire || []).slice(), stressMul: 1
+    };
+    var bench = [], cards = [];
+    s.deck.forEach(function (id) { (fits(id, E.ctx) ? cards : bench).push({ id: id }); });
+    var draw = shuffle(s, cards);
+    s.battle = {
+      enemy: en, draw: draw, hand: [], discard: [], exhaust: [], bench: bench,
+      energy: 0, guard: 0, turn: 0, calm: false,
+      usage: { think: 0, act: 0, relate: 0 }, trustGained: 0, playedOk: {}, msgs: [], usedItems: {}, teacherCard: null
+    };
+    s.phase = 'battle';
+    if (s.stats.think >= D.FORMS.organizeStat) { organize(s, true); }
+    if (bench.length) msg(s, 'この場面に 合わないカード ' + bench.length + 'まいは、今回は 休み。', 'bench');
+    log(s, { k: 'battle', enemy: eid, kind: E.kind, bench: bench.length });
+    startTurn(s, true);
+  }
+
+  function drawCards(s, n) {
+    var b = s.battle;
+    for (var i = 0; i < n; i++) {
+      if (!b.draw.length) {
+        if (!b.discard.length) return;
+        b.draw = shuffle(s, b.discard); b.discard = [];
+      }
+      b.hand.push(b.draw.pop());
+    }
+  }
+
+  function startTurn(s, first) {
+    var b = s.battle;
+    b.turn++; b.energy = D.PLAYER.energy; b.guard = 0; b.calm = false;
+    if (first && s.trust >= D.RULES.allyTrust) {
+      b.guard += D.RULES.allyGuard;
+      msg(s, '信頼が 高いので、友だちが そばにいてくれる（ゆとり +' + D.RULES.allyGuard + '）', 'ally');
+      log(s, { k: 'ally' });
+    }
+    if (first) {
+      D.ENEMIES[b.enemy.id].situ.forEach(function (id) { b.hand.push({ id: id, temp: true }); });
+    }
+    if (b.frozen) {
+      b.hand.forEach(function (h) { b.discard.push(h); });
+      b.hand = [{ id: 'ugokenai', temp: true }];
+      b.energy = 0;
+      msg(s, '心の余裕が なくなって、動けない…（このまま 時間が すぎるのを まつ）', 'stress');
+      return;
+    }
+    drawCards(s, D.PLAYER.hand);
+    if (s.yoyu < s.maxYoyu * D.RULES.stressThreshold) {
+      b.hand.push({ id: 'kattonaru', temp: true });
+      msg(s, D.TEXT.stressIntrude, 'stress');
+      log(s, { k: 'intrude' });
+    }
+  }
+
+  function msg(s, text, tag) { if (s.battle) s.battle.msgs.push({ text: text, tag: tag || '' }); }
+
+  function addTrust(s, d, why, fromCard) {
+    if (d > 0 && fromCard) {
+      var room = D.RULES.trustGainCapPerBattle - s.battle.trustGained;
+      d = Math.min(d, Math.max(0, room));
+      if (d <= 0) return 0;
+      s.battle.trustGained += d;
+    }
+    var before = s.trust;
+    s.trust = Math.max(0, Math.min(D.PLAYER.trustMax, s.trust + d));
+    var real = s.trust - before;
+    if (real !== 0) {
+      log(s, { k: 'trust', d: real, v: s.trust, why: why });
+      noteUnlocks(s, before, null);
+    }
+    return real;
+  }
+
+  // カードの使用条件が新たに満たされたら記録する
+  function noteUnlocks(s, trustBefore, statsBefore) {
+    var seen = {};
+    s.deck.concat(D.REWARD_POOL).forEach(function (id) {
+      if (seen[id]) return; seen[id] = 1;
+      var c = card(id); if (!c.req) return;
+      var prev = { trust: trustBefore == null ? s.trust : trustBefore, stats: statsBefore || s.stats };
+      var was = meetsReqWith(prev, c), now = meetsReq(s, c);
+      if (!was && now) log(s, { k: 'unlock', card: id });
+    });
+  }
+  function meetsReqWith(p, c) {
+    for (var k in c.req) {
+      if (k === 'trust') { if (p.trust < c.req.trust) return false; }
+      else if ((p.stats[k] || 0) < c.req[k]) return false;
+    }
+    return true;
+  }
+
+  // 状きょうを整理する：かいぶつ→現実＋オーラ→ふつうの現実。いきおいが弱まる
+  function organize(s, fromStat) {
+    var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    if (en.form >= 2) return;
+    var from = en.name;
+    en.form++;
+    en.name = E.forms[en.form];
+    en.str = Math.floor(en.str / 2);
+    en.stressMul = D.FORMS.stressMul[en.form];
+    if (en.form === 2) {
+      en.revealed = true;
+      if (E.view) {
+        en.weak = E.view.weak.slice(); en.resist = E.view.resist.slice();
+        en.backfire = E.view.backfire.slice(); en.stressMul *= E.view.stressMul;
+      }
+      log(s, { k: 'reveal', enemy: en.id, from: E.forms[0], to: en.name, truth: E.view ? E.view.truth : 'plain' });
+    }
+    msg(s, fromStat ? 'かしこさが 高いので、はじめから「' + en.name + '」に 見えている。' : '状きょうが 整理できた：「' + from + '」→「' + en.name + '」（いきおいが 弱まった）', 'reveal');
+    log(s, { k: 'form', enemy: en.id, form: en.form, stat: !!fromStat });
+  }
+
+  function solveAmount(s, c) {
+    var b = s.battle, en = b.enemy, st = statOf(c);
+    var n = c.solve + (st ? s.stats[st] : 0);
+    var m = 1;
+    if (en.weak.indexOf(c.type) >= 0) m *= D.RULES.weak;
+    if (en.resist.indexOf(c.type) >= 0) m *= D.RULES.resist;
+    if (D.ENEMIES[en.id].anxiety && !b.calm) m *= D.RULES.anxiety;
+    return Math.round(n * m);
+  }
+
+  // カードの効き方を画面に出すための見積もり（乱数は使わない）
+  function preview(s, i) {
+    var b = s.battle, h = b.hand[i], c = card(h.id), st = statOf(c), en = b.enemy;
+    var p = {};
+    if (c.solve) {
+      p.solve = solveAmount(s, c);
+      p.backfire = en.backfire.indexOf(c.type) >= 0;
+    }
+    if (c.guard) p.guard = c.guard + (st ? s.stats[st] : 0);
+    p.weak = en.weak.indexOf(c.type) >= 0;
+    p.resist = en.resist.indexOf(c.type) >= 0;
+    return p;
+  }
+
+  function playCard(s, i) {
+    if (!canPlay(s, i)) throw new Error('cannot play');
+    var b = s.battle, h = b.hand.splice(i, 1)[0], c = card(h.id), st = statOf(c), en = b.enemy;
+    b.energy -= c.cost;
+    if (st) b.usage[st]++;
+    if (c.type === 'calm') b.calm = true;
+
+    var ok = c.chance ? rand(s) < D.CHANCE[c.chance].p : true;
+    var entry = { k: 'play', card: h.id, enemy: en.id, ok: ok, judge: c.judge, style: c.style, temp: !!h.temp, revealedBefore: en.revealed };
+
+    if (c.trust) addTrust(s, c.trust, h.id, c.trust > 0);
+
+    if (ok) {
+      if (c.organize) organize(s);
+      if (c.distance && !b.distanced) {
+        b.distanced = true; en.str = 0; en.stressMul *= D.RULES.distanceMul;
+        msg(s, 'きょりを おいた。問題の いきおいが おさまり、ストレスも 弱まった。', 'reveal');
+      }
+      if (c.solve) {
+        var n = solveAmount(s, c);
+        en.hp -= n; entry.solve = n;
+        if (en.backfire.indexOf(c.type) >= 0) {
+          en.str += D.RULES.backfireGrow;
+          entry.backfire = D.RULES.backfireGrow;
+          msg(s, '「' + c.name + '」で その場は おさまった。でも あとで こじれて、問題の いきおい +' + D.RULES.backfireGrow + '。', 'backfire');
+        }
+      }
+      if (c.guard) b.guard += c.guard + (st ? s.stats[st] : 0);
+      if (c.heal) s.yoyu = Math.min(s.maxYoyu, s.yoyu + c.heal);
+      if (c.draw) drawCards(s, c.draw);
+      if (c.judge === 'impulse' && !entry.backfire) msg(s, '「' + c.name + '」で すっきりした。でも…', 'impulse');
+    } else {
+      var cause = D.TEXT.failCause[Math.floor(rand(s) * D.TEXT.failCause.length)];
+      msg(s, '「' + c.name + '」は うまくいかなかった。' + cause + (st ? '（' + D.STATS[st].name + 'の けいけんには なった）' : ''), 'fail');
+      if (c.fail) {
+        b.hand.push({ id: c.fail, temp: true });
+        msg(s, '次の手：「' + card(c.fail).name + '」が 手札に 入った。', 'next');
+        entry.next = c.fail;
+      }
+    }
+    if (c.curse) {
+      s.deck.push('moyamoya'); b.discard.push({ id: 'moyamoya' });
+      msg(s, D.TEXT.curseGained, 'curse');
+      log(s, { k: 'curse', why: h.id });
+    }
+    if (ok && h.temp && c.judge === 'good') b.playedOk[h.id] = 1;
+    log(s, entry);
+
+    if (h.temp || c.exhaust) b.exhaust.push(h); else b.discard.push(h);
+    if (ok && c.escape) { escapeBattle(s); return s; }
+    if (en.hp <= 0) winBattle(s);
+    return s;
+  }
+
+  // 苦手意識：その場面では ストレスが ふえる
+  function stressOf(s, mv) {
+    var en = s.battle.enemy, ctx = D.ENEMIES[en.id].ctx;
+    var ng = (s.nigate[ctx] || 0) * D.RULES.nigateStress;
+    return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul);
+  }
+  // 心の余裕は0より下がらない。下がった分は「動けない」中の つらさとして数える
+  function hurt(s, dmg) {
+    var b = s.battle;
+    if (dmg > s.yoyu) {
+      if (b) b.deficit = (b.deficit || 0) + (dmg - s.yoyu);
+      s.yoyu = 0;
+    } else s.yoyu -= dmg;
+    if (s.yoyu <= 0 && b && !b.frozen) {
+      b.frozen = true; b.frozenLeft = D.RULES.frozenTurns;
+      log(s, { k: 'frozen', enemy: b.enemy.id });
+    }
+  }
+
+  function enemyAct(s) {
+    var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    var mv = E.moves[en.mi % E.moves.length];
+    en.mi++;
+    if (mv.t === 'stress') {
+      var n = stressOf(s, mv);
+      var blocked = Math.min(b.guard, n);
+      var dmg = n - blocked;
+      hurt(s, dmg);
+      msg(s, mv.say + '（心の余裕 −' + dmg + (blocked ? '、ゆとりで ' + blocked + ' うけとめた' : '') + '）', 'hit');
+    } else if (mv.t === 'grow') {
+      en.str += mv.n;
+      msg(s, mv.say + '（問題の いきおい +' + mv.n + '）', 'grow');
+    } else if (mv.t === 'worry') {
+      b.discard.push({ id: 'moyamoya', temp: true });
+      msg(s, mv.say + '（この戦いの間 モヤモヤが まざる）', 'worry');
+    }
+  }
+
+  // 次に起きそうなこと（意図の表示）
+  function intent(s) {
+    var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    var mv = E.moves[en.mi % E.moves.length];
+    var o = { t: mv.t, say: mv.say };
+    if (mv.t === 'stress') o.n = stressOf(s, mv);
+    if (mv.t === 'grow') o.n = mv.n;
+    if (E.pass) o.passIn = E.pass.turns - b.turn + 1;
+    return o;
+  }
+
+  function endTurn(s) {
+    if (s.phase !== 'battle') throw new Error('not battle');
+    var b = s.battle;
+    b.msgs = [];
+    var moya = 0;
+    b.hand.forEach(function (h) {
+      if (h.id === 'moyamoya') moya++;
+      if (h.id === 'kattonaru') b.exhaust.push(h); else b.discard.push(h);
+    });
+    if (moya) {
+      hurt(s, moya * D.RULES.moyaDrain);
+      msg(s, 'モヤモヤが 気になって 心の余裕 −' + moya * D.RULES.moyaDrain, 'curse');
+    }
+    b.hand = [];
+    var wasFrozen = b.frozen;
+    enemyAct(s);
+    if (wasFrozen) {
+      b.frozenLeft--;
+      if (b.frozenLeft <= 0) { endFrozen(s); return s; }
+    }
+    var ps = D.ENEMIES[b.enemy.id].pass;
+    if (ps && b.turn >= ps.turns) { if (b.frozen) endFrozen(s); else winBattle(s, true); return s; }
+    startTurn(s, false);
+    return s;
+  }
+
+  // 動けないまま 時間が すぎた：苦手意識が つき、心の余裕は 1割まで もどる
+  function endFrozen(s) {
+    var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    var lv = Math.max(1, Math.ceil((b.deficit || 0) / D.RULES.nigatePer));
+    s.nigate[E.ctx] = (s.nigate[E.ctx] || 0) + lv;
+    s.yoyu = Math.max(1, Math.round(s.maxYoyu * D.RULES.frozenRecover));
+    log(s, { k: 'nigate', ctx: E.ctx, add: lv, to: s.nigate[E.ctx], enemy: en.id });
+    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, frozen: true });
+    if (en.kind === 'boss') { endRun(s, false); return; }
+    s.phase = 'reward';
+    s.reward = { choices: [], other: E.other, support: null, frozen: { ctx: E.ctx, add: lv, to: s.nigate[E.ctx] } };
+  }
+
+  // にげる：あぶない場面なら 正解（ふつうに 乗りこえた あつかい）。ふつうの課題では 問題が のこる
+  function escapeBattle(s) {
+    var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    log(s, { k: 'escape', enemy: en.id, ok: !!E.escapeOk });
+    if (E.escapeOk) {
+      addTrust(s, 1, 'escape', false);
+      winBattle(s, false, true);
+      return;
+    }
+    s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'flee:' + en.id });
+    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, fled: true });
+    if (en.kind === 'boss') { endRun(s, false); return; }
+    s.phase = 'reward';
+    s.reward = { choices: [], other: E.other, support: null, fled: true };
+  }
+
+  function winBattle(s, passed, escaped) {
+    var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, passed: !!passed, escaped: !!escaped });
+    if (passed && E.pass.leave) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'pass:' + en.id }); }
+    var statsBefore = { think: s.stats.think, act: s.stats.act, relate: s.stats.relate };
+    Object.keys(D.STATS).forEach(function (st) {
+      if (b.usage[st] >= D.RULES.growthUses && s.stats[st] < D.PLAYER.statMax) {
+        s.stats[st]++;
+        log(s, { k: 'grow', stat: st, to: s.stats[st], uses: b.usage[st], why: 'use' });
+      }
+    });
+    if (en.kind === 'elite') {
+      var top = Object.keys(D.STATS).sort(function (a, c) { return b.usage[c] - b.usage[a]; })[0];
+      if (b.usage[top] > 0 && s.stats[top] < D.PLAYER.statMax) {
+        s.stats[top]++;
+        log(s, { k: 'grow', stat: top, to: s.stats[top], uses: b.usage[top], why: 'elite' });
+      }
+    }
+    noteUnlocks(s, s.trust, statsBefore);
+    if (en.kind === 'boss') { endRun(s, true); return; }
+    s.phase = 'reward';
+    if (passed) {
+      s.reward = { choices: [], other: E.other, support: null, passed: E.pass.say, leave: !!E.pass.leave };
+      return;
+    }
+    var sup = null;
+    var unowned = Object.keys(D.SUPPORTS).filter(function (k) { return s.items.indexOf(k) < 0; });
+    if (unowned.length && (en.kind === 'elite' || rand(s) < D.SUPPORT_RULES.rewardChance)) sup = pick(s, unowned);
+    s.reward = { choices: rewardChoices(s), other: E.other, support: sup, escaped: !!escaped };
+  }
+
+  function rewardChoices(s) {
+    var b = s.battle;
+    var want = s.trust >= D.RULES.highTrust ? D.RULES.rewardChoicesHighTrust : D.RULES.rewardChoices;
+    var situ = shuffle(s, Object.keys(b.playedOk)).slice(0, 2);
+    if (b.teacherCard && situ.indexOf(b.teacherCard) < 0) situ = [b.teacherCard].concat(situ).slice(0, 2);
+    var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0; }));
+    return situ.concat(pool).slice(0, want);
+  }
+
+  function gainSupport(s, id, why) {
+    if (s.items.indexOf(id) >= 0) return false;
+    s.items.push(id);
+    if (s.equip.length < D.SUPPORT_RULES.slots) s.equip.push(id);
+    log(s, { k: 'support', id: id, why: why });
+    return true;
+  }
+
+  function takeSupport(s) {
+    if (s.phase !== 'reward' || !s.reward.support) throw new Error('no support');
+    gainSupport(s, s.reward.support, 'reward'); s.reward.support = null;
+    return s;
+  }
+
+  function canUseSupport(s, id) {
+    return s.phase === 'battle' && s.equip.indexOf(id) >= 0 && !s.battle.usedItems[id];
+  }
+
+  function useSupport(s, id) {
+    if (!canUseSupport(s, id)) throw new Error('cannot use item');
+    var u = D.SUPPORTS[id], b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    b.usedItems[id] = 1;
+    msg(s, '「' + u.name + '」', 'ally');
+    if (u.heal) s.yoyu = Math.min(s.maxYoyu, s.yoyu + u.heal);
+    if (id === 'teacher') {
+      var tc = D.TEACHER_CARDS[E.ctx];
+      b.hand.push({ id: tc, temp: true }); b.teacherCard = tc;
+      msg(s, '先生の すすめ：「' + card(tc).name + '」が 手札に 入った。', 'next');
+      organize(s);
+    }
+    if (id === 'friend') {
+      var fc = rand(s) < D.SUPPORT_RULES.junkChance ? 'junk_advice' : pick(s, D.FRIEND_CARDS);
+      s.deck.push(fc); b.hand.push({ id: fc });
+      log(s, { k: 'gain', card: fc, why: 'friend' });
+      msg(s, '友だちの アドバイス：「' + card(fc).name + '」' + (fc === 'junk_advice' ? '（あまり 役に立たなかった…）' : ''), fc === 'junk_advice' ? 'fail' : 'next');
+    }
+    if (u.clearMoya) {
+      var n = 0;
+      b.hand = b.hand.filter(function (h) { if (h.id === 'moyamoya') { b.discard.push(h); n++; return false; } return true; });
+      if (n) msg(s, 'モヤモヤが ' + n + 'まい 気にならなくなった。', 'reveal');
+    }
+    log(s, { k: 'useSupport', id: id, enemy: en.id });
+    return s;
+  }
+
+  // ひと休みで、つけるアイテムを えらび直す
+  function setEquip(s, ids) {
+    if (s.phase !== 'rest') throw new Error('not rest');
+    if (ids.length > D.SUPPORT_RULES.slots) throw new Error('too many');
+    ids.forEach(function (id) { if (s.items.indexOf(id) < 0) throw new Error('not owned'); });
+    s.equip = ids.slice();
+    return s;
+  }
+
+  function pickReward(s, id) {
+    if (s.phase !== 'reward') throw new Error('not reward');
+    if (id) {
+      if (s.reward.choices.indexOf(id) < 0) throw new Error('bad reward');
+      s.deck.push(id);
+      log(s, { k: 'gain', card: id, why: 'reward' });
+    } else log(s, { k: 'skip' });
+    return advance(s);
+  }
+
+  // --- ひと休み ---
+  function rest(s, choice, deckIdx) {
+    if (s.phase !== 'rest') throw new Error('not rest');
+    if (choice === 'rest') {
+      var before = s.yoyu;
+      s.yoyu = Math.min(s.maxYoyu, s.yoyu + Math.round(s.maxYoyu * D.RULES.restHeal));
+      log(s, { k: 'rest', d: s.yoyu - before });
+    } else if (choice === 'remove') {
+      var id = s.deck[deckIdx];
+      if (!id) throw new Error('bad card');
+      s.deck.splice(deckIdx, 1);
+      log(s, { k: 'remove', card: id });
+    } else throw new Error('bad choice');
+    return advance(s);
+  }
+
+  // --- できごと ---
+  function startEvent(s) {
+    var act = D.ACTS[s.act];
+    var id;
+    if (s.trust <= D.RULES.lowTrust && s.usedEvents.indexOf('second_chance') < 0) id = 'second_chance';
+    else {
+      var pool = act.events.filter(function (e) { return s.usedEvents.indexOf(e) < 0; });
+      id = pick(s, pool.length ? pool : act.events);
+    }
+    s.usedEvents.push(id);
+    s.event = { id: id, done: null };
+    s.phase = 'event';
+    log(s, { k: 'event', id: id });
+  }
+
+  function optionOpen(s, o) {
+    if (!o.req) return true;
+    if (o.req.trust != null && s.trust < o.req.trust) return false;
+    return true;
+  }
+
+  function chooseEvent(s, i) {
+    if (s.phase !== 'event' || s.event.done) throw new Error('not event');
+    var o = D.EVENTS[s.event.id].options[i];
+    if (!o || !optionOpen(s, o)) throw new Error('bad option');
+    var e = o.effects;
+    if (e.trust) addTrust(s, e.trust, 'event:' + s.event.id, false);
+    if (e.yoyu) s.yoyu = Math.max(1, Math.min(s.maxYoyu, s.yoyu + e.yoyu));
+    if (e.addCard) { s.deck.push(e.addCard); log(s, { k: 'gain', card: e.addCard, why: 'event' }); }
+    if (e.support) gainSupport(s, e.support, 'event');
+    if (e.curse) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'event:' + s.event.id }); }
+    s.event.done = i;
+    log(s, { k: 'choice', id: s.event.id, i: i });
+    return s;
+  }
+  function leaveEvent(s) {
+    if (s.phase !== 'event' || s.event.done == null) throw new Error('event not done');
+    return advance(s);
+  }
+
+  function endRun(s, won) {
+    s.phase = 'end';
+    s.result = { won: won, floor: s.floor };
+    log(s, { k: 'end', won: won });
+  }
+
+  // --- 不変条件（検査用） ---
+  function checkInvariants(s) {
+    var errs = [];
+    if (s.yoyu < 0 || s.yoyu > s.maxYoyu) errs.push('yoyu range');
+    if (s.trust < 0 || s.trust > D.PLAYER.trustMax) errs.push('trust range');
+    Object.keys(s.stats).forEach(function (k) { if (s.stats[k] < 0 || s.stats[k] > D.PLAYER.statMax) errs.push('stat range ' + k); });
+    if (s.battle && s.phase === 'battle') {
+      var b = s.battle;
+      var piles = b.draw.concat(b.hand, b.discard, b.exhaust, b.bench).filter(function (h) { return !h.temp; });
+      var exhaustedPerm = b.exhaust.filter(function (h) { return !h.temp; }).length;
+      if (piles.length !== s.deck.length) errs.push('card count ' + piles.length + '!=' + s.deck.length + ' (exhaust ' + exhaustedPerm + ')');
+    }
+    return errs;
+  }
+
+  // --- 振り返り ---
+  function summary(s) {
+    var L = s.log;
+    var plays = L.filter(function (e) { return e.k === 'play'; });
+    var grid = { goodOk: [], goodNg: [], impOk: [], impNg: [] };
+    plays.forEach(function (p) {
+      if (p.judge === 'good') (p.ok ? grid.goodOk : grid.goodNg).push(p);
+      else if (p.judge === 'impulse') (p.ok ? grid.impOk : grid.impNg).push(p);
+    });
+    var trustLine = L.filter(function (e) { return e.k === 'trust'; });
+    var recovered = [];
+    var dipped = false;
+    trustLine.forEach(function (e) { if (e.d < 0) dipped = true; else if (e.d > 0 && dipped) { recovered.push(e); dipped = false; } });
+    var grows = L.filter(function (e) { return e.k === 'grow'; }).map(function (g) {
+      var used = {};
+      plays.filter(function (p) { return p.floor === g.floor && statOf(card(p.card)) === g.stat; })
+        .forEach(function (p) { used[p.card] = (used[p.card] || 0) + 1; });
+      return { stat: g.stat, to: g.to, uses: g.uses, why: g.why, cards: used };
+    });
+    var seen = {};
+    var discovered = [];
+    plays.forEach(function (p) { if (p.temp && !seen[p.card] && p.judge === 'good') { seen[p.card] = 1; discovered.push({ card: p.card, enemy: p.enemy }); } });
+    return {
+      won: s.result && s.result.won, floor: s.floor,
+      stats: s.stats, trust: s.trust, trustStart: D.PLAYER.trustStart,
+      trustLine: trustLine, recovered: recovered,
+      grows: grows,
+      unlocks: L.filter(function (e) { return e.k === 'unlock'; }).map(function (e) { return e.card; }),
+      gained: L.filter(function (e) { return e.k === 'gain'; }),
+      removed: L.filter(function (e) { return e.k === 'remove'; }),
+      discovered: discovered,
+      reveals: L.filter(function (e) { return e.k === 'reveal'; }),
+      supportUses: L.filter(function (e) { return e.k === 'useSupport'; }),
+      escapes: L.filter(function (e) { return e.k === 'escape'; }),
+      nigate: L.filter(function (e) { return e.k === 'nigate'; }),
+      others: L.filter(function (e) { return e.k === 'win'; }),
+      grid: grid,
+      goodCount: plays.filter(function (p) { return p.judge === 'good'; }).length,
+      impulseCount: plays.filter(function (p) { return p.judge === 'impulse'; }).length
+    };
+  }
+
+  var API = {
+    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
+    canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
+    optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  else root.SST_ENGINE = API;
+})(this);
+
+// 保存先の切り替え。GAS 上では UserProperties、それ以外では localStorage。
+(function (root) {
+  'use strict';
+  var KEY = 'sst_run_v1';
+  var onGas = typeof google !== 'undefined' && google.script && google.script.run;
+
+  function localSave(json) { try { localStorage.setItem(KEY, json); } catch (e) { /* 保存できなくても遊べる */ } }
+  function localLoad() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+  function localClear() { try { localStorage.removeItem(KEY); } catch (e) { } }
+
+  var Platform = {
+    kind: onGas ? 'gas' : 'local',
+    save: function (state) {
+      var json = JSON.stringify(state);
+      localSave(json);
+      if (onGas) google.script.run.withFailureHandler(function () { }).saveRun(json);
+    },
+    load: function (cb) {
+      if (!onGas) { var j = localLoad(); cb(j ? safeParse(j) : null); return; }
+      google.script.run
+        .withSuccessHandler(function (j) { cb(j ? safeParse(j) : safeParse(localLoad())); })
+        .withFailureHandler(function () { cb(safeParse(localLoad())); })
+        .loadRun();
+    },
+    clear: function () {
+      localClear();
+      if (onGas) google.script.run.withFailureHandler(function () { }).clearRun();
+    },
+    param: function (name) {
+      try { return new URLSearchParams(root.location.search).get(name); } catch (e) { return null; }
+    }
+  };
+  function safeParse(j) { try { return j ? JSON.parse(j) : null; } catch (e) { return null; } }
+
+  root.SST_PLATFORM = Platform;
+})(this);
+
+// 自動生成（scripts/sprites.py）。直接編集しない
+// ドット絵（32×32）の描画。課題は form 0=かいぶつ／1=現実の姿＋ぶきみなオーラ（2=SVG の絵は illust.js）
+(function (root) {
+  'use strict';
+  var PAL = {"k": "#12172a", "w": "#ffffff", "W": "#d9dee8", "p": "#8e6ad8", "P": "#b79cf0", "y": "#ffd23f", "Y": "#e0a800", "r": "#e5484d", "R": "#b52a32", "g": "#5c6b8a", "q": "#45526e", "G": "#a7b2c8", "o": "#f08c3a", "O": "#c4651b", "s": "#f6cfa8", "S": "#e3ae85", "b": "#3b6fd8", "B": "#2a52a8", "n": "#7a4b2a", "N": "#9c6a40", "e": "#2f9e55", "E": "#21763f", "c": "#9fb6c8", "C": "#7690a6", "d": "#3d2f63", "D": "#2a1f47"};
+  var ART = {"dunno_m": [".............kkkkk..............", "............kyyyyyk.............", "...........kyykkkyyk............", "............kk...kyyk...........", ".................kyyk...........", ".................kyyk...........", "................kyyk............", "...............kyyk.............", "..............kyyk..............", "..............kyyk..............", "..............kyyk..............", "..............kYYk..............", "............kkkYYkkk............", ".........kkkddddddddkkk.........", "........kddddddddddddddk........", ".......kddddddddddddddddk.......", "......kddddpppdddddddddddk......", ".....kdddpppppddddddddddddk.....", "....kdddppkpppddddddddkddddk....", "...kddddpppkkdddddddkkddddddk...", "...kddddddrYrkdddddrYrddddddk...", "...kddddddrrrddddddrrrddddddk...", "...kddddddddddddddddddddddddk...", "...kddddddddddddddddddddddddk...", "...kddddddkwkwkwkwkwkwkdddddk...", "....kDDDDdkrrrrrrrrrrrkDDDDk....", "...kdkDDDDkwkwkwkwkwkwkDDDkdk...", "..kddddDDDDDDddddddDDDDDDddddk..", "..kddddkDDDDDDDDDDDDDDDDkddddk..", ".kddkkk.kDDDDDDDDDDDDDDk.kkkddk.", "..kk.....kkkDDDDDDDDkkk.....kk..", "............kkkkkkkk............"], "bumped_m": ["................................", "................................", "................................", "...........k........k...........", "..........kok......kok..........", "..........kook....kook..........", "..........koookkkkoook..........", "..........kooooooooook..........", "....kkk..kooooooooooook..kkk....", "...koookkooooooooooooookkoook...", "....koooooooyyoooooooooooook....", ".....koooooyyyooooooooooook.....", ".....koookyyyyoooooooookook.....", ".....koooykkyyoooooookkoook.....", "....koooyyyykkoooookkooooook....", "..kkkooooorrroooooorrroooookkk..", ".koooooooorrroooooorrrooooooook.", ".kooooooooooooooooooooooooooook.", "..kkkooooooooooooooooooooookkk..", ".kooooooooooooooooooooooooooook.", "kooooooookwkwkwkwkwkwkwkoooooook", "kooooooOOkrrrrrrrrrrrrrkOooooook", "kooooooOOkkkkkkkkkkkkkkkOooooook", "kOooooOoOkwkwkwkwkwkwkwkoOooooOk", ".kOOOOokkOOOOOOOOOOOOOOkkoOOOOk.", "..kkkkk..kOOOOOOOOOOOOk..kkkkk..", "..........kooOOOOOOook..........", "..........koookkkkoook..........", "..........kook....kook..........", "..........kok......kok..........", "...........k........k...........", "................................"], "left_out_m": ["................................", "................................", ".............kkkkkk.............", "..........kkkcccccckkk..........", ".........kcccccccccccck.........", "........kcccccccccccccck........", ".......kccccwwcccccccccck.......", "......kccccwwwccccccccccck......", ".....kccccwwwwcccccccccccck.....", ".....kcccwwwwwcccccccccccck.....", "....kcccwkkkkcccccckkkkcccck....", "....kcccckkkkcccccckkkkcccck....", "....kcccckkkkcccccckkkkcccck....", "....kcccckkrkcccccckkrkccccck...", "....kcccckkkkcccccckkkkccccck...", "....kcccckkkkcccccckkkkccccck...", "....kccccccccccccccccccccccck...", "....kccccccccccccccccccccccck...", "....kcccccccckkkkkkccccccccck...", "....kCCCCCCCkCCCCCCkCCCCCCCCk...", "....kCCCCCCCCCCCCCCCCCCCCCCCk...", "....kCCCCCCCCCCCCCCCCCCCCCCCk...", "....kCCCCCkCCCCCCCCCCCkCCCCCk...", ".....kCCCk.kCCCkkkCCCk.kCCCk....", ".....kCCCk.kCCCk.kCCCk.kCCCk....", "......kCk...kCk...kCk...kCk.....", "......kCk...kCk...kCk...kCk.....", "......kk.....k.....k.....k......", "....kkCk....................k...", "...kCCk...................kkCk..", "....kk...................kCCk...", "..........................kk...."], "teased_m": ["................................", "................................", "................................", ".....kk..kk..kk..kk..kk..kk.....", "....kggkkggkkggkkggkkggkkggk....", "..k.kggkkggkkggkkggkkggkkggk.k..", ".krkkggkkggkkggkkggkkggkkggkkrk.", "..krkggkkggkggggggggkggkkggkrk..", "...kggggggggggggggggggggggggk...", "...kggggggggggggggggggggggggk...", "....kkggggggGgggggggggggggkk....", "....kgggggGGGggggggggggggggk....", "...kggggGGGGGgggggggggggggggk...", "..kggggkGGGGGggggggggggggkgggk..", "..kggggGkkGGGggggggggggkkggggk..", ".kggggGGGGkkgggggggggkkgggggggk.", ".kggggggrrrrgggggggggrrrrgggggk.", ".kggggggrrrrgggggggggrrrrgggggk.", ".kggggggggggggggggggggggggggggk.", ".kggggggggggggggggggggggggggggk.", ".kggggggggggggggggggggggggggggk.", "..kggggkwkwkwkwkwkwkwkwkwkgggk..", "..kqqqqkrrrrrrrrrrrrrrrrrkqqqk..", "...kqqqkkkkkkkkkkkkkkkkkkkqqk...", "....kqqkwkwkwkwkwkwkwkwkwkqk....", ".....kqqqqqqqqqqqqqqqqqqqqk.....", "......kqqqqqqqqqqqqqqqqqqk......", ".......kkqqqqqqqqqqqqqqkk.......", ".........kkkqqqqqqqqkkk.........", "............kkkkkkkk............", "................................", "................................"], "presentation_m": ["................................", "................................", "................................", "............kkkkkkkk............", "..kkkkkkkkkkddddddddkkkkkkkkkk..", ".kDDDDDDDDDDDDDDDDDDDDDDDDDDDDk.", ".kDDDDDDDDDDDDDDDDDDDDDDDDDDDDk.", "..kkkdddddddwwwwwwwwdddddddkkk..", "...kdddddwwwwwwwwwrwwwwdddddk...", "..kdddddwwrwwwwwwwrwwwwwdddddk..", "..kddddwwwwrwwrrrrrwwwwwwddddk..", ".kddddwwwwwwrrrrrrrrwwwwrwddddk.", ".kdddwwwwwwrrrrrrrrrrwrrwwwdddk.", "kdddwwrwwwwrrrkkkkrrrrrwwwwwdddk", "kdddwwwrrrrrrkwwkkkrrrwwwwwwdddk", "kdddwwwwwwrrrkkkkkkrrrwwwwwwdddk", "kdddwwwwwwrrrkkkkkkrrrwrrrrrdddk", "kdddwwwwwwrrrkkkkkkrrrwwwwwwdddk", "kdddwwwrrrwRRrkkkkrRRwwwwwwwdddk", ".kdddWrWWwwRRRrrrrRRRrrWWWWdddk.", ".kDDDDWWWWWwRRRRRRRRwWrrWWDDDDk.", "..kDDDDWWWWWrwRRRRwWWWWWrDDDDk..", "..kDDDDDWWWrrWWWWrrWWWWWDDDDDk..", "...kDDDDDWWrWWWWWWrWWWWDDDDDk...", "..kkkDDDDDDDWWWWWWrWDDDDDDDkkk..", ".kDDDDDDDDDDDDDDDDDDDDDDDDDDDDk.", ".kDDDDDDDDDDDDDDDDDDDDDDDDDDDDk.", "..kkkkkkkkkkDDDDDDDDkkkkkkkkkk..", "............kkkkkkkk............", "................................", "................................", "................................"], "fight_near_m": ["..................kkkkkk........", "................kkggggggkk......", ".......kkkkkk.kkggggggggggkk....", ".....kkggggggkggggGgggggggggk...", "....kggggggggggggGGgggggggggk...", "...kgggGggggggggGGGggggggggggk..", "..kgggGGgggggggGGGGgggggggggggk.", "..kggGGGggggggggggggggggggggggk.", ".kggGGGgggggggggggggggggggggggk.", ".kgggggggkggggggggggggkgggggggk.", ".kggggggggkkggggggggkkggggggggk.", ".kgggggggrrrgggggggrrrggggggggk.", "..kggggggrrrgggggggrrrgggggggk..", "..kggggggggggggggggggggggggggk..", "..kggggggggggggggggggggggggggk..", "..kggggggggkwkwkwkwkwkgggggggk..", "...kqqqqqggkrrrrrrrrrkgqqqqqk...", "....kqqqqqqkwkwkwkwkwkqqqqqk....", ".....kkqqqqqqqqqqqqqqqqqqkk.....", ".......kkkkqqqqqqqqqqkkkk.......", "........kyyyykkkkkkkkyyyyk......", ".......kyyyyk......kyyyyk.......", ".......kyyyyk......kyyyk........", "......kyyyyk......kyyykkk.......", "......kyyykkk....kyyyyyyyk......", ".....kyyyyyyyk....kkkyyyk.......", "......kkkyyyk.......kyyk........", ".......kyyyk........kyk.........", ".......kyyk........kyk..........", ".......kyk..........k...........", "......kyk.......................", ".......k........................"], "stranger_m": ["................................", "..............kkkk..............", "............kkddddkk............", "...........kddddddddk...........", "..........kddddddddddk..........", "..........kddddddddddk..........", ".........kddddddddddddk.........", ".........kddddddddddddk.........", ".........kddrrrdddrrrdk.........", ".........kddrrrdddrrrdk.........", ".........kddddddddddddk.........", ".........kDDDddddddDDDk.........", "..........kDDddddddDDk..........", ".........kkDDrDddDrDDkk.........", "........kdddddrrrrdddddk........", "........kddddddddddddddk........", ".......kddddddddddddddddk.......", ".......kDDddddddddddddDDk.......", "......kDDDDddddddddddDDDDk......", ".....kDDDDDddddddddddDDDDDk.....", ".....kDDDDddddddddddddDDDDk.....", "....kDDDDddddddddddddddDDDDk....", "...kDDDDddddddddddddddddDDDDk...", "..kDDDDddddddddddddddddddDDDDk..", "...kDDddddddddddddddddddddDDk...", "....kkddddddddddddddddddddkk....", "....kddddddddddddddddddddddk....", "....kddddddddddddddddddddddk....", "....kddddddddddddddddddddddk....", "...kddddddddddddddddddddddddk...", "...kddddddddddddddddddddddddk...", "....kkkkkkkkkkkkkkkkkkkkkkkk...."], "dunno_r": ["................................", "................................", "......kkkkkkkkkkkkkkkkkkkk......", ".....kwwwwwwwwwwwwwwwwWWWWk.....", ".....kwwwwwwwwwwwwwwwwWWWWk.....", ".....kwwwwwwwwwwwwwwwwWWWWk.....", ".....kwwwwwwwwwwwwwwwwWWWWk.....", ".....kwwwGGGGGGGGGGGGGGwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwGGGGGGGGGGGGGGwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwGGGGGGGGGGGGGGwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwbbbwwwwk.....", ".....kwwwwwwwwwwwwbwwwbwwwk.....", ".....kwwwGGGGGGwwwwwwwbwwwk.....", ".....kwwwwwwwwwwwwwwwbwwwwk.....", ".....kwwwwwwwwwwwwwwbwwwwwk.....", ".....kwwwwwwwwwwwwwwbwwwwwk.....", ".....kwwwGGGGGGwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwbwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kwwwwwwwwwwwwwwwwwwwwk.....", ".....kWWWWWWWWWWWWWWWWWWWWk.....", ".....kWWWWWWWWWWWWWWWWWWWWk.....", "......kkkkkkkkkkkkkkkkkkkk......", "................................", "................................"], "bumped_r": ["................................", "................................", "..............kkkk..............", "............kknnnnkk............", "...........knNnnnnnnk......k....", "..........knnnnnnNnnnk....kkk...", ".........knnnnnnnnnnnnk..kkk....", "........knnnnnnnnnnnnnnk..k.....", "........knnnnnnnnnnnnnnk....kk..", "....kk.knnnnnssssssnnnnnk.kkkkk.", "...kssk.kssssssssssssssk.ksskk..", "...kssskksssksssssskssskksssk...", "...kssskksssksssssskssskksssk...", "....kssskssssssssssssssksssk....", "....kssskSSRssssssssRSSksssk....", ".....kssskSSSSssssSSSSksssk.....", "......ksskkSSSSkrkSSSkkssk......", "......kssskkSSSkrkSSkksssk......", ".......ksskeeeeeeeeeekssk.......", ".......kssseeeeeeeeeesssk.......", "........ksseeeeeeeeeessk........", ".........keeeeeeeeeeeek.........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", ".......kEEEEEEEEEEEEEEEEk.......", ".......kEEEEEEEEEEEEEEEEk.......", "........keeeeeeeeeeeeeek........", ".........kkkkkkkkkkkkkk.........", "................................"], "left_out_r": ["................................", "................................", "................................", "................................", "................................", "................................", ".....kkkkkk..........kkkkkk.....", "....knnnnnnk........kyyyyyyk....", "...knnNnnnnnk......kyyYyyyyyk...", "..knnnnnnNnnnk....kyyyyyyYyyyk..", ".knnnnnnnnnnnnk..kyyyyyyyyyyyyk.", ".knnnnnnnnnnnnk..kyyyyyyyyyyyyk.", ".kssssssssssssk..kssssssssssssk.", ".kssskssssksssk..kssskssssksssk.", ".kssskssssksssk..kssskssssksssk.", "..kSSssssssSSk....kSSssssssSSk..", "..kSRSkssskRSk....kSRSkssskRSk..", "...kSSrrrrrSk......kSSrrrrrSk...", "....koSrrrok........kbSrrrbk....", "...kooooooook......kbbbbbbbbk...", "..kooooooooook....kbbbbbbbbbbk..", "..kooooooooook....kbbbbbbbbbbk..", "..kooooooooook....kbbbbbbbbbbk..", "..kooooooooookkkkkkbbbbbbbbbbk..", ".koooooooooooorrrrbbbbbbbbbbbbk.", ".kooooooooooorwrrrrbbbbbbbbbbbk.", ".kOOOOOOOOOOOrrrrrrBBBBBBBBBBBBk", ".kOOOOOOOOOOOrrrrrrBBBBBBBBBBBBk", "..kkkkkkkkkkkRRrrRRkkkkkkkkkkkk.", ".............kRRRRk.............", "..............kkkk..............", "................................"], "teased_r": ["................................", "................................", "................................", "................................", "................................", "................................", "................................", "......kkkkkk........kkkkkk......", ".....knnnnnnk......kkkkkkkk.....", "....knnNnnnnnk....kkkgkkkkkk....", "...knnnnnnNnnnk..kkkkkkkgkkkk...", "..knnnnnnnnnnnnkkkkkkkkkkkkkkk..", "..knnnnnnnnnnnnkkkkkkkkkkkkkkk..", "..ksssssssssssskkssssssssssssk..", "..ksssksssskssskkssskssssksssk..", "..ksssksssskssskkssskssssksssk..", "...kSSssssssSSk..kSSssssssSSk...", "...kSRSkssskRSk..kSRSkssskRSk...", "....kSSrrrrrSk....kSSrrrrrSk....", ".....kgSrrrgk......kPSrrrPk.....", "....kggggggggk....kPPPPPPPPk....", "...kggggggggggk..kPPPPPPPPPPk...", "...kggggggggggk..kPPPPPPPPPPk...", "...kggggggggggk..kPPPPPPPPPPk...", "...kggggggggggk..kPPPPPPPPPPk...", "..kggggggggggggkkPPPPPPPPPPPPk..", "..kggggggggggggkkPPPPPPPPPPPPk..", "..kqqqqqqqqqqqqqkpppppppppppppk.", "..kqqqqqqqqqqqqqkpppppppppppppk.", "...kkkkkkkkkkkkk.kkkkkkkkkkkkk..", "................................", "................................"], "presentation_r": ["................................", "................................", "................................", "................................", "................................", "................................", "................................", "................................", "..............kkkk..............", "............kkkkkkkk............", "...........kkkgkkkkkk...........", "....kkkk..kkkkkkgkkkkk..kkkk....", "...knnnnk.kkkkkkkkkkkk.kyyyyk...", "..knNnnnnkkkkksssskkkkkyYyyyyk..", ".knnnnNnnnksskssssksskyyyyYyyyk.", "knnnnnnnnnnssksssskssyyyyyyyyyyk", "knnssssssnnSSssssssSSyyssssssyyk", "kssksssskssSRSssssSRSssksssskssk", "ksskssssksskSSSkSkSSkssksssskssk", "kSSssssssSSkkeSSkSekkSSssssssSSk", ".kRSSkskSRkkeeeeeeeekkRSSkskSRk.", "..kSSSkSSkkeeeeeeeeeekkSSSkSSk..", "..kbbbbbbkkeeeeeeeeeekkooooook..", ".kbbbbbbbbkeeeeeeeeeekooooooook.", ".kbbbbbbbbkeeeeeeeeeekooooooook.", "kbbbbbbbbbbeeeeeeeeeeooooooooook", "kbbbbbbbbbEEEEEEEEEEEooooooooook", "kbbbbbbbbbEEEEEEEEEEEooooooooook", "BBBBBBBBBBBkkkkkkkkkOOOOOOOOOOOk", "BBBBBBBBBBBk.......kOOOOOOOOOOOk", "kkkkkkkkkkk.........kkkkkkkkkkk.", "................................"], "fight_near_r": ["................................", "................................", "...............kkk..............", "..............kyyyk.............", ".............kyyyk..............", ".............kyyyk..............", "......kkkkkk.kyykk..kkkkkk......", "....kkgkkkkkkyyyyykkNnnnnnkk....", "...kkkkkkkgkkkkyyknnnnnnNnnnk...", "..kkkkkkkkkkkkkyknnnnnnnnnnnnk..", "..kkkkkkkkkkkkykknnnnnnnnnnnnk..", "..kkkkkkkkkkkkkkknnknnnnnnknnk..", ".kkksskssssksskknnssksssskssnnk.", ".kssssksssskssssssssksssskssssk.", ".kssssksssskssssssssksssskssssk.", "..ksssssssssssskkssssssssssssk..", "..kSSRssssssRSSkkSSRssssssRSSk..", "...kSSSskkkSSSk..kSSSskkkSSSk...", "....kSSkSSSkSk....kSSkSSSkSk....", "k...krSSSSSSrkk..kkgSSSSSSgk...k", "skkkrrrrrrrsssskksggggggggggkkks", "sssssrrrrrrssssssssgggggggggssss", "sssssrrrrrrrrssssssgggggggggssss", "kkkrrrrrrrrrrrrkkggggggggggggkkk", "..krrrrrrrrrrrrkkggggggggggggk..", "..krrrrrrrrrrrrkkggggggggggggk..", "..krrrrrrrrrrrrkkggggggggggggk..", ".kRRRRRRRRRRRRRRqqqqqqqqqqqqqqk.", ".kRRRRRRRRRRRRRRqqqqqqqqqqqqqqk.", ".krrrrrrrrrrrrrrggggggggggggggk.", "..kkkkkkkkkkkkkkkkkkkkkkkkkkkk..", "................................"], "stranger_r": [".............kkkkkk.............", "...........kkddddddkk...........", ".........kkddddddddddkk.........", "........kddddddddddddddk........", "........kddddddddddddddk........", ".......kkddddddddddddddkk.......", "......kddddddddddddddddddk......", ".......kGddddddddddddddGk.......", ".......kGGGddddddddddGGGk.......", ".......kssskkkddddkkksssk.......", ".......kssksksksskskskssk.......", ".......kssksksksskskskssk.......", "........ksskkksssskkkssk........", "........kSSRssssssssRSSk........", "........kSSSSssssssSSSSk........", ".........kSSSSSkSkSSSSk.........", "..........kSSSSSkSSSSk..........", "..........kqqSSSSSSqqk..........", ".........kqqqqqqqqqqqqk.........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", "........kqqqqqqqqqqqqqqk........", ".......kDDDDDDDDDDDDDDDDk.......", ".......kDDDDDDDDDDDDDDDDk.......", ".......kqqqqqqqqqqqqqqqqk.......", "........kkkkkkkkkkkkkkkk........", "................................"], "hero": ["................................", "..............kkkk..............", "............kknnnnkk............", "..........kknNnnnnnnkk..........", ".........knnnnnnnNnnnnk.........", ".........knnnnnnnnnnnnk.........", "........knnnnnnnnnnnnnnk........", ".......knnnnnnnnnnnnnnnnk.......", ".......knnnnnnssssnnnnnnk.......", ".......kssssssssssssssssk.......", ".......kssssksssssskssssk.......", ".......kssssksssssskssssk.......", "........kssssssssssssssk........", "........kSSRssssssssRSSk........", "........kSSSSssssssSSSSk........", ".........kSSSSSkSkSSSSk.........", "..........kSSSSSkSSSSk..........", "..........kbbSSSSSSbbk..........", ".........kbbbbbbbbbbbbk.........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", "........kbbbbbbbbbbbbbbk........", ".......kBBBBBBBBBBBBBBBBk.......", ".......kBBBBBBBBBBBBBBBBk.......", ".......kbbbbbbbbbbbbbbbbk.......", "........kkkkkkkkkkkkkkkk........", "................................"], "teacher": ["................................", "..............kkkk..............", "............kkGGGGkk............", "..........kkGgGGGGGGkk..........", ".........kGGGGGGGgGGGGk.........", ".........kGGGGGGGGGGGGk.........", "........kGGGGGGGGGGGGGGk........", ".......kGGGGGGGGGGGGGGGGk.......", ".......kGGGGGGssssGGGGGGk.......", ".......kssskkksssskkksssk.......", ".......kssksksksskskskssk.......", ".......kssksksksskskskssk.......", "........ksskkksssskkkssk........", "........kSSRssssssssRSSk........", "........kSSSSssssssSSSSk........", ".........kSSSSSkSkSSSSk.........", "..........kSSSSSkSSSSk..........", "..........keeSSSSSSeek..........", ".........keeeeeeeeeeeek.........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", "........keeeeeeeeeeeeeek........", ".......kEEEEEEEEEEEEEEEEk.......", ".......kEEEEEEEEEEEEEEEEk.......", ".......keeeeeeeeeeeeeeeek.......", "........kkkkkkkkkkkkkkkk........", "................................"], "friend": ["................................", "................................", "................................", "................................", "................................", "................................", "................................", "......kkkkkk........kkkkkk......", ".....kyyyyyyk......knnnnnnk.....", "....kyyYyyyyyk....knnNnnnnnk....", "...kyyyyyyYyyyk..knnnnnnNnnnk...", "..kyyyyyyyyyyyykknnnnnnnnnnnnk..", "..kyyyyyyyyyyyykknnnnnnnnnnnnk..", "..ksssssssssssskkssssssssssssk..", "..ksssksssskssskkssskssssksssk..", "..ksssksssskssskkssskssssksssk..", "...kSSssssssSSk..kSSssssssSSk...", "...kSRSkssskRSk..kSRSkssskRSk...", "....kSSrrrrrSk....kSSrrrrrSk....", ".....koSrrrok......kbSrrrbk.....", "....kooooooook....kbbbbbbbbk....", "...kooooooooook..kbbbbbbbbbbk...", "...kooooooooook..kbbbbbbbbbbk...", "...kooooooooook..kbbbbbbbbbbk...", "...kooooooooook..kbbbbbbbbbbk...", "..kooooooooooookkbbbbbbbbbbbbk..", "..kooooooooooookkbbbbbbbbbbbbk..", "..kOOOOOOOOOOOOOkBBBBBBBBBBBBBk.", "..kOOOOOOOOOOOOOkBBBBBBBBBBBBBk.", "...kkkkkkkkkkkkk.kkkkkkkkkkkkk..", "................................", "................................"], "family": ["................................", "................................", ".........kkkk...................", ".......kkkkkkkk.................", "......kkgkkkkkkk................", ".....kkkkkkkgkkkk...............", "....kkkkkkkkkkkkkk..............", "...kkkkkkkkkkkkkkkk.............", "...kkkkkkkkkkkkkkkk.............", "..kkkkkksssssskkkkkk............", "...kssssssssssssssk.............", "...kssskssssssksssk.............", "...kssskssssssksssk....kk.......", "...kssssssssssssssk..kknnkk.....", "...kSSRssssssssRSSk.knNnnnnk....", "....kSSSSssssSSSSk.knnnnNnnnk...", ".....kSSSSkSkSSSk.knnnnnnnnnnk..", "......kSSSSkSSSk..knnssssssnnk..", ".....kPPPPPPPPPPk.kssskssskssk..", "....kPPPPPPPPPPPPkkssskssskssk..", "....kPPPPPPPPPPPPk.kSSssssSSk...", "....kPPPPPPPPPPPPk..kRSkSkSRk...", "...kPPPPPPPPPPPPPPk.kbSSkSbk....", "...kPPPPPPPPPPPPPPkkbbbbbbbbk...", "...kPPPPPPPPPPPPPPkkbbbbbbbbk...", "...kPPPPPPPPPPPPPPkkbbbbbbbbk...", "...kPPPPPPPPPPPPPPkkbbbbbbbbk...", "..kppppppppppppppppkbbbbbbbbk...", "..kppppppppppppppppBBBBBBBBBBk..", "...kPPPPPPPPPPPPPPkBBBBBBBBBBk..", "....kkkkkkkkkkkkkk.kkkkkkkkkk...", "................................"], "book": ["................................", "................................", "......................kkk.......", ".....................kyyyk......", ".....................kyyyk......", ".....................kyyyk......", "............kkkkkkkk.kyyyk......", "......kkkkkkrrrRRrrrkkyyyk......", "...kkkrrrrrrrrrRRrrrrryyyrkkk...", "..krrrrrrrwwwwwRRwwwwwyyyrrrrk..", "..krrwwwwwwwwwwRRwwwwwyyywwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwGGGGwRRwwGGGGwwwwrrk..", "..krrwwGGGGwwwwRRwwwwwGGGGwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwGGGGwRRwwGGGGwwwwrrk..", "..krrwwGGGGwwwwRRwwwwwGGGGwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwGGGGwRRwwGGGGwwwwrrk..", "..krrwwGGGGwwwwRRwwwwwGGGGwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwwwwwwRRwwwwwwwwwwrrk..", "..krrwwwwwwwwrrRRrrwwwwwwwwrrk..", "..krrwwwrrrrrrrRRrrrrrrrwwwrrk..", "..krrrrrrrrrkkkRRkkkrrrrrrrrrk..", "..krrrkkkkkk..kRRk..kkkkkkrrrk..", "...kkk.........kk.........kkk...", "................................", "................................", "................................", "................................"]};
+  var N = 32, M = 3, SIZE = N + M * 2;
+  function grid(key) {
+    var art = ART[key], g = [];
+    for (var y = 0; y < SIZE; y++) { g.push([]); for (var x = 0; x < SIZE; x++) g[y].push(null); }
+    for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) { var ch = art[r][c]; if (ch !== '.') g[r + M][c + M] = PAL[ch]; }
+    return g;
+  }
+  function aura(g) {
+    var ring = function (src, color) {
+      var out = [];
+      for (var y = 0; y < SIZE; y++) for (var x = 0; x < SIZE; x++) {
+        if (src[y][x]) continue;
+        if ((y > 0 && src[y - 1][x]) || (y < SIZE - 1 && src[y + 1][x]) || (x > 0 && src[y][x - 1]) || (x < SIZE - 1 && src[y][x + 1])) out.push([x, y]);
+      }
+      out.forEach(function (p) { src[p[1]][p[0]] = color; });
+    };
+    ring(g, '#5a1e8c'); ring(g, 'rgba(120,50,190,0.6)'); ring(g, 'rgba(120,50,190,0.3)');
+    return g;
+  }
+  function draw(cv, key, form) {
+    cv.width = SIZE; cv.height = SIZE;
+    var x = cv.getContext('2d');
+    x.clearRect(0, 0, SIZE, SIZE);
+    var g = grid(key);
+    if (form === 1) g = aura(g);
+    for (var yy = 0; yy < SIZE; yy++) for (var xx = 0; xx < SIZE; xx++) if (g[yy][xx]) { x.fillStyle = g[yy][xx]; x.fillRect(xx, yy, 1, 1); }
+    if (form === 1) {
+      x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(70,20,110,0.28)'; x.fillRect(0, 0, SIZE, SIZE);
+      x.globalCompositeOperation = 'source-over';
+    }
+  }
+  function enemyKey(id, form) { return id + (form === 0 ? '_m' : '_r'); }
+  root.SST_SPRITES = { draw: draw, enemyKey: enemyKey, has: function (k) { return !!ART[k]; } };
+})(this);
+
+// 課題の「ほんとうの姿」（form 2）の SVG。ドット絵のかいぶつと対比して、くっきりした線で描く。
+(function (root) {
+  'use strict';
+  var LINE = '#12172a', SKIN = '#f6cfa8';
+
+  // 子ども1人（中心 x、足もと y、大きさ k）。mouth: smile / laugh / o / flat
+  function kid(x, y, k, o) {
+    o = o || {};
+    var hair = o.hair || '#6b4226', shirt = o.shirt || '#3b6fd8', mouth = o.mouth || 'smile';
+    var m = {
+      smile: '<path d="M-8 6 Q0 13 8 6" fill="none" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/>',
+      laugh: '<path d="M-10 4 Q0 18 10 4 Z" fill="#e5484d" stroke="' + LINE + '" stroke-width="3" stroke-linejoin="round"/>',
+      o: '<ellipse cx="0" cy="8" rx="4" ry="5" fill="#e5484d" stroke="' + LINE + '" stroke-width="3"/>',
+      flat: '<path d="M-6 8 H6" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/>',
+      angry: '<path d="M-8 10 Q0 2 8 10" fill="none" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/><path d="M-16 -14 L-5 -9 M16 -14 L5 -9" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round" transform="translate(0 -2)"/>'
+    }[mouth];
+    var arms = o.armsUp
+      ? '<path d="M-26 -50 L-42 -82 M26 -50 L42 -82" stroke="' + LINE + '" stroke-width="15" stroke-linecap="round"/><path d="M-26 -50 L-42 -82 M26 -50 L42 -82" stroke="' + SKIN + '" stroke-width="8" stroke-linecap="round"/>'
+      : '';
+    return '<g transform="translate(' + x + ' ' + y + ') scale(' + k + ')">' +
+      arms +
+      '<path d="M-30 0 V-38 Q-30 -62 0 -62 Q30 -62 30 -38 V0 Z" fill="' + shirt + '" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/>' +
+      '<g transform="translate(0 -90)">' +
+      '<circle r="28" fill="' + SKIN + '" stroke="' + LINE + '" stroke-width="4"/>' +
+      '<path d="M-28 -2 Q-30 -32 0 -32 Q30 -32 28 -2 Q16 -18 -4 -16 Q-20 -14 -28 -2 Z" fill="' + hair + '" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/>' +
+      (o.glasses ? '<circle cx="-10" cy="-2" r="8" fill="none" stroke="' + LINE + '" stroke-width="3"/><circle cx="10" cy="-2" r="8" fill="none" stroke="' + LINE + '" stroke-width="3"/>' : '') +
+      '<circle cx="-10" cy="-2" r="3.5" fill="' + LINE + '"/><circle cx="10" cy="-2" r="3.5" fill="' + LINE + '"/>' +
+      '<circle cx="-17" cy="8" r="4" fill="#f2a0a0" opacity=".7"/><circle cx="17" cy="8" r="4" fill="#f2a0a0" opacity=".7"/>' +
+      '<g transform="translate(0 6)">' + m + '</g>' +
+      '</g></g>';
+  }
+
+  var ART = {
+    // 1問の わからない問題：プリント1まい
+    dunno: '<rect x="44" y="18" width="112" height="148" rx="8" fill="#fff" stroke="' + LINE + '" stroke-width="5"/>' +
+      '<path d="M62 46 H138 M62 66 H138 M62 86 H120 M62 116 H96 M62 136 H96" stroke="#a7b2c8" stroke-width="6" stroke-linecap="round"/>' +
+      '<path d="M112 112 Q112 100 124 100 Q136 100 136 112 Q136 120 126 124 V132" fill="none" stroke="#3b5bdb" stroke-width="6" stroke-linecap="round"/><circle cx="126" cy="146" r="4.5" fill="#3b5bdb"/>',
+    // よそ見して ぶつかっただけ：あわてている子
+    bumped: kid(100, 178, 1.15, { mouth: 'o', shirt: '#2b8a3e', armsUp: true }) +
+      '<path d="M150 70 l10 -8 M156 84 l14 -2" stroke="' + LINE + '" stroke-width="4" stroke-linecap="round"/>',
+    // 人数が ちょうどの 遊び：2人とボール
+    left_out: kid(58, 178, .9, { mouth: 'laugh', shirt: '#f08c3a' }) + kid(142, 178, .9, { mouth: 'laugh', shirt: '#3b6fd8', hair: '#d9a400' }) +
+      '<circle cx="100" cy="172" r="12" fill="#e5484d" stroke="' + LINE + '" stroke-width="4"/><path d="M88 172 H112" stroke="' + LINE + '" stroke-width="3"/>',
+    // くり返し からかわれている：わらっている2人（ふつうの子として描く）
+    teased: kid(62, 178, .9, { mouth: 'laugh', shirt: '#5c6b8a' }) + kid(138, 178, .9, { mouth: 'laugh', shirt: '#9b7fe0', hair: '#2a2a2a' }),
+    // ふつうに 聞いている クラスの みんな：3人
+    presentation: kid(48, 182, .72, { mouth: 'smile', shirt: '#3b6fd8' }) + kid(152, 182, .72, { mouth: 'smile', shirt: '#f08c3a', hair: '#d9a400' }) +
+      kid(100, 168, .8, { mouth: 'smile', shirt: '#2b8a3e', hair: '#2a2a2a' })
+  };
+
+  ART.fight_near = kid(60, 184, 1.0, { mouth: 'angry', shirt: '#c92a2a', hair: '#2a2a2a' }) + kid(140, 184, 1.0, { mouth: 'angry', shirt: '#5c6b8a' }) +
+    '<path d="M96 40 l8 14 -10 2 8 14" fill="none" stroke="#e0a800" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>';
+  // 知らない大人：こわい顔にはしない（見た目では わからない、を残す）
+  ART.stranger = kid(100, 186, 1.25, { mouth: 'smile', shirt: '#4a4f63', hair: '#6e7781', glasses: true }) +
+    '<path d="M62 52 Q100 24 138 52 Z" fill="#3d2f63" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/><rect x="56" y="50" width="88" height="8" rx="4" fill="#3d2f63" stroke="' + LINE + '" stroke-width="4"/>';
+
+  function svg(id) {
+    if (!ART[id]) return null;
+    return '<svg viewBox="0 0 200 190" xmlns="http://www.w3.org/2000/svg" role="img">' + ART[id] + '</svg>';
+  }
+
+  root.SST_ILLUST = { svg: svg };
+})(this);
+
+// 画面。状態は engine が持ち、ここは描画と操作の受け渡しだけをする。
+(function (root) {
+  'use strict';
+  var E = root.SST_ENGINE, D = E.data, P = root.SST_PLATFORM;
+  var S = null;          // ゲームの状態
+  var sel = -1;          // 選んでいる手札
+  var removing = false;  // ひと休みで手放すカードを選んでいる
+  var debriefPage = 0;
+  var app;
+
+  function h(tag, attrs, kids) {
+    var el = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === 'class') el.className = attrs[k];
+      else if (k === 'text') el.textContent = attrs[k];
+      else if (k.slice(0, 2) === 'on') el.addEventListener(k.slice(2), attrs[k]);
+      else if (attrs[k] != null && attrs[k] !== false) el.setAttribute(k, attrs[k]);
+    }
+    (kids || []).forEach(function (c) { if (c != null) el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return el;
+  }
+
+  function save() { if (S && S.phase !== 'battle') P.save(S); }
+
+  function act(fn) {
+    try { fn(); } catch (e) { console.error(e); }
+    sel = -1;
+    save();
+    render();
+  }
+
+  // --- 上の帯 ---
+  function topBar() {
+    var pct = Math.round(S.yoyu / S.maxYoyu * 100);
+    var low = S.yoyu < S.maxYoyu * D.RULES.stressThreshold;
+    return h('header', { class: 'top' }, [
+      h('div', { class: 'meter' + (low ? ' low' : '') }, [
+        h('span', { class: 'lbl', text: '心の余裕' }),
+        h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + pct + '%' })]),
+        h('b', { text: S.yoyu + '/' + S.maxYoyu })
+      ]),
+      h('div', { class: 'chip trust', title: '信頼' }, [h('span', { class: 'lbl', text: '信頼' }), h('b', { text: String(S.trust) })]),
+      h('div', { class: 'stats' }, Object.keys(D.STATS).map(function (k) {
+        return h('div', { class: 'chip st-' + k }, [h('span', { class: 'lbl', text: D.STATS[k].name }), h('b', { text: String(S.stats[k]) })]);
+      })),
+      h('div', { class: 'nigates' }, Object.keys(S.nigate || {}).map(function (k) {
+        return h('div', { class: 'chip nigate', title: '苦手意識' }, [h('span', { class: 'lbl', text: '苦手：' + D.CTX_LABEL[k] }), h('b', { text: String(S.nigate[k]) })]);
+      })),
+      h('div', { class: 'floor', text: (S.row + 1) + ' / ' + S.map.length + ' だん' })
+    ]);
+  }
+
+  var selSup = null;
+  var lastDealKey = '';
+  function sprite(key, form, cls) {
+    var cv = document.createElement('canvas');
+    cv.className = 'px ' + (cls || '');
+    if (root.SST_SPRITES && SST_SPRITES.has(key)) SST_SPRITES.draw(cv, key, form || 0);
+    return cv;
+  }
+  // アイテム：つけているもの（3つまで）。戦いごとに1回ずつ
+  function itemSlots(inBattle) {
+    var slots = [];
+    for (var i = 0; i < D.SUPPORT_RULES.slots; i++) {
+      (function (id) {
+        if (!id) { slots.push(h('div', { class: 'item empty', title: 'あき' })); return; }
+        var u = D.SUPPORTS[id], can = inBattle && E.canUseSupport(S, id);
+        var used = inBattle && !can;
+        slots.push(h('button', {
+          class: 'item' + (selSup === id ? ' selected' : '') + (used ? ' used' : ''), disabled: !inBattle || used, 'aria-label': u.name,
+          onclick: function () {
+            if (selSup === id) { selSup = null; act(function () { E.useSupport(S, id); }); }
+            else { selSup = id; sel = -1; render(); }
+          }
+        }, [sprite(id, 2), h('span', { class: 'iname', text: u.name })]));
+      })(S.equip[i]);
+    }
+    var tip = selSup && inBattle ? h('div', { class: 'itemtip' }, [h('b', { text: D.SUPPORTS[selSup].name }), h('span', { text: D.SUPPORTS[selSup].note }), h('small', { text: 'もう一度 タップで 使う（この戦いで 1回）' })]) : null;
+    return h('div', { class: 'items' }, slots.concat([tip]));
+  }
+
+  // --- タイトル ---
+  function titleScreen(saved) {
+    app.replaceChildren(h('main', { class: 'title' }, [
+      h('h1', { text: D.TEXT.title }),
+      h('p', { class: 'sub', text: '毎日の「こまった」に、どの手で こたえる？' }),
+      saved ? h('button', { class: 'primary big', onclick: function () { S = saved; render(); }, text: 'つづきから' }) : null,
+      h('button', { class: saved ? 'secondary big' : 'primary big', onclick: start, text: saved ? 'はじめから' : 'はじめる' })
+    ]));
+  }
+  function start() {
+    var mode = Number(P.param('mode')) || 1;
+    S = E.newRun((Date.now() ^ (Math.random() * 1e9)) >>> 0, mode);
+    debriefPage = 0;
+    save(); render();
+  }
+
+  var NODE = {
+    battle: { label: '課題', cls: 'n-battle' }, elite: { label: '大きなかべ', cls: 'n-elite' },
+    event: { label: 'できごと', cls: 'n-event' }, rest: { label: 'ひと休み', cls: 'n-rest' }, boss: { label: 'ボス', cls: 'n-boss' }
+  };
+
+  // --- マップ ---
+  function mapScreen() {
+    var rows = S.map.map(function (row, r) {
+      return h('div', { class: 'maprow' + (r === S.row ? ' now' : r < S.row ? ' past' : '') }, [
+        h('span', { class: 'rownum', text: r === S.map.length - 1 ? 'さいご' : (r + 1) + 'だん目' })
+      ].concat(row.map(function (k, c) {
+        var n = NODE[k];
+        return h('button', {
+          class: 'node ' + n.cls, disabled: r !== S.row,
+          onclick: function () { act(function () { E.chooseNode(S, c); }); }
+        }, [n.label]);
+      })));
+    }).reverse();
+    var notice = S.notice; S.notice = null;
+    return h('main', { class: 'map' }, [notice ? h('p', { class: 'praise', text: notice }) : null, itemSlots(false), h('p', { class: 'hint', text: '次に 行くところを えらぼう' })].concat(rows));
+  }
+
+  // --- 戦い ---
+  function cardView(c, opts) {
+    opts = opts || {};
+    var effects = [];
+    var p = opts.preview || {};
+    if (c.solve) effects.push(h('span', { class: 'fx solve' }, ['解決 ' + (p.solve != null ? p.solve : c.solve)]));
+    if (c.guard) effects.push(h('span', { class: 'fx guard' }, ['ゆとり ' + (p.guard != null ? p.guard : c.guard)]));
+    if (c.heal) effects.push(h('span', { class: 'fx heal' }, ['余裕 +' + c.heal]));
+    if (c.draw) effects.push(h('span', { class: 'fx' }, ['1まい 引く']));
+    if (c.organize) effects.push(h('span', { class: 'fx reveal' }, ['整理する']));
+    if (c.escape) effects.push(h('span', { class: 'fx reveal' }, ['その場を はなれる']));
+    if (c.distance) effects.push(h('span', { class: 'fx reveal' }, ['いきおいを おさめる']));
+    if (c.trust > 0) effects.push(h('span', { class: 'fx trust' }, ['信頼 +' + c.trust]));
+    if (c.trust < 0) effects.push(h('span', { class: 'fx bad' }, ['信頼 ' + c.trust]));
+    if (c.curse) effects.push(h('span', { class: 'fx bad' }, ['モヤモヤが 入る']));
+    var tags = [];
+    if (p.weak) tags.push(h('span', { class: 'tag good', text: 'よく効く' }));
+    if (p.resist) tags.push(h('span', { class: 'tag', text: '効きにくい' }));
+    if (p.backfire) tags.push(h('span', { class: 'tag bad', text: 'あとで こじれる' }));
+    var lock = opts.lock;
+    return h('div', { class: 'card t-' + c.type + (opts.selected ? ' selected' : '') + (opts.disabled ? ' off' : '') + (opts.temp ? ' temp' : '') }, [
+      h('div', { class: 'cost', text: c.unplayable ? '-' : String(c.cost) }),
+      h('div', { class: 'ctype', text: D.TYPE_LABEL[c.type] + (opts.temp ? '・この場' : '') }),
+      h('div', { class: 'cname', text: c.name }),
+      h('div', { class: 'cline', text: c.line }),
+      h('div', { class: 'fxs' }, effects),
+      c.chance ? h('div', { class: 'chance c-' + c.chance, text: D.CHANCE[c.chance].label }) : null,
+      tags.length ? h('div', { class: 'tags' }, tags) : null,
+      lock ? h('div', { class: 'lock', text: lock }) : null,
+      c.ctx && opts.showCtx ? h('div', { class: 'ctx', text: '使える場面：' + c.ctx.map(function (k) { return D.CTX_LABEL[k]; }).join('・') }) : null
+    ]);
+  }
+
+  function lockText(c) {
+    var short = E.reqShort(S, c);
+    if (!short) return null;
+    return 'あと ' + short.map(function (x) { return (x.k === 'trust' ? '信頼' : D.STATS[x.k].name) + x.need; }).join('・');
+  }
+
+  function battleScreen() {
+    var b = S.battle, en = b.enemy, it = E.intent(S), EN = D.ENEMIES[en.id];
+    var itText = it.t === 'stress' ? '心の余裕 −' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
+    var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
+    var bubble = h('section', { class: 'bubble k-' + en.kind }, [
+      h('div', { class: 'ekind', text: (en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
+      h('h2', { class: 'ename', text: en.name }),
+      h('div', { class: 'meter hp' }, [
+        h('span', { class: 'lbl', text: '問題の大きさ' }),
+        h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + hpPct + '%' })]),
+        h('b', { text: Math.max(0, en.hp) + '/' + en.maxHp })
+      ]),
+      h('div', { class: 'intent' }, [h('span', { class: 'lbl', text: 'つぎに 起きそうなこと' }), h('b', { text: it.say + '（' + itText + '）' })]),
+      it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (EN.pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
+      EN.anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
+    ]);
+    var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(en.id, en.form), en.form, 'mon')]);
+    if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(en.id)) { monster.innerHTML = SST_ILLUST.svg(en.id); }
+    var hero = h('div', { class: 'hero' }, [
+      sprite('hero', 2, 'me'),
+      h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: 'ゆとり' }), h('b', { text: String(b.guard) })])
+    ]);
+    var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, bubble, monster]);
+    var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.slice(-3).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
+    var energy = h('div', { class: 'orb', title: '元気' }, [h('b', { text: b.energy + '/' + D.PLAYER.energy }), h('small', { text: '元気' })]);
+    var dealKey = S.floor + ':' + b.turn;
+    var deal = dealKey !== lastDealKey; lastDealKey = dealKey;
+    var n = b.hand.length, mid = (n - 1) / 2;
+    var hand = h('section', { class: 'hand' }, b.hand.map(function (hc, i) {
+      var c = E.card(hc.id), ok = E.canPlay(S, i);
+      var el = cardView(c, { preview: c.unplayable ? {} : E.preview(S, i), selected: sel === i, disabled: !ok, temp: hc.temp, lock: lockText(c) });
+      var d = i - mid;
+      el.style.setProperty('--rot', (d * 2.2) + 'deg');
+      el.style.setProperty('--lift', (Math.abs(d) * Math.abs(d) * 1.4) + 'px');
+      if (deal) { el.classList.add('deal'); el.style.animationDelay = (i * 70) + 'ms'; }
+      el.addEventListener('click', function () {
+        selSup = null;
+        if (!ok) { sel = i; render(); return; }
+        if (sel === i) act(function () { E.playCard(S, i); });
+        else { sel = i; render(); }
+      });
+      return el;
+    }));
+    var help = h('p', { class: 'hint', text: sel >= 0 && E.canPlay(S, sel) ? 'もう一度 タップで 使う' : sel >= 0 ? (E.card(b.hand[sel].id).unplayable ? 'モヤモヤは 使えない' : '元気が たりない／条件が たりない') : 'カードを タップして えらぶ' });
+    var end = h('button', { class: 'primary endturn', onclick: function () { act(function () { E.endTurn(S); }); }, text: 'ターンを おわる' });
+    var piles = h('div', { class: 'pile draw', text: '山札 ' + b.draw.length });
+    var disc = h('div', { class: 'pile disc', text: 'すて札 ' + b.discard.length });
+    return h('main', { class: 'battle' }, [stage, h('div', { class: 'row' }, [energy, msgs, help, end]), h('div', { class: 'handrow' }, [piles, hand, disc])]);
+  }
+
+  // --- 報酬 ---
+  function rewardScreen() {
+    var r = S.reward;
+    return h('main', { class: 'reward' }, [
+      h('h2', { text: r.frozen ? '時間が すぎた…' : r.fled ? 'その場を はなれた' : r.escaped ? '安全な ところへ はなれた！' : r.passed ? '時間が たった' : '乗りこえた！' }),
+      r.frozen ? h('p', { class: 'story', text: '動けないまま、時間が すぎた。「' + D.CTX_LABEL[r.frozen.ctx] + '」に 苦手意識が ついた（' + r.frozen.to + '）。この場面では ストレスが 少し ふえる。心の余裕は 1割まで もどった。' }) : null,
+      r.fled ? h('p', { class: 'story', text: 'にげたので、問題は そのまま のこった（モヤモヤが デッキに 入った）。にげるのが いい場面と、そうでない場面が ある。' }) : null,
+      r.escaped ? h('p', { class: 'praise', text: 'あぶない場面では、はなれる・にげる・大人を よぶ が いちばん。自分の 安全を 守れた。' }) : null,
+      r.passed ? h('p', { class: 'story', text: r.passed + (r.leave ? '（モヤモヤが デッキに 入った）' : '') }) : null,
+      h('p', { class: 'other', text: r.other }),
+      r.support ? h('div', { class: 'supoffer' }, [
+        sprite(r.support, 2, 'offer'),
+        h('b', { text: 'アイテムが 見つかった：「' + D.SUPPORTS[r.support].name + '」' }),
+        h('small', { text: D.SUPPORTS[r.support].note }),
+        h('button', { class: 'secondary', onclick: function () { act(function () { E.takeSupport(S); }); }, text: '受け取る' }),
+        S.equip.length >= D.SUPPORT_RULES.slots ? h('small', { text: 'いまは 3つ つけているので、持ち物に 入る（ひと休みで 入れかえられる）' }) : null
+      ]) : null,
+      r.choices.length ? h('p', { class: 'hint', text: 'これから 使える 選択肢を 1つ えらぼう' }) : null,
+      h('div', { class: 'choices' }, r.choices.map(function (id) {
+        var el = cardView(E.card(id), { lock: lockText(E.card(id)), showCtx: true });
+        el.addEventListener('click', function () { act(function () { E.pickReward(S, id); }); });
+        return el;
+      })),
+      h('button', { class: 'secondary', onclick: function () { act(function () { E.pickReward(S, null); }); }, text: r.choices.length ? '今回は えらばない' : '次へ' })
+    ]);
+  }
+
+  // --- ひと休み ---
+  function restScreen() {
+    if (removing) {
+      return h('main', { class: 'rest' }, [
+        h('h2', { text: '手放す（卒業する）カードを えらぶ' }),
+        h('div', { class: 'choices small' }, S.deck.map(function (id, i) {
+          var el = cardView(E.card(id), { showCtx: true });
+          el.addEventListener('click', function () { removing = false; act(function () { E.rest(S, 'remove', i); }); });
+          return el;
+        })),
+        h('button', { class: 'secondary', onclick: function () { removing = false; render(); }, text: 'もどる' })
+      ]);
+    }
+    var equipPanel = S.items.length > 1 ? h('div', { class: 'equip' }, [
+      h('h3', { text: 'アイテムを 入れかえる（' + D.SUPPORT_RULES.slots + 'つまで つけられる）' }),
+      h('div', { class: 'equiplist' }, S.items.map(function (id) {
+        var on = S.equip.indexOf(id) >= 0, full = S.equip.length >= D.SUPPORT_RULES.slots;
+        return h('button', {
+          class: 'eq' + (on ? ' on' : ''), disabled: !on && full, 'aria-pressed': on ? 'true' : 'false',
+          onclick: function () {
+            var next = on ? S.equip.filter(function (x) { return x !== id; }) : S.equip.concat([id]);
+            act(function () { E.setEquip(S, next); });
+          }
+        }, [sprite(id, 2), h('b', { text: D.SUPPORTS[id].name }), h('small', { text: on ? 'つけている' : (full ? 'いっぱい' : 'つける') })]);
+      }))
+    ]) : null;
+    return h('main', { class: 'rest' }, [
+      h('h2', { text: 'ひと休み' }),
+      equipPanel,
+      h('div', { class: 'two' }, [
+        h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['休む', h('small', { text: '心の余裕を ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' 回ふく' })]),
+        h('button', { class: 'secondary big', onclick: function () { removing = true; render(); } }, ['手放す', h('small', { text: 'いらない くせを 1つ 卒業する' })])
+      ])
+    ]);
+  }
+
+  // --- できごと ---
+  function eventScreen() {
+    var ev = D.EVENTS[S.event.id], done = S.event.done;
+    return h('main', { class: 'event' }, [
+      h('h2', { text: ev.title }),
+      h('p', { class: 'story', text: ev.text }),
+      done == null
+        ? h('div', { class: 'opts' }, ev.options.map(function (o, i) {
+          var open = E.optionOpen(S, o);
+          return h('button', { class: 'opt', disabled: !open, onclick: function () { act(function () { E.chooseEvent(S, i); }); } },
+            [o.label, !open ? h('small', { text: '（信頼が ' + o.req.trust + ' 以上で えらべる）' }) : null]);
+        }))
+        : h('div', {}, [
+          h('p', { class: 'result', text: ev.options[done].result }),
+          h('button', { class: 'primary', onclick: function () { act(function () { E.leaveEvent(S); }); }, text: '次へ' })
+        ])
+    ]);
+  }
+
+  // --- 振り返り ---
+  function cardName(id) { var n = E.card(id).name; return n.charAt(0) === '「' ? n : '「' + n + '」'; }
+  function whyText(why) {
+    if (why === 'start') return 'スタート';
+    if (why === 'escape') return 'あぶない場面から はなれた';
+    if (!E.card(why)) return why;
+    if (why.indexOf('event:') === 0) return 'できごと「' + D.EVENTS[why.slice(6)].title + '」で えらんだこと';
+    return cardName(why) + 'を 使った';
+  }
+
+  function trustChart(line) {
+    var W = 520, H = 120, pad = 16, n = line.length;
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('class', 'trustchart');
+    var pts = line.map(function (e, i) {
+      var x = pad + (n > 1 ? i * (W - 2 * pad) / (n - 1) : 0);
+      var y = H - pad - e.v / D.PLAYER.trustMax * (H - 2 * pad);
+      return [x, y, e];
+    });
+    var pl = document.createElementNS(ns, 'polyline');
+    pl.setAttribute('points', pts.map(function (p) { return p[0] + ',' + p[1]; }).join(' '));
+    pl.setAttribute('class', 'tline'); svg.appendChild(pl);
+    pts.forEach(function (p) {
+      var c = document.createElementNS(ns, 'circle');
+      c.setAttribute('cx', p[0]); c.setAttribute('cy', p[1]); c.setAttribute('r', 5);
+      c.setAttribute('class', p[2].d > 0 ? 'up' : p[2].d < 0 ? 'down' : 'flat');
+      svg.appendChild(c);
+    });
+    return svg;
+  }
+
+  function debriefGrow(sm) {
+    var items = [];
+    sm.grows.forEach(function (g) {
+      var used = Object.keys(g.cards).map(function (id) { return cardName(id) + 'を ' + g.cards[id] + '回'; }).join('、');
+      items.push(h('li', { class: 'grow' }, [
+        h('b', { text: D.STATS[g.stat].name + ' ' + (g.to - 1) + ' → ' + g.to }),
+        h('span', { text: g.why === 'elite' ? '大きなかべを 乗りこえて、いちばん 使った力が のびた。' : (used || D.STATS[g.stat].verb + 'カードを ' + g.uses + '回') + ' 使ったから。' })
+      ]));
+    });
+    sm.escapes.filter(function (e) { return e.ok; }).forEach(function (e) {
+      items.push(h('li', { class: 'unlock' }, [h('b', { text: '「' + D.ENEMIES[e.enemy].scene + '」から はなれて、安全を 守れた' }), h('span', { text: 'たたかうだけが 正解じゃない。場面に 合わせて えらべるのが 大事な力。' })]));
+    });
+    sm.nigate.forEach(function (e) {
+      items.push(h('li', {}, [h('b', { text: '「' + D.CTX_LABEL[e.ctx] + '」が 苦手に なった（' + e.to + '）' }), h('span', { text: '心の余裕が なくなる前に、休む・きょりを おく・だれかに そうだん しよう。' })]));
+    });
+    if (sm.supportUses.length) {
+      var names = {};
+      sm.supportUses.forEach(function (e) { names[D.SUPPORTS[e.id].name] = 1; });
+      items.push(h('li', { class: 'unlock' }, [h('b', { text: 'こまったとき、' + Object.keys(names).map(function (n) { return '「' + n + '」'; }).join('・') + 'に たよれた' }), h('span', { text: 'たよれる人や ものを 使えるのも、大事な力。' })]));
+    }
+    sm.unlocks.forEach(function (id) {
+      items.push(h('li', { class: 'unlock' }, [h('b', { text: cardName(id) + 'が 使えるようになった' }), h('span', { text: '育った力と 信頼で、できることが ふえた。' })]));
+    });
+    var trustUps = sm.trustLine.filter(function (e) { return e.d > 0; });
+    var trustBox = h('div', { class: 'trustbox' }, [
+      h('h3', { text: '信頼 ' + sm.trustStart + ' → ' + sm.trust }),
+      trustChart(sm.trustLine),
+      h('ul', {}, groupUps(trustUps).map(function (g) { return h('li', { text: '+' + g.d + '：' + whyText(g.why) + (g.n > 1 ? '（' + g.n + '回）' : '') }); })),
+      sm.recovered.length ? h('p', { class: 'praise', text: '信頼が 下がったあと、自分の行動で 取りもどした。それは とても 大事な力。' }) : null
+    ]);
+    var cards = [];
+    sm.gained.forEach(function (g) { cards.push(h('li', { text: cardName(g.card) + 'を 手に入れた（選択肢が ふえた）' })); });
+    sm.removed.forEach(function (g) { cards.push(h('li', { class: 'grad', text: cardName(g.card) + 'を 卒業した' })); });
+    var fallback = null;
+    if (!items.length && !trustUps.length && !cards.length) {
+      var most = mostUsed();
+      fallback = h('p', { class: 'praise', text: '今回は ' + (most ? cardName(most) + 'で たくさん 乗りこえた。' : 'さいごまで あきらめずに 考えた。') + '次は「わからないと言う」や「いっしょにやろう」も ためせるよ。' });
+    }
+    return [
+      h('h2', { text: 'そだったもの' }),
+      h('ul', { class: 'growlist' }, items),
+      fallback,
+      trustBox,
+      cards.length ? h('div', {}, [h('h3', { text: '選択肢' }), h('ul', {}, cards)]) : null
+    ];
+  }
+  function groupUps(ups) {
+    var by = {}, order = [];
+    ups.forEach(function (e) {
+      if (!by[e.why]) { by[e.why] = { why: e.why, d: 0, n: 0 }; order.push(e.why); }
+      by[e.why].d += e.d; by[e.why].n++;
+    });
+    return order.map(function (k) { return by[k]; });
+  }
+  function mostUsed() {
+    var cnt = {};
+    S.log.forEach(function (e) { if (e.k === 'play') cnt[e.card] = (cnt[e.card] || 0) + 1; });
+    var best = null;
+    Object.keys(cnt).forEach(function (k) { if (!best || cnt[k] > cnt[best]) best = k; });
+    return best;
+  }
+
+  function debriefView(sm) {
+    return [
+      h('h2', { text: '見方が 変わった・見つけた' }),
+      sm.reveals.length ? h('ul', { class: 'reveals' }, sm.reveals.map(function (r) {
+        return h('li', {}, [h('s', { text: r.from }), ' → ', h('b', { text: r.to }),
+          h('small', { text: r.truth === 'hostile' ? '（たしかめたら、ほんとうに いやなことだった。だから 先生に つたえるのが 大事）' : '（たしかめたら、わざとじゃなかった）' })]);
+      })) : h('p', { text: '今回は「見方を 変える」カードを 使わなかった。次は「相手の ようすを見る」を ためしてみよう。' }),
+      h('h3', { text: 'この場面で、こんな 選択肢が あった' }),
+      h('ul', {}, sm.discovered.map(function (d) { return h('li', { text: D.ENEMIES[d.enemy].scene + '：' + cardName(d.card) }); })),
+      h('h3', { text: '相手から 見ると' }),
+      h('ul', { class: 'others' }, sm.others.map(function (o) { return h('li', { text: o.other }); }))
+    ];
+  }
+
+  function debriefGrid(sm) {
+    function cell(cls, title, sub, list) {
+      var ex = list[0];
+      return h('div', { class: 'cell ' + cls }, [
+        h('b', { text: title }), h('small', { text: sub }),
+        h('div', { class: 'num', text: list.length + '回' }),
+        ex ? h('p', { text: '例：' + cardName(ex.card) }) : null
+      ]);
+    }
+    var g = sm.grid;
+    return [
+      h('h2', { text: '選び方と 結果' }),
+      h('div', { class: 'grid4' }, [
+        h('div', {}), h('div', { class: 'gh', text: 'うまくいった' }), h('div', { class: 'gh', text: 'うまくいかなかった' }),
+        h('div', { class: 'gh side', text: 'よい選び方' }),
+        cell('g-ok', 'よかった', '', g.goodOk),
+        cell('g-ng', 'ナイストライ', '選び方は よかった。こういう日も ある', g.goodNg),
+        h('div', { class: 'gh side', text: 'しょうどう' }),
+        cell('i-ok', 'ラッキー（でもモヤモヤ）', 'その場は おさまったけど…', g.impOk),
+        cell('i-ng', 'うまくいかなかった', '', g.impNg)
+      ]),
+      h('p', { class: 'hint', text: '結果だけで、選び方の よしあしは きまらない。ほんとうの 生活なら、どれを えらぶ？' })
+    ];
+  }
+
+  function endScreen() {
+    var sm = E.summary(S);
+    var pages = [debriefGrow, debriefView, debriefGrid];
+    var body = pages[debriefPage](sm);
+    var nav = h('div', { class: 'nav' }, [
+      debriefPage > 0 ? h('button', { class: 'secondary', onclick: function () { debriefPage--; render(); }, text: 'もどる' }) : h('span'),
+      h('span', { class: 'dots', text: (debriefPage + 1) + ' / ' + pages.length }),
+      debriefPage < pages.length - 1
+        ? h('button', { class: 'primary', onclick: function () { debriefPage++; render(); }, text: '次へ' })
+        : h('button', { class: 'primary', onclick: function () { P.clear(); start(); }, text: 'もう一回' })
+    ]);
+    return h('main', { class: 'end' }, [
+      h('p', { class: 'verdict ' + (sm.won ? 'won' : 'lost'), text: sm.won ? D.TEXT.win : D.TEXT.lose })
+    ].concat(body, [nav]));
+  }
+
+  function render() {
+    if (!S) return;
+    var screen;
+    if (S.phase === 'map') screen = mapScreen();
+    else if (S.phase === 'battle') screen = battleScreen();
+    else if (S.phase === 'reward') screen = rewardScreen();
+    else if (S.phase === 'rest') screen = restScreen();
+    else if (S.phase === 'event') screen = eventScreen();
+    else screen = endScreen();
+    app.replaceChildren(topBar(), screen);
+    app.setAttribute('data-phase', S.phase);
+  }
+
+  function boot() {
+    app = document.getElementById('app');
+    P.load(function (saved) {
+      if (saved && saved.ver === E.ENGINE_VER && saved.phase !== 'end') titleScreen(saved);
+      else titleScreen(null);
+    });
+  }
+
+  root.SST_UI = { boot: boot, _state: function () { return S; } };
+})(this);
+
+SST_UI.boot();
+</script>
+</body>
+</html>
