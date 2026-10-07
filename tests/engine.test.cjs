@@ -68,7 +68,7 @@ test('失敗したら「次の手」が手札に入り、経験は数える', ()
 test('見方カードで課題の名前と相性が変わる', () => {
   for (let seed = 1; seed < 200; seed++) {
     const s = E.newRun(seed, 1);
-    E.chooseNode(s, 0);
+    E._battle(s, 'bumped');
     if (s.battle.enemy.id !== 'bumped') continue;
     for (let k = 0; k < 2; k++) { s.battle.hand.push({ id: 'watch_them', temp: true }); s.battle.energy = 3; E.playCard(s, s.battle.hand.length - 1); }
     assert.strictEqual(s.battle.enemy.name, D.ENEMIES.bumped.forms[2]);
@@ -95,10 +95,10 @@ test('合格基準（各方針1000回）', () => {
 test('場面に合わないカードは、その戦いの山札・手札に出ない', () => {
   for (let seed = 1; seed < 300; seed++) {
     const s = E.newRun(seed, 1);
-    E.chooseNode(s, 0);
-    const ctx = D.ENEMIES[s.battle.enemy.id].ctx;
+    E._battle(s, 'bumped');
+    const ctx = D.ENEMIES[s.battle.enemy.id].ctx, term = D.ENEMIES[s.battle.enemy.id].term;
     const live = s.battle.draw.concat(s.battle.hand).filter((h) => !h.temp);
-    live.forEach((h) => assert.ok(E.fits(h.id, ctx), h.id + ' @' + ctx));
+    live.forEach((h) => assert.ok(E.fits(h.id, ctx, term), h.id + ' @' + ctx));
     if (s.battle.enemy.id === 'bumped') { assert.ok(s.battle.bench.some((h) => h.id === 'try_it')); return; }
   }
   assert.fail('bumped が出なかった');
@@ -107,7 +107,7 @@ test('場面に合わないカードは、その戦いの山札・手札に出�
 test('アイテム：戦いごとに1回、なくならない。先生は場面のカードをくれ、報酬にも出る', () => {
   for (let seed = 1; seed < 300; seed++) {
     const s = E.newRun(seed, 1, 'tario');
-    E.chooseNode(s, 0);
+    E._battle(s, 'homework');
     if (s.battle.enemy.id !== 'homework') continue;
     E.useSupport(s, 'teacher');
     assert.ok(!E.canUseSupport(s, 'teacher'));
@@ -154,7 +154,7 @@ test('時間で過ぎ去る課題：ターン数を乗りこえると終わり�
   assert.ok(!D.ENEMIES.teased.pass && !D.ENEMIES.presentation.pass);
   for (let seed = 1; seed < 300; seed++) {
     const s = E.newRun(seed, 1);
-    E.chooseNode(s, 0);
+    E._battle(s, 'bumped');
     if (s.battle.enemy.id !== 'bumped') continue;
     s.yoyu = 999; s.maxYoyu = 999;
     for (let i = 0; i < 3 && s.phase === 'battle'; i++) E.endTurn(s);
@@ -170,7 +170,7 @@ test('時間で過ぎ去る課題：ターン数を乗りこえると終わり�
 test('あぶない場面：にげると 乗りこえた あつかい（報酬あり・信頼+1）', () => {
   for (let seed = 1; seed < 400; seed++) {
     const s = E.newRun(seed, 1);
-    E.chooseNode(s, 0);
+    E._battle(s, 'fight_near');
     if (D.ENEMIES[s.battle.enemy.id].kind !== 'danger') continue;
     const t0 = s.trust;
     const i = s.battle.hand.findIndex((h) => h.id === 'run_now');
@@ -187,7 +187,7 @@ test('あぶない場面：にげると 乗りこえた あつかい（報酬あ
 test('ふつうの課題で にげると 問題が のこる（モヤモヤ・報酬なし）', () => {
   for (let seed = 1; seed < 400; seed++) {
     const s = E.newRun(seed, 1);
-    E.chooseNode(s, 0);
+    E._battle(s, 'bumped');
     if (D.ENEMIES[s.battle.enemy.id].kind === 'danger') continue;
     s.battle.hand.push({ id: 'run_now', temp: true });
     const n = s.deck.filter((x) => x === 'moyamoya').length;
@@ -204,7 +204,7 @@ test('ふつうの課題で にげると 問題が のこる（モヤモヤ・�
 test('心の余裕が0：ゲームは終わらず「動けない」になり、終わると 苦手意識がつき 余裕は1割', () => {
   for (let seed = 1; seed < 400; seed++) {
     const s = E.newRun(seed, 1, 'tario');
-    E.chooseNode(s, 0);
+    E._battle(s, 'fight_near');
     const E0 = D.ENEMIES[s.battle.enemy.id];
     if (E0.kind !== 'danger') continue;
     s.yoyu = 1;
@@ -314,7 +314,7 @@ test('パニック：効果のない 使えないカード。整えるカード�
 
 test('問題行動を えらぶと、次に 道と関係なく トラブルが 起き、そのあと 同じ段の マップに もどる', () => {
   for (let seed = 1; seed < 200; seed++) {
-    const s = E.newRun(seed, 1); E.chooseNode(s, E.reachable(s)[0]);
+    const s = E.newRun(seed, 1); E._battle(s, 'bumped');
     if (s.phase !== 'battle' || D.ENEMIES[s.battle.enemy.id].kind === 'danger') continue;
     s.battle.hand.push({ id: 'tataku', temp: true });
     E.playCard(s, s.battle.hand.length - 1);

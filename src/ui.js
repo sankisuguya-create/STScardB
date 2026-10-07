@@ -52,7 +52,7 @@
   }
 
   var selSup = null;
-  var lastDealKey = '', lastMoyaKey = '', lastClearKey = '';
+  var lastDealKey = '', lastMoyaKey = '', lastClearKey = '', lastPlay = null, shownPlay = null, lastHitKey = '';
   function sprite(key, form, cls) {
     var cv = document.createElement('canvas');
     cv.className = 'px ' + (cls || '');
@@ -201,12 +201,13 @@
   }
 
   var NODE = {
-    battle: { label: '課題', cls: 'n-battle' }, elite: { label: '大きなかべ', cls: 'n-elite' },
+    battle: { label: '課題に 向き合う', cls: 'n-battle' }, elite: { label: '大きなかべ', cls: 'n-elite' },
+    mystery: { label: '？', cls: 'n-mystery' }, slack: { label: 'ゴロゴロ', cls: 'n-slack' },
     event: { label: 'できごと', cls: 'n-event' }, rest: { label: 'ひと休み', cls: 'n-rest' }, boss: { label: 'ボス', cls: 'n-boss' }
   };
 
   // --- マップ（線で つながった 分かれ道） ---
-  var MX = 150, MY = 46, MW = 4 * MX, MH = (D.MAP.rows + 1) * MY;
+  var MX = 200, MY = 42, MW = D.MAP.cols * MX, MH = (D.MAP.rows + 1) * MY;
   function nodeXY(r, col) { return [col * MX + MX / 2, MH - (r + 0.5) * MY]; }
   function mapScreen() {
     var ok = E.reachable(S), m = S.map;
@@ -236,7 +237,7 @@
           style: 'left:' + (xy[0] / MW * 100) + '%;top:' + (xy[1] / MH * 100) + '%',
           disabled: !here,
           onclick: function () { act(function () { E.chooseNode(S, i); }); }
-        }, [h('b', { text: (n.related ? '★' : '') + label }), sub ? h('small', { text: sub }) : null]));
+        }, [h('b', { text: (n.related ? '★' : '') + label }), sub && n.kind !== 'mystery' ? h('small', { text: sub }) : null]));
       });
     });
     var notice = S.notice; S.notice = null;
@@ -244,7 +245,11 @@
       bossBanner(),
       notice ? h('p', { class: 'praise', text: notice }) : null,
       h('div', { class: 'maprow2' }, [itemSlots(false), h('p', { class: 'hint', text: '光っている マスから 次に 行くところを えらぼう' })]),
-      h('div', { class: 'mapbox', style: 'aspect-ratio:' + MW + ' / ' + MH }, [svg].concat(nodes))
+      h('div', { class: 'routes' }, D.ROUTES.map(function (R) {
+        return h('div', { class: 'route r-' + R.id + (S.route === R.id ? ' on' : '') }, [h('b', { text: R.name }), h('small', { text: R.note })]);
+      })),
+      h('div', { class: 'mapbox', style: 'aspect-ratio:' + MW + ' / ' + MH }, [svg].concat(nodes)),
+      (S.slack ? h('p', { class: 'slacknote', text: 'ゴロゴロ ' + S.slack + '回：ボスが ' + Math.round(D.MAP.slackBoss * S.slack * 100) + '% 大きく なっている' }) : null)
     ]);
   }
 
@@ -316,7 +321,21 @@
       sprite('hero_' + (D.HEROES[S.hero] ? D.HEROES[S.hero].look : 'hayatsu'), 2, 'me'),
       h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: '心の準備' }), h('b', { text: String(b.guard) })])
     ]);
-    var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, bubble, monster]);
+    var fx = [];
+    if (lastPlay && lastPlay !== shownPlay) {
+      shownPlay = lastPlay;
+      fx.push(h('div', { class: 'playfx t-' + lastPlay.type, text: lastPlay.name }));
+      if (lastPlay.solve) { fx.push(h('div', { class: 'numpop solve', text: '−' + lastPlay.solve })); monster.classList.add('hit'); }
+      if (lastPlay.guard) fx.push(h('div', { class: 'numpop guard', text: '心の準備 +' + lastPlay.guard }));
+    }
+    var hk = b.lastHit ? (S.floor + ':' + b.lastHit.turn) : '';
+    var hitNow = b.lastHit && hk !== lastHitKey && b.lastHit.turn === b.turn - 1;
+    if (hitNow) {
+      lastHitKey = hk;
+      if (b.lastHit.dmg > 0) { fx.push(h('div', { class: 'hurtflash' })); fx.push(h('div', { class: 'numpop stress', text: 'ストレス +' + b.lastHit.dmg })); hero.classList.add('hurt'); }
+      if (b.lastHit.blocked) fx.push(h('div', { class: 'numpop block', text: '心の準備で ' + b.lastHit.blocked + ' 受けとめた' }));
+    }
+    var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, bubble, monster].concat(fx));
     var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.slice(-3).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
     var energy = h('div', { class: 'orb', title: '元気' }, [h('b', { text: b.energy + '/' + D.PLAYER.energy }), h('small', { text: '元気' })]);
     var dealKey = S.floor + ':' + b.turn;
@@ -332,7 +351,7 @@
       el.addEventListener('click', function () {
         selSup = null;
         if (!ok) { sel = i; render(); return; }
-        if (sel === i) act(function () { E.playCard(S, i); });
+        if (sel === i) { var pv = E.preview(S, i); lastPlay = { name: c.name, solve: pv.solve, guard: pv.guard, type: c.type, key: Date.now() }; act(function () { E.playCard(S, i); }); }
         else { sel = i; render(); }
       });
       return el;

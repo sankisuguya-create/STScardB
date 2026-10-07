@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 6;
+  var ENGINE_VER = 7;
 
   // --- 乱数 ---
   function rand(s) {
@@ -55,56 +55,26 @@
 
   // 分かれ道のマップ：7段×4列。3本の道を下から上へ引き、通ったマスと線を使う。
   // マスの課題は はじめに 決めておく（マップで 名前が 見える）。課題の半分以上は ボスに 関連する課題
+  // マップ：3本の 一本道（しんどいが 力が つく道／ふつうの道／楽そうな道）。
+  // ボスに 関連する 課題は「課題に 向き合う」として 名前を 見せる。関連しない 課題（トラブル・アクシデント・失敗）は「？」マスに かくれ、できごとの ことも ある
   function buildMap(s) {
-    var M = D.MAP, act = D.ACTS[s.act], nodes = [], edges = {};
-    for (var r = 0; r < M.rows; r++) nodes.push({});
-    var starts = M.straight ? [0, 1, 2, 3].slice(0, M.paths) : shuffle(s, [0, 1, 2, 3]).slice(0, M.paths);
-    starts.forEach(function (c0) {
-      var c = c0;
-      for (var r = 0; r < M.rows; r++) {
-        nodes[r][c] = nodes[r][c] || { col: c };
-        if (r < M.rows - 1) {
-          var opts = M.straight ? [c] : [c - 1, c, c + 1].filter(function (x) { return x >= 0 && x < M.cols; });
-          var nc = pick(s, opts);
-          edges[r + ':' + c + ':' + nc] = 1;
-          c = nc;
-        }
+    var M = D.MAP, act = D.ACTS[s.act], rows = [], edges = [];
+    for (var r = 0; r < M.rows; r++) rows.push([]);
+    D.ROUTES.forEach(function (R, c) {
+      var mid = R.nodes.slice(1);
+      shuffle(s, mid);
+      var kinds = [R.nodes[0]].concat(mid);
+      for (var r2 = 0; r2 < M.rows; r2++) {
+        var kind = r2 === M.rows - 1 ? 'rest' : kinds[r2];
+        var n = { col: c, kind: kind, route: R.id };
+        if (kind === 'battle') { n.enemy = pick(s, act.related); n.related = true; }
+        if (kind === 'elite') n.enemy = pick(s, act.elites);
+        rows[r2].push(n);
+        if (r2 < M.rows - 1) edges.push({ r: r2, from: c, to: c });
       }
     });
-    for (var r2 = 0; r2 < M.rows - 1; r2++) {
-      Object.keys(nodes[r2]).forEach(function (c) {
-        c = Number(c);
-        [c - 1, c + 1].forEach(function (nc) {
-          if (nodes[r2 + 1][nc] && rand(s) < M.crossEdge) edges[r2 + ':' + c + ':' + nc] = 1;
-        });
-      });
-    }
-    var rows = nodes.map(function (o) { return Object.keys(o).map(Number).sort(function (a, b) { return a - b; }).map(function (c) { return o[c]; }); });
-    // マスの種類
-    rows.forEach(function (row, r) {
-      row.forEach(function (n) {
-        if (r === 0) n.kind = 'battle';
-        else if (r === M.rows - 1) n.kind = 'rest';
-        else {
-          var x = rand(s);
-          n.kind = x < .56 ? 'battle' : x < .78 ? 'event' : x < .86 ? 'rest' : (r >= 2 ? 'elite' : 'battle');
-        }
-      });
-    });
-    // 課題を わりあてる（関連する課題を 半分以上）
-    var battles = [];
-    rows.forEach(function (row) { row.forEach(function (n) { if (n.kind === 'battle') battles.push(n); }); });
-    var order = shuffle(s, battles.slice());
-    var needRelated = Math.ceil(order.length * M.relatedShare);
-    order.forEach(function (n, i) {
-      if (i < needRelated) { n.enemy = pick(s, act.related); n.related = true; }
-      else if (rand(s) < D.RULES.dangerChance) n.enemy = pick(s, act.dangers);
-      else n.enemy = pick(s, act.others);
-    });
-    rows.forEach(function (row) { row.forEach(function (n) { if (n.kind === 'elite') n.enemy = pick(s, act.elites); }); });
-    var edgeList = Object.keys(edges).map(function (k) { var p = k.split(':').map(Number); return { r: p[0], from: p[1], to: p[2] }; });
-    rows.push([{ col: 1.5, kind: 'boss', enemy: act.boss }]);
-    return { rows: rows, edges: edgeList };
+    rows.push([{ col: (M.cols - 1) / 2, kind: 'boss', enemy: act.boss }]);
+    return { rows: rows, edges: edges };
   }
 
   // いまの段で えらべる マス（前の段から 線で つながっているもの）
@@ -153,8 +123,17 @@
     var n = s.map.rows[s.row][i];
     s.floor++;
     s.pos = n.col;
+    if (n.route) s.route = n.route;
     s.nodeRelated = !!n.related;
-    if (n.kind === 'battle' || n.kind === 'elite' || n.kind === 'boss') { startBattle(s, n.enemy); s.phase = 'intro'; }
+    if (n.kind === 'mystery') {
+      var act = D.ACTS[s.act];
+      if (rand(s) < D.MAP.mysteryBattle) {
+        var pool = act.others.concat(rand(s) < D.RULES.dangerChance * 2 ? act.dangers : []);
+        startBattle(s, pick(s, pool)); s.phase = 'intro'; s.mysteryBattle = true;
+      } else startEvent(s);
+    }
+    else if (n.kind === 'slack') { s.usedEvents.push('slack'); s.event = { id: 'slack', done: null }; s.phase = 'event'; log(s, { k: 'event', id: 'slack' }); }
+    else if (n.kind === 'battle' || n.kind === 'elite' || n.kind === 'boss') { startBattle(s, n.enemy); s.phase = 'intro'; }
     else if (n.kind === 'event') startEvent(s);
     else if (n.kind === 'rest') { s.phase = 'rest'; }
     s.nodeKind = n.kind;
@@ -189,7 +168,7 @@
   function heroMod(s, E) { var H = D.HEROES[s.hero]; return (H && H.ctxMod && H.ctxMod[E.ctx]) || 1; }
   function bossHp(s, E) {
     var hp = E.hp * D.RULES.hpScale * heroMod(s, E);
-    if (E.kind === 'boss') hp *= D.MAP.bossBase * (1 - D.MAP.heartHp * lostHearts(s));
+    if (E.kind === 'boss') hp *= D.MAP.bossBase * (1 - D.MAP.heartHp * lostHearts(s)) * (1 + D.MAP.slackBoss * (s.slack || 0));
     return Math.round(hp);
   }
 
@@ -464,6 +443,7 @@
       var n = stressOf(s, mv);
       var blocked = Math.min(b.guard, n);
       var dmg = n - blocked;
+      b.lastHit = { dmg: dmg, blocked: blocked, turn: b.turn };
       hurt(s, dmg);
       msg(s, mv.say + '（ストレス +' + dmg + (blocked ? '、心の準備で ' + blocked + ' うけとめた' : '') + '）', 'hit');
     } else if (mv.t === 'grow') {
@@ -560,7 +540,7 @@
     if (passed && E.pass.leave) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'pass:' + en.id }); }
     var statsBefore = { think: s.stats.think, act: s.stats.act, relate: s.stats.relate };
     Object.keys(D.STATS).forEach(function (st) {
-      if (b.usage[st] >= D.RULES.growthUses && s.stats[st] < D.PLAYER.statMax) {
+      if (b.usage[st] >= (s.route === 'hard' ? D.RULES.growthUses - 1 : D.RULES.growthUses) && s.stats[st] < D.PLAYER.statMax) {
         s.stats[st]++;
         log(s, { k: 'grow', stat: st, to: s.stats[st], uses: b.usage[st], why: 'use' });
       }
@@ -734,6 +714,7 @@
     var e = o.effects;
     if (e.trust) addTrust(s, e.trust, 'event:' + s.event.id, false);
     if (e.yoyu) s.yoyu = Math.max(1, Math.min(s.maxYoyu, s.yoyu + e.yoyu));
+    if (e.slack) { s.slack = (s.slack || 0) + e.slack; log(s, { k: 'slack', n: s.slack }); }
     if (e.addCard) { s.deck.push(e.addCard); log(s, { k: 'gain', card: e.addCard, why: 'event' }); }
     if (e.support) gainSupport(s, e.support, 'event');
     if (e.curse) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'event:' + s.event.id }); }
@@ -750,7 +731,7 @@
   // ボスを たおした：次の層へ。さいごの層なら おわり
   function bossDown(s) {
     if (s.act < s.acts - 1) {
-      s.act++; s.row = 0; s.pos = null; s.hearts = D.MAP.hearts;
+      s.act++; s.row = 0; s.pos = null; s.hearts = D.MAP.hearts; s.slack = 0;
       s.yoyu = s.maxYoyu;
       s.map = buildMap(s);
       s.phase = 'actclear';
@@ -845,7 +826,7 @@
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, _battle: function (s, eid) { s.floor++; if (s.pos == null) s.pos = 0; startBattle(s, eid); s.phase = 'battle'; return s; }, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D

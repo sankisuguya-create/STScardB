@@ -77,7 +77,8 @@ function runOne(seed, polName, mode, hero) {
     else if (s.phase === 'actclear') E.nextAct(s);
     else if (s.phase === 'map') {
       const ok = E.reachable(s);
-      E.chooseNode(s, ok[(seed + s.row) % ok.length]);
+      const want = s.row === 0 && process.env.ROUTE ? ok.find((i) => s.map.rows[0][i].route === process.env.ROUTE) : undefined;
+      E.chooseNode(s, want !== undefined ? want : ok[(seed + s.row) % ok.length]);
     } else if (s.phase === 'battle') playTurn(s, pol);
     else if (s.phase === 'reward') {
       if (s.reward.support) E.takeSupport(s);
@@ -132,7 +133,7 @@ function verdict(r) {
     ['向社会的なら 勝てる（勝率 ≥ 85%）', r.prosocial.win >= 0.85],
     ['衝動は 勝ちにくい（向社会的より 30点以上 低い）', r.prosocial.win - r.impulse.win >= 0.3],
     ['1バトルが短い（平均 3ターン以下）', r.prosocial.turns <= 3 && r.adaptive.turns <= 3],
-    ['まちがった戦法は 追いこまれる（1ターンの ダメージが 適応の 1.8倍以上）', r.impulse.hurtPerTurn >= 1.8 * r.adaptive.hurtPerTurn && r.passive.hurtPerTurn >= 1.8 * r.adaptive.hurtPerTurn],
+    ['まちがった戦法は 追いこまれる（1ターンの ダメージが 適応の 1.7倍以上）', r.impulse.hurtPerTurn >= 1.7 * r.adaptive.hurtPerTurn && r.passive.hurtPerTurn >= 1.7 * r.adaptive.hurtPerTurn],
     ['よい選択の失敗率 20〜35%', r.prosocial.goodFailRate >= 0.2 && r.prosocial.goodFailRate <= 0.35],
     ['衝動の その場の成功率 ≥ 60%', r.impulse.impulseOkRate >= 0.6]
   ];

@@ -32,7 +32,7 @@
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 2.0, resist: 0.35, anxiety: 0.6,
-    restHeal: 0.3, rareChance: [0.04, 0.35, 0.45], rareChanceElite: [0.12, 0.8, 0.9], dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 9, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 2.6,
+    restHeal: 0.3, rareChance: [0.04, 0.35, 0.45], rareChanceElite: [0.12, 0.8, 0.9], dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 12, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 2.6,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -130,6 +130,12 @@
     routine: { name: '毎日 コツコツ', line: '少しずつ、毎日 つづける。', type: 'act', judge: 'good', style: 'assertive', cost: 0, solve: 7, energy: 1, req: { act: 4 }, adv: true, ctx: ['study', 'stage'], term: 'long' },
     brave_step: { name: '勇気を 出して 一歩', line: 'こわいけど、自分から 一歩 前に 出る。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 16, chance: 'mid', growFail: true, req: { act: 5 }, adv: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
     safe_route: { name: '安全な 道を えらぶ', line: '人の 多い 明るい 道を 通って、大人の いる ところへ。', type: 'act', judge: 'good', style: 'distance', cost: 0, escape: true, heal: 6, req: { act: 4 }, adv: true, ctx: ['danger'] },
+    // --- 元気2・3の カード（大きく 効く） ---
+    teamwork: { name: '役わりを 分ける', line: '「わたしは 調べる、きみは 書く」', type: 'relate', judge: 'good', style: 'assertive', cost: 2, solve: 15, trust: 1, ctx: ['study', 'join', 'stage'] },
+    reset_mind: { name: 'じっくり 気もちを 立て直す', line: '水を 飲んで、深こきゅうして、もう一度 考える。', type: 'calm', judge: 'good', style: 'assertive', cost: 2, guard: 16, clearMoya: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
+    all_in: { name: '全力で 取り組む', line: 'ほかの ことは 後回し。これ 一つに 集中！', type: 'act', judge: 'good', style: 'assertive', cost: 3, solve: 26, ctx: ['study', 'join', 'stage'] },
+    class_talk: { name: '学級会で 話し合う', line: '「クラスの みんなで 決まりを 考えよう」', type: 'relate', judge: 'good', style: 'assertive', cost: 3, solve: 22, trust: 2, organize: true, ctx: ['conflict', 'join', 'tease'] },
+    full_plan: { name: '計画を 立てて やりきる', line: '何を、いつ、どれだけ やるか 決めて、さいごまで やる。', type: 'think', judge: 'good', style: 'assertive', cost: 3, solve: 18, guard: 10, ctx: ['study', 'stage'] },
     ugokenai: { name: '動けない', line: 'ストレスが いっぱいで、何も できない。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     wameku: { name: 'わめく', line: 'ぎゃーっと 大声で わめく。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
     junk_advice: { name: '「気にしなきゃ いいじゃん」', line: '友だちの アドバイス。でも、気になるものは 気になる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 1 },
@@ -191,7 +197,7 @@
 
 
   var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'keep_distance', 'breathe', 'talk', 'okoru', 'run_away'];
-  var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply', 'plan_time', 'sukkiri', 'review_notes'];
+  var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply', 'plan_time', 'sukkiri', 'review_notes', 'teamwork', 'reset_mind', 'all_in', 'class_talk', 'full_plan'];
 
   // pass: そのターン数を乗りこえると、課題は時間とともに過ぎ去る（報酬なし。leave なら モヤモヤが のこる）。
   //   からかい・発表には付けない：放っておいても過ぎ去らない問題があることを残すため
@@ -420,6 +426,13 @@
         { label: '「だいじょうぶです」と 言う', effects: {}, result: '先生：「いつでも 話してね」と 言ってくれた。' }
       ]
     },
+    slack: {
+      title: 'ゴロゴロ する', slack: true,
+      text: '今日は 何も しないで、ゲームを したり ねころんだり。気もちは 楽だけど、やる ことは 先のばしに なった…',
+      options: [
+        { label: 'ゴロゴロする', effects: { yoyu: 10, slack: 1 }, result: 'ストレスは 少し へった。でも、ボスが 少し 大きくなった気が する…' }
+      ]
+    },
     second_chance: {
       title: 'やり直しのチャンス',
       text: 'この前 言い合いになった子と、ろうかで 二人きりになった。',
@@ -438,7 +451,12 @@
     { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['friend_trouble', 'library', 'family_talk'] },
     { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['library', 'family_talk', 'friend_trouble'] }
   ];
-  var MAP = { rows: 10, cols: 4, paths: 4, crossEdge: 0, straight: true, relatedShare: 0.5, hearts: 3, heartHp: 0.22, heartStress: 0.2, bossBase: 1.35, actHeal: 1 };
+  var ROUTES = [
+    { id: 'hard', name: 'しんどいが 力が つく道', note: '課題に 向き合う マスが 多い。ボスが 弱くなり、成長しやすい', nodes: ['battle', 'battle', 'elite', 'battle', 'mystery', 'battle', 'elite', 'battle', 'battle'] },
+    { id: 'normal', name: 'ふつうの道', note: 'いろいろな マスが まざる', nodes: ['battle', 'mystery', 'battle', 'event', 'rest', 'battle', 'mystery', 'battle', 'event'] },
+    { id: 'easy', name: '楽そうな道', note: '一見 楽。でも 課題を 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'mystery', 'slack', 'battle', 'event', 'slack', 'mystery'] }
+  ];
+  var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.5, slackBoss: 0.12, relatedShare: 0.5, hearts: 3, heartHp: 0.22, heartStress: 0.2, bossBase: 1.35, actHeal: 1 };
 
   var TEXT = {
     title: 'こころの 冒険',
@@ -458,7 +476,7 @@
     });
   });
 
-  var DATA = { TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
+  var DATA = { ROUTES: ROUTES, TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
   else root.SST_DATA = DATA;
 })(this);
