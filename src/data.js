@@ -345,7 +345,7 @@
 
   // ===== トラブル課題（衝動的な 行動が 多いほど ？マスで 出やすい）=====
   ENEMIES.payback = {
-    trouble: true, art: 'bumped',
+    trouble: true,
     intro: 'この前 カッと なって やり返した 子が、今日は こっちを にらんでいる。「この前の、おぼえてるからな」',
     forms: ['しかえし 火の玉', 'にらんでくる あの子', 'まだ おこっている 子'],
     ctx: 'conflict', scene: 'しかえし', kind: 'normal', hp: 30,
@@ -354,7 +354,7 @@
     other: 'あの子：「…あやまってくれたなら、もう いいよ」'
   };
   ENEMIES.bad_rep = {
-    trouble: true, art: 'rumor',
+    trouble: true,
     intro: '教室に 入ると、ひそひそ 声。「あの子、すぐ おこるんだって」 自分の ことが うわさに なっている。',
     forms: ['うわさの 黒い けむり', 'ひそひそ 話す クラスの 子', '前の ことを 気にしている 子たち'],
     ctx: 'tease', scene: '自分の うわさ', kind: 'normal', hp: 28,
@@ -363,7 +363,7 @@
     other: 'クラスの子：「ちゃんと あやまってたの、見てたよ」'
   };
   ENEMIES.cold_class = {
-    trouble: true, art: 'left_out',
+    trouble: true,
     intro: '休み時間。いつもの 遊びに 行ったら、みんなが ちょっと だまった。「…どうする？」と 目を 見合わせている。',
     forms: ['つめたい かぜの かべ', '目を 見合わせる みんな', 'まだ 様子を 見ている みんな'],
     ctx: 'join', scene: 'みんなが よそよそしい', kind: 'normal', hp: 30,
@@ -375,7 +375,7 @@
 
   // ===== 自分の しっぱい（？マスで ときどき 出る）=====
   ENEMIES.got_rough = {
-    selfFail: true, art: 'bumped', term: 'short',
+    selfFail: true, term: 'short',
     intro: '休み時間、おにごっこで テンションが 上がって、友だちを 強く たたいて しまった。友だちが うでを おさえて 下を 向いている。',
     forms: ['あばれる 火の 手', 'うでを おさえる 友だち', 'びっくりして いたい 友だち'],
     ctx: 'conflict', scene: 'もり上がって たたいた', kind: 'normal', hp: 26,
@@ -384,7 +384,7 @@
     other: '友だち：「いたかったけど、すぐ あやまって くれたから いいよ」'
   };
   ENEMIES.said_too_much = {
-    selfFail: true, art: 'rumor',
+    selfFail: true,
     intro: 'みんなで わらっているうちに、調子に のって 友だちの ことを「へんなの」と 言いすぎた。友だちが 笑わなく なった。',
     forms: ['とげとげ ことばの つる', 'だまりこんだ 友だち', '本当は 気にしていた 友だち'],
     ctx: 'tease', scene: '言いすぎた', kind: 'normal', hp: 26,
@@ -393,7 +393,7 @@
     other: '友だち：「言われて いやだった。でも、あやまって くれて うれしかった」'
   };
   ENEMIES.joined_in = {
-    selfFail: true, art: 'teased',
+    selfFail: true,
     intro: 'クラスの 何人かが ある子を からかっていた。気づいたら 自分も いっしょに わらって、まねを していた。その子が 一人で 帰っていく。',
     forms: ['わらい声の むれ', 'からかわれた あの子', '一人で がまんしていた あの子'],
     ctx: 'tease', scene: 'からかいに 加わった', kind: 'normal', hp: 30,
@@ -402,7 +402,7 @@
     other: 'あの子：「次の 日、声を かけて くれて ほっとした」'
   };
   ENEMIES.skipped_hw = {
-    selfFail: true, solo: true, art: 'homework',
+    selfFail: true, solo: true,
     intro: 'きのう ゲームに むちゅうに なって、宿題を やらずに ねて しまった。朝の 会で「宿題を 出してください」の 声。',
     forms: ['サボりの おばけ', '出せない 宿題', 'やれば おわる 量の 宿題'],
     ctx: 'study', scene: '宿題を サボった', kind: 'normal', hp: 24,
@@ -411,7 +411,7 @@
     other: '先生：「正直に 言って くれたね。休み時間に いっしょに やろう」'
   };
   ENEMIES.ran_hall = {
-    selfFail: true, art: 'bumped', term: 'short',
+    selfFail: true, term: 'short',
     intro: '早く 遊びたくて ろうかを 走ったら、曲がり角で 下の 学年の 子と ぶつかった。その子が しりもちを ついている。',
     forms: ['ろうかを かける つむじ風', 'しりもちを ついた 子', 'びっくりした 下の 学年の 子'],
     ctx: 'conflict', scene: 'ろうかを 走った', kind: 'normal', hp: 22,
@@ -420,7 +420,7 @@
     other: '下の 学年の 子：「手を かして くれて ありがとう」'
   };
   ENEMIES.chatting = {
-    selfFail: true, art: 'dunno', term: 'short',
+    selfFail: true, term: 'short',
     intro: 'じゅぎょう中、となりの 子と 話していたら 楽しくて 声が 大きく なった。先生に「今は 何の 時間？」と 言われた。',
     forms: ['おしゃべり ことり', 'こっちを 見る 先生', 'じゅぎょうに もどってほしい 先生'],
     ctx: 'study', scene: 'じゅぎょう中の おしゃべり', kind: 'normal', hp: 20,
@@ -430,7 +430,7 @@
   };
 
   ENEMIES.kanji_practice = {
-    solo: true, art: 'homework',
+    solo: true,
     intro: '漢字大テストまで あと 3日。家で 漢字ドリルを 開いた。書いても 書いても、なかなか おぼえられない。',
     forms: ['漢字の 山おばけ', 'まっ白な 練習ノート', '毎日 少しずつの 練習'],
     ctx: 'study', scene: '漢字の 自己練習', kind: 'normal', hp: 26,
@@ -439,7 +439,6 @@
     other: 'お家の人：「毎日 少しずつ 書いてて えらいね」'
   };
   ENEMIES.weak_kanji = {
-    art: 'dunno',
     intro: 'ミニテストで、また 同じ 漢字を まちがえた。「にがてな 字」が いくつも ある。どう 対策 しよう？',
     forms: ['にがて漢字の むれ', '赤ペンだらけの ミニテスト', 'あと 少しで 書ける 字'],
     ctx: 'study', scene: '苦手な 漢字の 対策', kind: 'normal', hp: 28,
@@ -448,7 +447,7 @@
     other: '先生：「まちがえた 字を 集めて 練習したのが よかったね」'
   };
   ENEMIES.lost_game = {
-    art: 'team', pass: { turns: 3, say: '休み時間が おわった。くやしさは 少し のこった。', leave: true },
+    pass: { turns: 3, say: '休み時間が おわった。くやしさは 少し のこった。', leave: true },
     intro: '昼休みの ドッジボール。さいごの 一人で 当てられて、チームが 負けた。あいての チームが よろこんでいる。',
     forms: ['くやしさの ほのお', 'よろこぶ あいての チーム', 'いい 試合を した みんな'],
     ctx: 'join', scene: '試合に 負けた', kind: 'normal', hp: 22,
@@ -457,7 +456,6 @@
     other: 'あいての チームの 子：「いい 試合だったね！ また やろう」'
   };
   ENEMIES.saw_exclusion = {
-    art: 'left_out',
     intro: 'クラスの 何人かが「あの子は 入れないでおこう」と ひそひそ 話している。その子は 一人で 下を 向いている。自分は どうする？',
     forms: ['見て見ぬふりの きり', 'ひそひそ 話す グループ', '声を かけて ほしそうな あの子'],
     ctx: 'tease', scene: '仲間外れを 見かけた', kind: 'boss', hp: 50,
@@ -467,7 +465,6 @@
     other: 'あの子：「声を かけて くれて、すごく うれしかった」'
   };
   ENEMIES.whisper_group = {
-    art: 'rumor',
     intro: '「ねえ、あの子って さ…」 友だちに ひそひそ話に さそわれた。だれかの 悪口みたいだ。',
     forms: ['ひそひそ こうもりの むれ', 'こっちを 見て わらう 友だち', '話に 入れて ほしいだけの 友だち'],
     ctx: 'tease', scene: 'ひそひそ話に さそわれた', kind: 'normal', hp: 26,
@@ -476,7 +473,6 @@
     other: '友だち：「言われて 気づいた。悪口は やめるね」'
   };
   ENEMIES.alone_kid = {
-    art: 'left_out',
     intro: '休み時間、いつも 一人で 本を 読んでいる 子が いる。声を かけたいけど、どう 思われるか 気になる。',
     forms: ['とおくの 小さな かげ', '一人で いる あの子', 'じつは 話したかった あの子'],
     ctx: 'join', scene: '一人で いる 子', kind: 'normal', hp: 24,
@@ -486,7 +482,6 @@
     other: 'あの子：「じつは、話しかけて ほしかったんだ」'
   };
   ENEMIES.duty_fight = {
-    art: 'team',
     intro: '給食当番の 日。配る 量や 順番で もめて、「ずるい！」「ちゃんと やって！」の 声が 飛びかう。',
     forms: ['ずるい！の 大うず', 'もめている 当番の みんな', 'うまく 回したいだけの みんな'],
     ctx: 'join', scene: '給食当番で もめる', kind: 'boss', hp: 48,
@@ -496,7 +491,7 @@
     other: '当番の みんな：「役わりを 決めたら スムーズに なったね」'
   };
   ENEMIES.line_cut = {
-    art: 'bumped', term: 'short',
+    term: 'short',
     intro: '水飲み場の 列に ならんでいたら、あとから 来た 子が 前に わりこんだ。',
     forms: ['わりこみ ムシ', '前に 入った あの子', '列に 気づかなかった あの子'],
     ctx: 'conflict', scene: '順番を ぬかされた', kind: 'normal', hp: 22,
@@ -507,7 +502,7 @@
     other: 'わりこんだ 子：「あ、ならんでたんだ。ごめん！」'
   };
   ENEMIES.ball_grab = {
-    art: 'bumped', term: 'short',
+    term: 'short',
     intro: '休み時間、一つしか ない ボールを 同時に つかんだ。「ぼくが 先！」「わたしが 先！」',
     forms: ['ひっぱりあいの 大だこ', 'ボールを はなさない あの子', '同じく 遊びたい あの子'],
     ctx: 'conflict', scene: 'ボールの 取り合い', kind: 'normal', hp: 24,
@@ -516,7 +511,6 @@
     other: 'あの子：「じゃんけんで 決めて、次は 交代しよう」'
   };
   ENEMIES.duty_skip = {
-    art: 'team',
     intro: 'そうじ当番。同じ はんの 子が ほうきで チャンバラを していて、ぜんぜん そうじを しない。',
     forms: ['さぼり だらけ だぬき', 'ふざけている あの子', 'やり方が わからない あの子'],
     ctx: 'join', scene: '当番を さぼる 子', kind: 'normal', hp: 24,
@@ -525,7 +519,7 @@
     other: 'あの子：「やること 決めて もらって、やりやすかった」'
   };
   ENEMIES.relay = {
-    art: 'presentation', term: 'short', anxiety: true,
+    term: 'short', anxiety: true,
     intro: '運動会の リレー。バトンを 受け取る 順番が 近づいてくる。全校の 前で 走るのは はじめてだ。',
     forms: ['大かんせいの 大波', 'こっちを 見る 全校の みんな', 'おうえん している みんな'],
     ctx: 'stage', scene: '運動会の リレー', kind: 'boss', hp: 46,
@@ -535,7 +529,6 @@
     other: 'チームの 子：「さいごまで 全力で 走って くれて ありがとう」'
   };
   ENEMIES.baton_practice = {
-    art: 'practice',
     intro: 'リレーの 練習。バトンパスで 何回も 落としてしまう。本番まで あと 少し。',
     forms: ['バトン落としの つむじ風', '何回も 落ちる バトン', 'あと 少しで つながる バトン'],
     ctx: 'stage', scene: 'バトンパスの 練習', kind: 'normal', hp: 28,
@@ -545,7 +538,6 @@
     other: 'チームの 子：「声を かけ合ったら うまく いったね」'
   };
   ENEMIES.team_pick = {
-    art: 'team',
     intro: '運動会の チーム分け。「足が おそい 人は いやだ」と だれかが 言った。話し合いが ぎすぎすしている。',
     forms: ['ぎすぎす 四つ頭', '言い合う クラスの みんな', '勝ちたい だけの みんな'],
     ctx: 'join', scene: 'チーム分けで もめる', kind: 'normal', hp: 28,

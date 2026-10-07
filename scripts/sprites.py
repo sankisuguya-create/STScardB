@@ -292,6 +292,258 @@ g = G(); g.ell(16, 26, 13, 4, 'n', shade='N')
 kid(g, 6, 24, hair='n', hair2='N', shirt='o', shirt2='O', mouth='o', k=.8); kid(g, 16, 22, hair='k', hair2='g', shirt='b', shirt2='B', mouth='flat', k=.8); kid(g, 26, 24, hair='y', hair2='Y', shirt='e', shirt2='E', mouth='o', k=.8)
 S['team_r'] = g.outline().out()
 
+# ===== 22課題ぶんの 専用の絵 =====
+def eyes2(g, x0, x1, y, c='r'):
+    g.rect(x0, y, 2, 2, c); g.rect(x1, y, 2, 2, c)
+def flame(g, cx, by, w, h, c1='r', c2='o', c3='y'):
+    g.poly([(cx - w, by), (cx - w * .8, by - h * .5), (cx - w * .4, by - h * .7), (cx - w * .2, by - h), (cx + w * .1, by - h * .6), (cx + w * .5, by - h * .85), (cx + w * .7, by - h * .45), (cx + w, by)], c1)
+    g.ell(cx, by - h * .25, w * .7, h * .3, c2); g.ell(cx, by - h * .15, w * .35, h * .18, c3)
+def ball(g, cx, cy, r=3):
+    g.ell(cx, cy, r, r, 'r', shade='R', light='w')
+
+# しかえし 火の玉
+g = G(); flame(g, 16, 30, 13, 28)
+g.px([(9, 15), (10, 16), (11, 16), (12, 17)], 'k'); g.px([(23, 15), (22, 16), (21, 16), (20, 17)], 'k'); eyes2(g, 10, 20, 17, 'k')
+teeth(g, 11, 21, 22, 3); g.ell(3, 26, 2.5, 3, 'o'); g.ell(29, 24, 2, 3, 'o')
+S['payback_m'] = g.outline().out()
+g = G(); kid(g, 16, 31, hair='k', hair2='g', shirt='r', shirt2='R', mouth='angry', brows='angry', k=1.25)
+g.px([(4, 4), (5, 5), (6, 4), (4, 6), (6, 6)], 'r'); S['payback_r'] = g.outline().out()
+
+# うわさの 黒い けむり
+g = G()
+for cx, cy, r in [(10, 20, 7), (20, 18, 8), (15, 11, 7), (24, 9, 5), (7, 10, 4)]: g.ell(cx, cy, r, r * .9, 'D', shade='k', light='d')
+g.rect(11, 15, 2, 2, 'y'); g.rect(19, 15, 2, 2, 'y'); g.px([(13, 21), (14, 22), (15, 21), (16, 22), (17, 21), (18, 22)], 'w')
+for x, y in [(3, 28), (6, 30), (27, 28), (29, 26)]: g.put(x, y, 'd')
+S['bad_rep_m'] = g.outline().out()
+g = G(); kid(g, 6, 31, hair='y', hair2='Y', shirt='g', shirt2='q', mouth='flat', k=.8); kid(g, 16, 31, hair='n', hair2='N', shirt='o', shirt2='O', mouth='flat', k=.8); kid(g, 26, 31, hair='k', hair2='g', shirt='P', shirt2='p', mouth='o', k=.8)
+g.ell(12, 4, 3, 2, 'G'); g.ell(20, 4, 3, 2, 'G'); S['bad_rep_r'] = g.outline().out()
+
+# つめたい かぜの かべ
+g = G(); g.rect(3, 4, 26, 25, 'c'); g.rect(3, 25, 26, 4, 'C')
+for y in (8, 14, 20): g.rect(3, y, 26, 1, 'C')
+for i, y in enumerate((5, 11, 17, 23)):
+    for x in range(4 + (i % 2) * 4, 29, 8): g.rect(x, y, 1, 3, 'C')
+eyes2(g, 9, 21, 12, 'b'); g.px([(10, 11), (22, 11)], 'w'); g.rect(12, 18, 8, 1, 'k')
+for x, y in [(1, 8), (0, 9), (30, 14), (31, 15), (1, 20), (30, 22)]: g.put(x, y, 'w')
+S['cold_class_m'] = g.outline().out()
+g = G(); kid(g, 7, 31, hair='n', hair2='N', shirt='e', shirt2='E', mouth='flat', k=.85); kid(g, 25, 31, hair='y', hair2='Y', shirt='b', shirt2='B', mouth='flat', k=.85); kid(g, 16, 29, hair='k', hair2='g', shirt='o', shirt2='O', mouth='o', k=.8)
+g.px([(14, 3), (16, 2), (18, 3)], 'b'); S['cold_class_r'] = g.outline().out()
+
+# あばれる 火の 手
+g = G(); g.rect(10, 18, 12, 13, 'o'); g.ell(16, 16, 10, 8, 'o', shade='O', light='y')
+for i, x in enumerate((7, 12, 17, 22)): g.rect(x, 3 + (i % 2) * 2, 4, 10, 'o'); g.ell(x + 2, 4 + (i % 2) * 2, 2, 2, 'y')
+g.poly([(5, 18), (1, 10), (4, 9), (8, 15)], 'o')
+flame(g, 16, 31, 6, 6, 'r', 'y', 'w'); eyes2(g, 11, 19, 15, 'k'); g.rect(13, 20, 6, 1, 'k')
+S['got_rough_m'] = g.outline().out()
+g = G(); kid(g, 16, 31, hair='y', hair2='Y', shirt='b', shirt2='B', mouth='flat', k=1.25)
+g.line(10, 21, 19, 19, 's', 3); g.ell(20, 19, 2, 2, 'r'); S['got_rough_r'] = g.outline().out()
+
+# とげとげ ことばの つる
+g = G()
+for i in range(28):
+    t = i / 27; x = 16 + math.sin(t * 9) * 9; y = 30 - t * 26
+    g.ell(x, y, 2.2, 2.2, 'e')
+    if i % 3 == 0: g.poly([(x, y - 1), (x + (4 if i % 2 else -4), y - 3), (x, y + 1)], 'E')
+g.ell(16, 7, 6, 5, 'e', shade='E'); eyes2(g, 12, 18, 6); teeth(g, 12, 20, 9, 2)
+g.ell(5, 16, 3, 2, 'P'); g.ell(27, 22, 3, 2, 'P')
+S['said_too_much_m'] = g.outline().out()
+g = G(); kid(g, 16, 31, hair='n', hair2='N', shirt='g', shirt2='q', mouth='flat', k=1.25)
+for x in (13, 16, 19): g.put(x, 1, 'k')
+S['said_too_much_r'] = g.outline().out()
+
+# わらい声の むれ
+g = G()
+for cx, cy, col, sh in [(8, 10, 'y', 'Y'), (24, 10, 'o', 'O'), (16, 21, 'y', 'Y'), (6, 24, 'o', 'O'), (26, 24, 'y', 'Y')]:
+    g.ell(cx, cy, 6, 5.5, col, shade=sh)
+    g.px([(cx - 3, cy - 1), (cx - 2, cy - 2), (cx - 1, cy - 1), (cx + 1, cy - 1), (cx + 2, cy - 2), (cx + 3, cy - 1)], 'k')
+    g.poly([(cx - 3, cy + 1), (cx + 3, cy + 1), (cx, cy + 4)], 'r')
+S['joined_in_m'] = g.outline().out()
+g = G(); kid(g, 16, 31, hair='k', hair2='g', shirt='c', shirt2='C', mouth='flat', k=1.1)
+g.rect(5, 8, 5, 6, 'r'); g.rect(5, 8, 5, 1, 'R'); g.ell(26, 28, 3, 1, 'G'); S['joined_in_r'] = g.outline().out()
+
+# サボりの おばけ
+g = G(); g.ell(16, 13, 11, 10, 'W', shade='G', light='w')
+g.poly([(5, 13), (27, 13), (28, 29), (24, 25), (20, 30), (16, 25), (12, 30), (8, 25), (4, 29)], 'W')
+g.rect(9, 12, 5, 1, 'k'); g.rect(19, 12, 5, 1, 'k'); g.ell(16, 19, 3, 2, 'k')
+g.rect(22, 2, 7, 5, 'g'); g.rect(23, 3, 5, 3, 'b'); g.px([(25, 7), (24, 8)], 'g')
+for x, y in [(3, 5), (4, 4), (5, 5), (6, 4), (4, 7), (5, 7)]: g.put(x, y, 'b')
+S['skipped_hw_m'] = g.outline().out()
+g = G(); g.rect(4, 8, 24, 18, 'b'); g.rect(4, 8, 24, 3, 'B'); g.rect(9, 13, 14, 10, 'w')
+for y in (15, 18, 21): g.rect(11, y, 10, 1, 'W')
+g.rect(18, 4, 10, 6, 'g'); g.rect(19, 5, 8, 4, 'c')
+S['skipped_hw_r'] = g.outline().out()
+
+# ろうかを かける つむじ風
+g = G()
+for i in range(6):
+    y = 6 + i * 4; w = 13 - i * 1.6
+    g.ell(16 + (i % 2) * 2 - 1, y, w, 2.2, 'c' if i % 2 else 'W')
+g.ell(16, 13, 6, 4, 'c', shade='C'); eyes2(g, 12, 18, 12); g.rect(14, 15, 4, 1, 'k')
+for y in (10, 18, 24): g.line(1, y, 4, y, 'C')
+g.rect(3, 29, 26, 2, 'n')
+S['ran_hall_m'] = g.outline().out()
+g = G(); kid(g, 16, 31, hair='y', hair2='Y', shirt='y', shirt2='Y', mouth='o', k=.9)
+g.rect(2, 30, 28, 2, 'N'); g.px([(5, 10), (4, 9), (27, 10), (28, 9), (26, 12)], 'k'); S['ran_hall_r'] = g.outline().out()
+
+# おしゃべり ことり
+g = G(); g.ell(14, 19, 10, 9, 'y', shade='Y', light='w')
+g.ell(18, 10, 7, 6, 'y', shade='Y'); g.poly([(24, 9), (31, 11), (24, 13)], 'o')
+g.rect(18, 8, 2, 2, 'k'); g.poly([(4, 18), (0, 12), (8, 15)], 'Y'); g.poly([(8, 20), (16, 16), (20, 24)], 'Y')
+g.poly([(10, 27), (8, 31), (12, 29)], 'O'); g.poly([(16, 27), (16, 31), (19, 29)], 'O')
+for x, y in [(26, 3), (28, 2), (29, 5), (31, 4), (25, 17), (28, 18)]: g.put(x, y, 'k')
+S['chatting_m'] = g.outline().out()
+g = G(); kid(g, 16, 31, hair='G', hair2='g', shirt='e', shirt2='E', mouth='flat', k=1.25, glasses=True)
+g.rect(1, 4, 6, 14, 'e'); g.rect(1, 4, 6, 1, 'E'); S['chatting_r'] = g.outline().out()
+
+# 漢字の 山おばけ
+g = G(); g.poly([(1, 31), (16, 3), (31, 31)], 'G'); g.poly([(16, 3), (31, 31), (20, 31)], 'g')
+g.poly([(12, 10), (16, 3), (20, 10)], 'w')
+for (x, y) in [(9, 26), (14, 20), (20, 25), (17, 13)]:
+    g.rect(x, y, 4, 1, 'k'); g.rect(x + 1, y - 1, 1, 4, 'k'); g.rect(x, y + 2, 4, 1, 'k')
+eyes2(g, 11, 19, 16); teeth(g, 12, 20, 28, 2)
+S['kanji_practice_m'] = g.outline().out()
+g = G(); g.rect(4, 5, 24, 24, 'w'); g.rect(4, 26, 24, 3, 'W')
+for x in (10, 16, 22): g.rect(x, 5, 1, 21, 'c')
+for y in (11, 17, 23): g.rect(4, y, 24, 1, 'c')
+g.rect(6, 7, 3, 1, 'k'); g.rect(7, 6, 1, 4, 'k')
+g.line(20, 2, 28, 14, 'y', 2); g.put(28, 15, 'k')
+S['kanji_practice_r'] = g.outline().out()
+
+# にがて漢字の むれ
+g = G()
+for cx, cy in [(8, 9), (24, 9), (16, 20), (6, 25), (26, 25)]:
+    g.rect(cx - 5, cy - 5, 10, 10, 'w'); g.rect(cx - 5, cy + 3, 10, 2, 'W')
+    g.rect(cx - 3, cy - 3, 6, 1, 'k'); g.rect(cx, cy - 4, 1, 7, 'k'); g.rect(cx - 2, cy, 5, 1, 'k')
+    g.put(cx - 3, cy + 1, 'r'); g.put(cx + 3, cy + 1, 'r')
+g.line(1, 1, 30, 30, 'r'); S['weak_kanji_m'] = g.outline().out()
+g = G(); g.rect(4, 3, 24, 27, 'w'); g.rect(4, 28, 24, 2, 'W')
+for y in (7, 13, 19, 25):
+    g.rect(7, y, 10, 1, 'G'); g.line(20, y - 1, 24, y + 2, 'r'); g.line(24, y - 1, 20, y + 2, 'r')
+g.ell(23, 7, 3, 3, 'r'); g.ell(23, 7, 2, 2, 'w')
+S['weak_kanji_r'] = g.outline().out()
+
+# くやしさの ほのお
+g = G(); flame(g, 16, 31, 14, 30, 'R', 'r', 'o')
+g.px([(9, 16), (10, 17), (11, 17), (12, 18)], 'k'); g.px([(23, 16), (22, 17), (21, 17), (20, 18)], 'k'); eyes2(g, 10, 20, 18, 'y')
+g.px([(11, 25), (12, 24), (13, 24), (14, 24), (15, 24), (16, 24), (17, 24), (18, 24), (19, 24), (20, 25)], 'k')
+g.px([(10, 21), (10, 22), (21, 21), (21, 22)], 'c')
+S['lost_game_m'] = g.outline().out()
+g = G(); kid(g, 9, 31, hair='y', hair2='Y', shirt='r', shirt2='R', mouth='laugh', arms='up', k=.95); kid(g, 23, 31, hair='n', hair2='N', shirt='r', shirt2='R', mouth='laugh', arms='up', k=.95)
+ball(g, 16, 4, 3); S['lost_game_r'] = g.outline().out()
+
+# 見て見ぬふりの きり
+g = G(); g.ell(16, 16, 15, 12, 'W', shade='c', light='w'); g.rect(1, 18, 30, 8, 'W')
+for x0 in (2, 9, 16, 23): g.poly([(x0, 25), (x0 + 6, 25), (x0 + 3, 30)], 'c')
+g.rect(7, 13, 6, 2, 'G'); g.rect(19, 13, 6, 2, 'G'); g.rect(6, 12, 8, 1, 'C'); g.rect(18, 12, 8, 1, 'C')
+g.rect(13, 20, 6, 1, 'C')
+S['saw_exclusion_m'] = g.outline().out()
+g = G(); kid(g, 6, 31, hair='n', hair2='N', shirt='P', shirt2='p', mouth='smile', k=.8); kid(g, 15, 31, hair='y', hair2='Y', shirt='o', shirt2='O', mouth='smile', k=.8)
+kid(g, 27, 31, hair='k', hair2='g', shirt='c', shirt2='C', mouth='flat', k=.75); g.rect(21, 4, 1, 26, 'G')
+S['saw_exclusion_r'] = g.outline().out()
+
+# ひそひそ こうもりの むれ
+g = G()
+for cx, cy, s in [(16, 18, 1.0), (7, 7, .6), (25, 7, .6)]:
+    g.poly([(cx, cy - 4 * s), (cx - 14 * s, cy - 9 * s), (cx - 11 * s, cy), (cx - 15 * s, cy + 4 * s), (cx, cy + 7 * s)], 'D')
+    g.poly([(cx, cy - 4 * s), (cx + 14 * s, cy - 9 * s), (cx + 11 * s, cy), (cx + 15 * s, cy + 4 * s), (cx, cy + 7 * s)], 'D')
+    g.ell(cx, cy, 5 * s, 6 * s, 'd'); g.put(cx - 2 * s, cy - 1, 'y'); g.put(cx + 2 * s, cy - 1, 'y')
+g.px([(14, 22), (15, 21), (16, 22), (17, 21), (18, 22)], 'w')
+S['whisper_group_m'] = g.outline().out()
+g = G(); kid(g, 10, 31, hair='k', hair2='g', shirt='e', shirt2='E', mouth='laugh', k=1.0); kid(g, 23, 31, hair='y', hair2='Y', shirt='o', shirt2='O', mouth='smile', k=1.0)
+g.ell(16, 13, 2, 3, 's'); g.ell(28, 3, 3, 2, 'w'); g.px([(27, 3), (29, 3)], 'k'); S['whisper_group_r'] = g.outline().out()
+
+# とおくの 小さな かげ
+g = G(); g.ell(16, 28, 14, 3, 'G')
+g.ell(16, 18, 5, 8, 'D', shade='k'); g.ell(16, 10, 4, 4, 'D')
+g.put(14, 10, 'c'); g.put(18, 10, 'c')
+for x, y in [(4, 6), (8, 3), (24, 4), (28, 8), (3, 16), (29, 18)]: g.put(x, y, 'c')
+S['alone_kid_m'] = g.outline().out()
+g = G(); kid(g, 12, 31, hair='n', hair2='N', shirt='P', shirt2='p', mouth='flat', k=1.1)
+g.poly([(11, 21), (19, 18), (27, 21), (27, 27), (19, 25), (11, 27)], 'e'); g.line(19, 18, 19, 25, 'E')
+S['alone_kid_r'] = g.outline().out()
+
+# ずるい！の 大うず
+g = G()
+for i in range(60):
+    a = i / 60 * math.tau * 2.6; r = 2 + i * .22
+    g.ell(16 + math.cos(a) * r, 16 + math.sin(a) * r, 2, 2, 'b' if i % 8 < 5 else 'c')
+g.ell(16, 16, 4, 4, 'B'); eyes2(g, 13, 17, 15, 'y')
+g.rect(28, 2, 2, 6, 'r'); g.rect(28, 9, 2, 2, 'r'); g.rect(2, 24, 2, 5, 'r'); g.rect(2, 30, 2, 1, 'r')
+S['duty_fight_m'] = g.outline().out()
+g = G(); kid(g, 9, 30, hair='n', hair2='N', shirt='w', shirt2='W', mouth='angry', brows='angry', arms='push', hat='w'); kid(g, 23, 30, hair='k', hair2='g', shirt='w', shirt2='W', mouth='angry', brows='angry', arms='push', hat='w')
+g.ell(16, 29, 4, 2, 'G'); S['duty_fight_r'] = g.outline().out()
+
+# わりこみ ムシ
+g = G()
+for i, x in enumerate((6, 12, 18, 24)): g.ell(x, 19, 4.5, 4.5, 'e' if i % 2 else 'E')
+g.ell(27, 15, 5, 5, 'e', shade='E'); g.rect(26, 13, 2, 2, 'r'); g.rect(29, 13, 1, 2, 'r')
+g.line(26, 10, 23, 3, 'k'); g.line(29, 10, 31, 3, 'k')
+for x in (6, 12, 18, 24): g.line(x, 23, x - 2, 28, 'k'); g.line(x, 23, x + 2, 28, 'k')
+g.poly([(4, 4), (14, 4), (14, 1), (19, 6), (14, 11), (14, 8), (4, 8)], 'y')
+S['line_cut_m'] = g.outline().out()
+g = G(); kid(g, 8, 31, hair='n', hair2='N', shirt='b', shirt2='B', mouth='o', k=.85); kid(g, 18, 31, hair='y', hair2='Y', shirt='o', shirt2='O', mouth='smile', k=.85)
+g.rect(24, 14, 8, 4, 'W'); g.rect(27, 10, 2, 4, 'G'); g.put(28, 18, 'c'); g.put(28, 20, 'c')
+S['line_cut_r'] = g.outline().out()
+
+# ひっぱりあいの 大だこ
+g = G(); g.ell(16, 11, 10, 9, 'P', shade='p', light='w')
+for i, x in enumerate((7, 11, 16, 21, 25)):
+    g.line(x, 18, x + (-6 if x < 16 else 6 if x > 16 else 0), 28 - (i % 2) * 2, 'P', 3)
+ball(g, 4, 28, 3.5); ball(g, 28, 28, 3.5)
+g.px([(10, 8), (11, 9), (12, 9)], 'k'); g.px([(22, 8), (21, 9), (20, 9)], 'k'); eyes2(g, 10, 20, 10); g.ell(16, 15, 2, 1.5, 'k')
+S['ball_grab_m'] = g.outline().out()
+g = G(); kid(g, 7, 31, hair='n', hair2='N', shirt='b', shirt2='B', mouth='angry', brows='angry', arms='push', k=.95); kid(g, 25, 31, hair='k', hair2='g', shirt='P', shirt2='p', mouth='angry', brows='angry', arms='push', k=.95)
+ball(g, 16, 22, 4); S['ball_grab_r'] = g.outline().out()
+
+# さぼり だらけ だぬき
+g = G(); g.ell(16, 21, 11, 9, 'N', shade='n', light='W'); g.ell(16, 11, 9, 7, 'N', shade='n')
+g.poly([(7, 7), (8, 1), (12, 5)], 'n'); g.poly([(25, 7), (24, 1), (20, 5)], 'n')
+g.ell(12, 11, 3, 2.5, 'D'); g.ell(20, 11, 3, 2.5, 'D'); g.rect(10, 11, 3, 1, 'w'); g.rect(19, 11, 3, 1, 'w')
+g.ell(16, 15, 2, 1.5, 'k'); g.ell(16, 23, 6, 5, 'W')
+g.line(27, 30, 31, 12, 'Y', 2); g.rect(28, 26, 4, 5, 'y')
+S['duty_skip_m'] = g.outline().out()
+g = G(); kid(g, 13, 31, hair='y', hair2='Y', shirt='o', shirt2='O', mouth='laugh', arms='up', k=1.05)
+g.line(22, 3, 28, 20, 'Y', 2); g.poly([(26, 20), (31, 20), (31, 27), (25, 27)], 'y'); S['duty_skip_r'] = g.outline().out()
+
+# 大かんせいの 大波
+g = G(); g.poly([(0, 31), (0, 20), (6, 10), (14, 4), (24, 4), (30, 10), (26, 12), (22, 10), (20, 14), (24, 20), (31, 22), (31, 31)], 'b')
+g.poly([(0, 31), (0, 24), (10, 22), (20, 26), (31, 25), (31, 31)], 'B')
+g.poly([(14, 4), (24, 4), (30, 10), (26, 12), (22, 8), (16, 7)], 'w')
+eyes2(g, 8, 15, 14, 'y'); g.ell(12, 20, 4, 2.5, 'k')
+for x, y in [(2, 3), (4, 2), (28, 16), (30, 17)]: g.put(x, y, 'w')
+S['relay_m'] = g.outline().out()
+g = G()
+for i, x in enumerate((4, 10, 16, 22, 28)): kid(g, x, 22, hair='nkyNg'[i], hair2='N', shirt='rbyeo'[i], shirt2='RBYEO'[i], mouth='laugh', arms='up' if i % 2 else None, k=.55)
+g.rect(0, 25, 32, 7, 'e'); g.rect(0, 28, 32, 1, 'w')
+S['relay_r'] = g.outline().out()
+
+# バトン落としの つむじ風
+g = G()
+for i in range(7):
+    y = 4 + i * 3.6; w = 14 - i * 1.7
+    g.ell(16 + math.sin(i) * 2, y, w, 2, 'G' if i % 2 else 'c')
+g.ell(16, 11, 5, 3.5, 'c', shade='C'); eyes2(g, 13, 17, 10)
+g.rect(3, 22, 3, 8, 'r'); g.rect(26, 2, 3, 8, 'y'); g.put(4, 22, 'w'); g.put(27, 2, 'w')
+S['baton_practice_m'] = g.outline().out()
+g = G(); g.line(3, 6, 14, 14, 's', 3); g.line(29, 8, 19, 15, 's', 3)
+g.line(13, 25, 22, 29, 'r', 3); g.ell(16, 30, 6, 1, 'G')
+for x, y in [(9, 20), (10, 21), (22, 21), (23, 20)]: g.put(x, y, 'k')
+g.rect(0, 30, 32, 2, 'O'); S['baton_practice_r'] = g.outline().out()
+
+# ぎすぎす 四つ頭
+g = G()
+for cx, cy, col, sh in [(9, 9, 'r', 'R'), (23, 9, 'o', 'O'), (9, 22, 'g', 'q'), (23, 22, 'd', 'D')]:
+    g.ell(cx, cy, 6, 6, col, shade=sh)
+    for a in range(0, 360, 60):
+        r = math.radians(a); g.poly([(cx + math.cos(r - .3) * 5, cy + math.sin(r - .3) * 5), (cx + math.cos(r) * 8, cy + math.sin(r) * 8), (cx + math.cos(r + .3) * 5, cy + math.sin(r + .3) * 5)], col)
+    g.px([(cx - 3, cy - 2), (cx - 2, cy - 1), (cx + 3, cy - 2), (cx + 2, cy - 1)], 'k'); g.rect(cx - 2, cy, 1, 1, 'y'); g.rect(cx + 2, cy, 1, 1, 'y')
+    g.px([(cx - 2, cy + 3), (cx - 1, cy + 2), (cx, cy + 3), (cx + 1, cy + 2), (cx + 2, cy + 3)], 'k')
+g.line(14, 14, 18, 18, 'y'); g.line(18, 14, 14, 18, 'y')
+S['team_pick_m'] = g.outline().out()
+g = G(); g.rect(6, 1, 20, 9, 'e'); g.rect(6, 8, 20, 2, 'E'); g.rect(9, 3, 5, 1, 'w'); g.rect(18, 3, 5, 1, 'w'); g.rect(9, 6, 4, 1, 'w'); g.rect(18, 6, 6, 1, 'w')
+kid(g, 6, 31, hair='n', hair2='N', shirt='r', shirt2='R', mouth='angry', brows='angry', k=.75); kid(g, 16, 31, hair='y', hair2='Y', shirt='w', shirt2='W', mouth='o', k=.75); kid(g, 26, 31, hair='k', hair2='g', shirt='r', shirt2='R', mouth='angry', brows='angry', k=.75)
+S['team_pick_r'] = g.outline().out()
+
 # ===== 自分・アイテム =====
 g = G(); kid(g, 16, 31, hair='n', hair2='N', shirt='b', shirt2='B', mouth='smile', k=1.3); S['hero'] = g.outline().out()
 g = G(); kid(g, 16, 31, hair='k', hair2='g', shirt='P', shirt2='p', mouth='smile', k=1.3, glasses=True); S['hero_hanoko'] = g.outline().out()
