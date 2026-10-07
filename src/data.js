@@ -41,8 +41,13 @@
   // style: 振り返りのアサーション3分類（aggressive/passive/assertive）
   var CARDS = {
     // --- 初期デッキ ---
+    // --- がまんの 上位（時間を やりすごす）と 目を そらす ---
+    no_worry: { name: '失敗したって 大丈夫', line: '「まちがえても、やり直せば いい」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 16 },
+    later_down: { name: 'あとで 落ちこめば いい', line: '「今は とりあえず 前を 向こう。くやしいのは あとで」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 13, draw: 1 },
+    switch_on: { name: '切りかえて いこう', line: '「よし、次！」と 声に 出す。手札の パニックと モヤモヤを 外へ。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 10, clearPanicAll: true, clearMoya: true },
+    look_away: { name: '現実から 目を そらす', line: '「見なかった ことに しよう…」', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 22, curse: true },
     try_it: { name: 'トライする', line: 'とにかく 一度 やってみる。', type: 'act', judge: 'neutral', style: 'assertive', cost: 1, solve: 5, ctx: ['study', 'join', 'stage'] },
-    endure: { name: 'がまんする', line: 'ぐっと こらえる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 5 },
+    endure: { name: 'がまんする', line: 'ぐっと こらえる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 7 },
     breathe: { name: '深こきゅう', line: 'ゆっくり 3回 いきをすう。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 4, draw: 1 },
     talk: { name: '話してみる', line: '「ねえ、ちょっといい？」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 4, ctx: ['study', 'conflict', 'join', 'tease'] },
     keep_distance: { name: 'きょりを おく', line: '「ちょっと はなれて、頭を ひやそう」', type: 'calm', judge: 'good', style: 'distance', cost: 1, guard: 6, distance: true, ctx: ['conflict', 'tease', 'join', 'danger'] },
@@ -54,7 +59,7 @@
     their_view: { name: '相手の気もちを考える', line: '「あの子は どう思ったかな？」', type: 'think', judge: 'good', style: 'assertive', cost: 1, guard: 4, organize: true, ctx: ['conflict', 'join', 'tease'] },
     start_now: { name: 'すぐ取りかかる', line: 'あとまわしに しない。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 8, ctx: ['study', 'stage'] },
     move_body: { name: '体を動かして 気分てんかん', line: '休み時間に 外で走る。', type: 'act', judge: 'good', style: 'assertive', cost: 1, guard: 7, exhaust: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
-    together: { name: '「いっしょにやろう」', line: '「いっしょにやろう」と 声をかける。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, trust: 1, chance: 'high', ctx: ['study', 'join', 'stage'] },
+    together: { coop: true, name: '「いっしょにやろう」', line: '「いっしょにやろう」と 声をかける。', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 6, trust: 1, chance: 'high', ctx: ['study', 'join', 'stage'] },
     thanks: { name: '「ありがとう」を つたえる', line: '「さっきは ありがとう」', type: 'relate', judge: 'good', style: 'assertive', cost: 0, guard: 3, trust: 1, ctx: ['study', 'conflict', 'join', 'stage'] },
     apologize: { name: 'あやまる', line: '「さっきは ごめんね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, solve: 3, trust: 2, ctx: ['conflict', 'join'] },
     lead: { name: 'みんなを まとめる', line: '「じゃあ、じゅんばんに 言っていこう」', type: 'relate', judge: 'good', style: 'assertive', cost: 2, solve: 14, chance: 'mid', req: { relate: 2, trust: 6 }, ctx: ['study', 'join', 'stage'] },
@@ -131,7 +136,7 @@
     brave_step: { name: '勇気を 出して 一歩', line: 'こわいけど、自分から 一歩 前に 出る。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 16, chance: 'mid', growFail: true, req: { act: 5 }, adv: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
     safe_route: { name: '安全な 道を えらぶ', line: '人の 多い 明るい 道を 通って、大人の いる ところへ。', type: 'act', judge: 'good', style: 'distance', cost: 0, escape: true, req: { act: 4 }, adv: true, ctx: ['danger'] },
     // --- 元気2・3の カード（大きく 効く） ---
-    teamwork: { name: '役わりを 分ける', line: '「わたしは 調べる、きみは 書く」', type: 'relate', judge: 'good', style: 'assertive', cost: 2, solve: 15, trust: 1, ctx: ['study', 'join', 'stage'] },
+    teamwork: { coop: true, name: '役わりを 分ける', line: '「わたしは 調べる、きみは 書く」', type: 'relate', judge: 'good', style: 'assertive', cost: 2, solve: 15, trust: 1, ctx: ['study', 'join', 'stage'] },
     reset_mind: { name: 'じっくり 気もちを 立て直す', line: '水を 飲んで、深こきゅうして、もう一度 考える。', type: 'calm', judge: 'good', style: 'assertive', cost: 2, guard: 16, clearMoya: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'] },
     all_in: { name: '全力で 取り組む', line: 'ほかの ことは 後回し。これ 一つに 集中！', type: 'act', judge: 'good', style: 'assertive', cost: 3, solve: 26, ctx: ['study', 'join', 'stage'] },
     class_talk: { name: '学級会で 話し合う', line: '「クラスの みんなで 決まりを 考えよう」', type: 'relate', judge: 'good', style: 'assertive', cost: 3, solve: 22, trust: 2, organize: true, ctx: ['conflict', 'join', 'tease'] },
@@ -149,9 +154,9 @@
   // アイテム（支え）：つけている（equip）ものは、戦いごとに1回ずつ使える。元気は使わない。なくならない。
   // つけられるのは slots まで。ひと休みで、持っているものと入れかえられる
   var SUPPORTS = {
-    teacher: { name: '先生に そうだん', line: '「先生、聞いてほしいことが あります」', note: 'この場面で 先生に すすめられた カードが 手札に入る（戦いのあと 報酬にも出る）。状きょうも 1つ 整理される', term: 'long' },
-    friend: { name: '友だちに そうだん', line: '「ねえ、どう思う？」', note: '心の準備 +5。友だちの アドバイスが カードになる（ときどき 役に立たないことも）', guard: 5 },
-    family: { name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', note: '心の準備 +10', guard: 10, term: 'long' },
+    teacher: { help: true, name: '先生に そうだん', line: '「先生、聞いてほしいことが あります」', note: 'この場面で 先生に すすめられた カードが 手札に入る（戦いのあと 報酬にも出る）。状きょうも 1つ 整理される', term: 'long' },
+    friend: { help: true, name: '友だちに そうだん', line: '「ねえ、どう思う？」', note: '心の準備 +5。友だちの アドバイスが カードになる（ときどき 役に立たないことも）', guard: 5 },
+    family: { help: true, name: 'お家の人に そうだん', line: '帰ってから 話を 聞いてもらう。', note: '心の準備 +10', guard: 10, term: 'long' },
     diary: { name: '日記を 書く', line: '今日の ことを ノートに 書く。', note: 'モヤモヤを 1まい デッキから けす', purgeMoya: true, term: 'long' },
     book: { name: 'お気に入りの本', line: '好きな 本を 読んで、気もちを 切りかえる。', note: '心の準備 +4、手札の モヤモヤを すてる', guard: 4, clearMoya: true, term: 'long' }
   };
@@ -197,7 +202,7 @@
 
 
   var STARTER = ['try_it', 'try_it', 'try_it', 'try_it', 'endure', 'endure', 'endure', 'keep_distance', 'breathe', 'talk', 'okoru', 'run_away'];
-  var REWARD_POOL = ['write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply', 'plan_time', 'sukkiri', 'review_notes', 'teamwork', 'reset_mind', 'all_in', 'class_talk', 'full_plan'];
+  var REWARD_POOL = ['no_worry', 'later_down', 'switch_on', 'look_away', 'write_plan', 'their_view', 'start_now', 'move_body', 'together', 'thanks', 'apologize', 'lead', 'name_feeling', 'sort_out', 'firm_reply', 'plan_time', 'sukkiri', 'review_notes', 'teamwork', 'reset_mind', 'all_in', 'class_talk', 'full_plan'];
 
   // pass: そのターン数を乗りこえると、課題は時間とともに過ぎ去る（報酬なし。leave なら モヤモヤが のこる）。
   //   からかい・発表には付けない：放っておいても過ぎ去らない問題があることを残すため
@@ -209,7 +214,7 @@
       intro: '算数の じゅぎょう中。黒板の 問題を 見ても、どうやって とけば いいのか わからない。まわりの 子は どんどん ノートに 書いている…',
       forms: ['ハテナ だいまじん', 'むずかしそうな プリント', 'わからない 1問'],
       ctx: 'study', scene: 'わからない問題', name: 'わからない問題', kind: 'normal', hp: 24,
-      pass: { turns: 5, say: 'じゅぎょうが おわった。でも、わからないままだ。', leave: true },
+      pass: { turns: 3, say: 'じゅぎょうが おわった。でも、わからないままだ。', leave: true },
       moves: [{ t: 'stress', n: 6, say: 'あせってくる' }, { t: 'grow', n: 2, say: 'どんどん むずかしく見えてくる' }, { t: 'stress', n: 7, say: 'まわりが すすんでいく' }],
       weak: ['relate', 'think'], resist: [], situ: ['say_dunno', 'ask_next', 'skip_it'],
       other: 'となりの子：「聞いてくれたら、すぐ 教えたのに」'
@@ -229,7 +234,7 @@
       intro: '昼休み、校庭で みんなが おにごっこを している。「入れて」と 言いたいけど、なかなか 声が 出ない…',
       forms: ['ひとりぼっちの きり', '入れてくれない グループ？', '人数が ちょうどの 遊び'],
       ctx: 'join', scene: '遊びに 入れない', name: '遊びに 入れない', kind: 'normal', hp: 28,
-      pass: { turns: 4, say: '休み時間が おわった。さびしさは 少し のこった。', leave: true },
+      pass: { turns: 3, say: '休み時間が おわった。さびしさは 少し のこった。', leave: true },
       moves: [{ t: 'stress', n: 6, say: 'さびしくなる' }, { t: 'worry', say: '「きらわれてる？」と考えてしまう' }, { t: 'stress', n: 8, say: '休み時間が おわっていく' }],
       weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['let_me_in', 'invite_other', 'sulk'],
       other: '遊んでいた子：「人数が ちょうどだったから、気づかなかった」'
@@ -247,7 +252,7 @@
       term: 'short',
       intro: '今日は 学習発表会。ぶたいの そでから 見ると、体育館に 人が いっぱい。次は 自分の 番だ。',
       forms: ['見つめる 大目玉', 'こっちを見る みんな', 'ふつうに 聞いている クラスの みんな'],
-      ctx: 'stage', scene: 'みんなの前で 発表', name: 'みんなの前で 発表', kind: 'boss', hp: 42, anxiety: true,
+      pass: { turns: 4, say: '発表の 時間が すぎた。言えなかった ことが のこった。', leave: true }, ctx: 'stage', scene: 'みんなの前で 発表', name: 'みんなの前で 発表', kind: 'boss', hp: 42, anxiety: true,
       moves: [{ t: 'stress', n: 7, say: '心ぞうが どきどきする' }, { t: 'inject', card: 'panic', say: '頭が まっ白に なりそう（パニックが まざる）' }, { t: 'stress', n: 9, say: 'みんなが こっちを見る' }, { t: 'worry', say: '「まちがえたら どうしよう」' }, { t: 'grow', n: 2, say: '声が 小さくなってくる' }],
       weak: ['think'], resist: [], backfire: [], situ: ['read_memo', 'breathe_first', 'friend_face', 'give_up'],
       other: '聞いていた子：「さいごまで 言えてて すごかった」'
@@ -259,7 +264,7 @@
       term: 'short',
       intro: '今日は 算数の テスト。つくえの 上に テスト用紙が くばられた。「はじめ」の 声が かかる。',
     forms: ['100点の 大まじん', 'むずかしそうな テスト用紙', 'いつもの 小テスト'],
-    ctx: 'study', scene: 'テスト', kind: 'boss', hp: 42,
+    solo: true, pass: { turns: 4, say: 'テストの 時間が おわった。とけなかった 問題が 頭に のこる。', leave: true }, ctx: 'study', scene: 'テスト', kind: 'boss', hp: 42,
     moves: [{ t: 'stress', n: 7, say: '時間が どんどん へっていく' }, { t: 'inject', card: 'panic', say: '頭が まっ白に なりそう（パニックが まざる）' }, { t: 'stress', n: 9, say: 'まわりの えんぴつの 音が 気になる' }, { t: 'worry', say: '「わからない 問題が ある…」' }],
     weak: ['think'], resist: [], backfire: [], situ: ['review_notes', 'breathe_first', 'give_up'],
     other: '先生：「さいごまで あきらめずに 見直したね」'
@@ -267,7 +272,7 @@
   ENEMIES.homework = {
       intro: '気づいたら、今日までの 提出物が 大量に たまっている…。漢字ドリル、計算プリント、音読カード。どれから 手を つけよう。',
     forms: ['しゅくだい 大なだれ', 'つみ上がった プリント', '今日の 宿題 2まい'],
-    ctx: 'study', scene: '宿題の 山', kind: 'normal', hp: 26,
+    solo: true, ctx: 'study', scene: '宿題の 山', kind: 'normal', hp: 26,
     moves: [{ t: 'stress', n: 6, say: '「まだ こんなに ある…」' }, { t: 'grow', n: 2, say: 'ねる時間が 近づく' }, { t: 'stress', n: 7, say: 'あそびたい 気もちが じゃまをする' }],
     weak: ['think', 'act'], resist: [], backfire: [], situ: ['plan_time', 'put_off'],
     other: 'お家の人：「先に やって えらいね」'
@@ -293,7 +298,7 @@
   ENEMIES.misunder = {
       intro: '友だちに 言われた 一言が 気に なる。「それって、どういう いみ？」 なんだか 悪く 言われた 気が する。',
     forms: ['もやもや 二面ぐも', 'ちがう話を している 二人', '言い方の ちがい'],
-    ctx: 'conflict', scene: 'かんちがい', kind: 'normal', hp: 24,
+    ctx: 'conflict', scene: 'かんちがい', pass: { turns: 4, say: '時間が たって、うやむやに なった。でも 気まずさは のこった。', leave: true }, kind: 'normal', hp: 24,
     moves: [{ t: 'stress', n: 7, say: '「なんで そんなこと 言うの」' }, { t: 'grow', n: 2, say: '話が どんどん ずれていく' }],
     weak: [], resist: ['relate'], backfire: ['impulse'], situ: ['ask_meaning', 'okoru'],
     view: { truth: 'benign', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.6 },
@@ -302,7 +307,7 @@
   ENEMIES.rumor = {
       intro: 'トイレの 前で、何人かが ひそひそ 話を している。自分の 名前が 聞こえた 気が した…',
     forms: ['ひそひそ こうもり', 'こそこそ 話す 子たち', 'ただの うわさ話'],
-    ctx: 'tease', scene: 'かげ口を 聞いた', kind: 'normal', hp: 24,
+    ctx: 'tease', scene: 'かげ口を 聞いた', pass: { turns: 4, say: 'うわさは 聞こえなくなった。でも 気には なっている。', leave: true }, kind: 'normal', hp: 24,
     moves: [{ t: 'inject', card: 'warukuchi', say: '言い返したく なる（悪口が まざる）' }, { t: 'stress', n: 7, say: '聞こえないように 話している' }, { t: 'worry', say: '「自分の ことかも…」' }, { t: 'stress', n: 8, say: 'うわさが 広がっていく' }],
     weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['not_join', 'tell_teacher', 'spread'],
     other: '先生：「話に のらずに いてくれて ありがとう」'
@@ -310,7 +315,7 @@
   ENEMIES.practice = {
       intro: '発表会の 練習。何回 やっても、同じ ところで まちがえてしまう。本番まで あと少し。',
     forms: ['しっぱい ループ大へび', '何度も つまずく 練習', 'あと少しの 練習'],
-    ctx: 'stage', scene: '練習が うまくいかない', kind: 'normal', hp: 28,
+    ctx: 'stage', scene: '練習が うまくいかない', pass: { turns: 4, say: '練習の 時間が おわった。不安は のこったまま。', leave: true }, kind: 'normal', hp: 28,
     moves: [{ t: 'stress', n: 7, say: 'また まちがえた' }, { t: 'grow', n: 2, say: '本番が 近づく' }, { t: 'stress', n: 8, say: '「みんなは できてるのに」' }],
     weak: ['act'], resist: [], backfire: [], situ: ['practice_again', 'quit_it'],
     other: '先生：「くり返し 練習したから、できるように なったね」'
@@ -318,7 +323,7 @@
   ENEMIES.team = {
       intro: 'グループで 発表の テーマを 決める 時間。みんな 言いたいことが ちがって、話が まとまらない。',
     forms: ['バラバラ 四つ頭', '言い合う グループ', '意見が ちがう だけの なかま'],
-    ctx: 'join', scene: 'グループで 意見が 合わない', kind: 'normal', hp: 30,
+    ctx: 'join', scene: 'グループで 意見が 合わない', pass: { turns: 4, say: '時間ぎれで、先生が テーマを 決めた。', leave: true }, kind: 'normal', hp: 30,
     moves: [{ t: 'stress', n: 7, say: 'みんな 自分の 意見を ゆずらない' }, { t: 'grow', n: 2, say: '時間が なくなっていく' }, { t: 'stress', n: 8, say: '声が 大きくなる' }],
     weak: [], resist: ['impulse'], backfire: ['impulse'], situ: ['listen_all', 'vote', 'force_own'],
     view: { truth: 'benign', weak: ['relate', 'think'], resist: [], backfire: ['impulse'], stressMul: 0.7 },

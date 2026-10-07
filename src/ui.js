@@ -319,6 +319,7 @@
         h('b', { text: Math.max(0, en.hp) + '/' + en.maxHp })
       ]),
       h('div', { class: 'intent' }, [h('span', { class: 'lbl', text: 'つぎに 起きそうなこと' }), h('b', { text: it.say + '（' + itText + '）' })]),
+      EN.solo ? h('div', { class: 'termnote', text: '個人課題：自分の 力で とりくむ。相談・協力の カードと アイテムは 使えない' }) : null,
       EN.term === 'short' ? h('div', { class: 'termnote', text: 'すぐに 来る 課題：「時間を かけて」の カード・相談アイテムは 使えない' }) : null,
       it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (EN.pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
       EN.anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
@@ -400,7 +401,8 @@
       r.frozen ? h('p', { class: 'story', text: '動けないまま、時間が すぎた。「' + D.CTX_LABEL[r.frozen.ctx] + '」に 苦手意識が ついた（' + r.frozen.to + '）。この場面では ストレスが 少し ふえる。ストレスは 9割まで さがった。' }) : null,
       r.fled ? h('p', { class: 'story', text: 'にげたので、問題は そのまま のこった（モヤモヤが デッキに 入った）。にげるのが いい場面と、そうでない場面が ある。' }) : null,
       r.escaped ? h('p', { class: 'praise', text: 'あぶない場面では、はなれる・にげる・大人を よぶ が いちばん。自分の 安全を 守れた。' }) : null,
-      r.passed ? h('p', { class: 'story', text: r.passed + (r.leave ? '（モヤモヤが デッキに 入った）' : '') }) : null,
+      r.passed ? h('p', { class: 'story', text: r.passed + (r.leave ? '（ストレスが 多すぎて、モヤモヤが デッキに 入った）' : '') }) : null,
+      r.endured ? h('p', { class: 'praise', text: '心の準備で たえきった。気もちを 落ちつけて やりすごせたので、モヤモヤは のこらなかった。' }) : null,
       h('p', { class: 'other', text: r.other }),
       r.support ? h('div', { class: 'supoffer' }, [
         sprite(r.support, 2, 'offer'),

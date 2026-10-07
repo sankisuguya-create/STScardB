@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 9;
+  var ENGINE_VER = 10;
 
   // --- 乱数 ---
   function rand(s) {
@@ -24,9 +24,10 @@
   }
 
   function card(id) { return D.CARDS[id]; }
-  function fits(id, ctx, term) {
+  function fits(id, ctx, term, solo) {
     var c = D.CARDS[id];
     if (term === 'short' && c.term === 'long') return false;
+    if (solo && (c.help || c.coop)) return false;
     return !c.ctx || !ctx || c.ctx.indexOf(ctx) >= 0;
   }
   function statOf(c) { return D.STATS[c.type] ? c.type : null; }
@@ -188,7 +189,7 @@
       backfire: (E.backfire || []).slice(), stressMul: 1, heroMul: heroMod(s, E), bossMul: E.kind === 'boss' ? 1 - D.MAP.heartStress * lostHearts(s) : 1
     };
     var bench = [], cards = [];
-    s.deck.forEach(function (id) { (fits(id, E.ctx, E.term) ? cards : bench).push({ id: id }); });
+    s.deck.forEach(function (id) { (fits(id, E.ctx, E.term, E.solo) ? cards : bench).push({ id: id }); });
     var draw = shuffle(s, cards);
     s.battle = {
       enemy: en, draw: draw, hand: [], discard: [], exhaust: [], bench: bench,
@@ -568,7 +569,8 @@
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
     if (s.tutorial) { s.phase = 'tutorialdone'; log(s, { k: 'tutorialdone' }); return; }
     log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, passed: !!passed, escaped: !!escaped, turns: b.turn, taken: b.taken || 0 });
-    if (passed && E.pass.leave) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'pass:' + en.id }); }
+    var leave = passed && E.pass.leave && overStressed(s);
+    if (leave) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'pass:' + en.id }); }
     var statsBefore = { think: s.stats.think, act: s.stats.act, relate: s.stats.relate };
     Object.keys(D.STATS).forEach(function (st) {
       if (b.usage[st] >= (s.route === 'hard' ? D.RULES.growthUses - 1 : D.RULES.growthUses) && s.stats[st] < D.PLAYER.statMax) {
@@ -594,7 +596,7 @@
     if (en.kind === 'boss') { bossDown(s); return; }
     s.phase = 'reward';
     if (passed) {
-      s.reward = { choices: [], other: E.other, support: null, passed: E.pass.say, leave: !!E.pass.leave };
+      s.reward = { choices: [], other: E.other, support: null, passed: E.pass.say, leave: leave, endured: passed && E.pass.leave && !leave };
       return;
     }
     var sup = null;
@@ -605,14 +607,14 @@
 
   // 報酬：その課題の 場面で 使える カードだけを 出す。レアは 条件を 満たし、運が よい時だけ（大きなかべは 出やすい）
   function rewardChoices(s) {
-    var b = s.battle, ctx = D.ENEMIES[b.enemy.id].ctx, term = D.ENEMIES[b.enemy.id].term;
+    var b = s.battle, ctx = D.ENEMIES[b.enemy.id].ctx, term = D.ENEMIES[b.enemy.id].term, solo = D.ENEMIES[b.enemy.id].solo;
     var want = s.trust >= D.RULES.highTrust ? D.RULES.rewardChoicesHighTrust : D.RULES.rewardChoices;
     var situ = shuffle(s, Object.keys(b.playedOk)).slice(0, 2);
     if (b.teacherCard && situ.indexOf(b.teacherCard) < 0) situ = [b.teacherCard].concat(situ).slice(0, 2);
-    var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0 && fits(id, ctx, term); }));
+    var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0 && fits(id, ctx, term, solo); }));
     var out = situ.concat(pool).slice(0, want);
     var chance = (b.enemy.kind === 'elite' ? D.RULES.rareChanceElite : D.RULES.rareChance)[s.act] || 0;
-    var adv = shuffle(s, D.ADVANCED.filter(function (id) { var c = card(id); return !c.signature && meetsReq(s, c) && s.deck.indexOf(id) < 0 && fits(id, ctx, term); }));
+    var adv = shuffle(s, D.ADVANCED.filter(function (id) { var c = card(id); return !c.signature && meetsReq(s, c) && s.deck.indexOf(id) < 0 && fits(id, ctx, term, solo); }));
     if (adv.length && rand(s) < chance) { if (out.length >= want) out[out.length - 1] = adv[0]; else out.push(adv[0]); }
     return out;
   }
@@ -634,6 +636,7 @@
   function canUseSupport(s, id) {
     if (s.phase !== 'battle') return false;
     if (D.SUPPORTS[id].term === 'long' && D.ENEMIES[s.battle.enemy.id].term === 'short') return false;
+    if (D.SUPPORTS[id].help && D.ENEMIES[s.battle.enemy.id].solo) return false;
     return s.equip.indexOf(id) >= 0 && !s.battle.usedItems[id];
   }
 

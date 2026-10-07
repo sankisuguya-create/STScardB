@@ -107,17 +107,18 @@ test('場面に合わないカードは、その戦いの山札・手札に出�
 test('アイテム：戦いごとに1回、なくならない。先生は場面のカードをくれ、報酬にも出る', () => {
   for (let seed = 1; seed < 300; seed++) {
     const s = E.newRun(seed, 1, 'tario');
-    E._battle(s, 'homework');
-    if (s.battle.enemy.id !== 'homework') continue;
+    E._battle(s, 'practice');
+    if (s.battle.enemy.id !== 'practice') continue;
+    const tc = D.TEACHER_CARDS.stage;
     E.useSupport(s, 'teacher');
     assert.ok(!E.canUseSupport(s, 'teacher'));
-    assert.ok(s.battle.hand.concat(s.battle.discard).some((h) => h.id === 'ask_teacher'));
+    assert.ok(s.battle.hand.concat(s.battle.discard).some((h) => h.id === tc));
     assert.strictEqual(s.battle.enemy.form, 1);
     assert.deepStrictEqual(s.equip, ['teacher']);
     s.battle.enemy.hp = 0; s.battle.hand.push({ id: 'try_it', temp: true }); s.battle.energy = 3;
     E.playCard(s, s.battle.hand.length - 1);
     assert.strictEqual(s.phase, 'reward');
-    assert.ok(s.reward.choices.includes('ask_teacher'));
+    assert.ok(s.reward.choices.includes(tc));
     E.pickReward(s, null);
     E.chooseNode(s, 0);
     if (s.phase === 'battle' && D.ENEMIES[s.battle.enemy.id].term !== 'short') assert.ok(E.canUseSupport(s, 'teacher'));
@@ -151,7 +152,7 @@ test('ひと休みで アイテムを入れかえられる（3つまで・持っ
 });
 
 test('時間で過ぎ去る課題：ターン数を乗りこえると終わり、報酬はない。からかいは過ぎ去らない', () => {
-  assert.ok(!D.ENEMIES.teased.pass && !D.ENEMIES.presentation.pass);
+  assert.ok(!D.ENEMIES.teased.pass && !D.ENEMIES.friend_fight.pass);
   for (let seed = 1; seed < 300; seed++) {
     const s = E.newRun(seed, 1);
     E._battle(s, 'bumped');
@@ -478,4 +479,24 @@ test('途中脱落なし：ボスで 動けなくなっても 次の層へ 進�
 test('カードと アイテムで ストレスは 回復しない', () => {
   for (const id of Object.keys(D.CARDS)) assert.ok(!D.CARDS[id].heal, id);
   for (const id of Object.keys(D.SUPPORTS)) assert.ok(!D.SUPPORTS[id].heal, id);
+});
+
+test('個人課題：相談・協力の カードは 控えへ、相談アイテムは 使えない', () => {
+  const s = E.newRun(2, 1, 'tario'); s.deck.push('ask_teacher', 'together', 'endure');
+  s.equip = ['teacher', 'book']; s.items = ['teacher', 'book'];
+  E._battle(s, 'test');
+  const ids = s.battle.bench.map((h) => h.id);
+  assert.ok(ids.includes('ask_teacher') && ids.includes('together'));
+  assert.ok(!E.canUseSupport(s, 'teacher'));
+  assert.ok(E.canUseSupport(s, 'book') || D.SUPPORTS.book.term === 'long');
+});
+
+test('耐久：ストレス6割以下で たえきると モヤモヤは のこらない', () => {
+  const s = E.newRun(4, 1, 'hanoko');
+  E._battle(s, 'misunder');
+  s.yoyu = 999; s.maxYoyu = 999;
+  const n0 = s.deck.filter((x) => x === 'moyamoya').length;
+  for (let i = 0; i < 6 && s.phase === 'battle'; i++) { s.battle.hand = []; E.endTurn(s); }
+  assert.ok(s.reward.passed && s.reward.endured);
+  assert.strictEqual(s.deck.filter((x) => x === 'moyamoya').length, n0);
 });

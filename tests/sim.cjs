@@ -14,12 +14,15 @@ const POLICIES = {
   // 適応：ふだんは向社会的、あぶない場面では はなれる・にげる、からかいでは きっぱり／先生
   // 自力：向社会的だが 助けを もとめない（相談カード・アイテムを 使わない）
   selfreliant: { order: ['good', 'neutral'], reward: (c) => c.judge === 'good' && !c.help, rest: 'remove-impulse', event: 0, noHelp: true },
+  // 耐久：時間で 過ぎ去る 課題では 心の準備を かためて たえる。過ぎ去らない 課題では 向社会的
+  endure: { order: ['good', 'neutral'], reward: (c) => c.judge === 'good' && !!c.guard, rest: 'remove-impulse', event: 0, endure: true },
   adaptive: { order: ['good', 'neutral'], reward: (c) => c.judge === 'good', rest: 'remove-impulse', event: 0, adaptive: true }
 };
 
 function rank(c, pol, s) {
   const kind = c.style === 'passive' && c.judge !== 'good' ? 'passive' : c.judge;
   let r = pol.order.indexOf(kind);
+  if (pol.endure && D.ENEMIES[s.battle.enemy.id].pass) { if (!c.guard || c.judge === 'impulse') return -1; return 50 + c.guard; }
   if (pol === POLICIES.passive && c.type === 'relate') r = -1;
   const danger = D.ENEMIES[s.battle.enemy.id].kind === 'danger';
   if (c.escape && !(pol.adaptive && danger)) r = -1;
@@ -138,7 +141,8 @@ function verdict(r) {
     ['1バトルが短い（平均 3ターン以下）', r.prosocial.turns <= 3 && r.adaptive.turns <= 3],
     ['まちがった戦法は 追いこまれる（1ターンの ダメージが 適応の 1.7倍以上）', r.impulse.hurtPerTurn >= 1.7 * r.adaptive.hurtPerTurn && r.passive.hurtPerTurn >= 1.7 * r.adaptive.hurtPerTurn],
     ['よい選択の失敗率 20〜35%', r.prosocial.goodFailRate >= 0.2 && r.prosocial.goodFailRate <= 0.35],
-    ['衝動の その場の成功率 ≥ 60%', r.impulse.impulseOkRate >= 0.6]
+    ['衝動の その場の成功率 ≥ 60%', r.impulse.impulseOkRate >= 0.6],
+    ['耐久（時間で 過ぎ去る 課題を 心の準備で たえる）が 成立（≥ 75%、衝動より上、向社会的より下）', r.endure.win >= 0.75 && r.endure.win > r.impulse.win && r.endure.win < r.prosocial.win]
   ];
   return checks;
 }
