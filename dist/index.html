@@ -558,7 +558,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
     low: { p: 0.35, label: '失敗するかも' }
   };
 
-  var PLAYER = { stressStart: 10, statMin: -2, weakFail: 0.2, overStress: 0.6, overFail: 0.2, panicStress: 0.8, overPanic: 2, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
+  var PLAYER = { stressStart: 10, statMin: -2, weakFail: 0.2, statPow: 2, overStress: 0.6, overFail: 0.2, panicStress: 0.8, overPanic: 2, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
 
   var RULES = {
     stressThreshold: 0.3,      // 余裕（＝上限−ストレス）がこの割合未満でカッとなるが手札にまざる
@@ -1194,7 +1194,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
       title: 'ゴロゴロ する', slack: true,
       text: '今日は 何も しないで、ゲームを したり ねころんだり。気もちは 楽だけど、やる ことは 先のばしに なった…',
       options: [
-        { label: 'ゴロゴロする', effects: { yoyu: 22, slack: 1 }, result: 'ストレスは 少し へった。でも、ボスが 少し 大きくなった気が する…' }
+        { label: 'ゴロゴロする', effects: { yoyu: 22, slack: 1 }, result: 'ストレスは へった。でも、体が なまって、これからの 課題が 少し きつく 感じそう…' }
       ]
     },
     second_chance: {
@@ -1221,7 +1221,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
     { id: 'easy', name: '楽そうな道', note: '課題は 1つ だけで 休める。でも 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'slack', 'rest', 'battle', 'slack', 'event', 'event'] }
   ];
 
-  var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.15, mysteryElite: 0.05, troublePer: 0.06, selfFail: 0.05, selfFailPer: 0.03, selfFailMax: 0.3, troubleMax: 0.6, slackBoss: 0.05, actHealAmount: 0, relatedShare: 0.5, hearts: 3, heartHp: 0.18, heartStress: 0.2, bossBase: 1.15, actHeal: 1 };
+  var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.15, mysteryElite: 0.05, troublePer: 0.06, actScale: { hp: [1, 1.3, 1.6], stress: [1, 1.2, 1.4] }, rust: 0.07, selfFail: 0.05, selfFailPer: 0.03, selfFailMax: 0.3, troubleMax: 0.6, slackBoss: 0.05, actHealAmount: 0, relatedShare: 0.5, hearts: 3, heartHp: 0.18, heartStress: 0.2, bossBase: 1.15, actHeal: 1 };
 
   // カードを 使った時の「どうなったか」（場面 × カードの系統）
   var OUTCOME = {
@@ -3989,7 +3989,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
   function helpBoost(s, c) { var H = D.HEROES[s.hero]; return (H && H.helpBoost && c && c.help) ? H.helpBoost : 1; }
   function heroMod(s, E) { var H = D.HEROES[s.hero]; return (H && H.ctxMod && H.ctxMod[E.ctx]) || 1; }
   function bossHp(s, E) {
-    var hp = E.hp * D.RULES.hpScale * heroMod(s, E);
+    var hp = E.hp * D.RULES.hpScale * heroMod(s, E) * actScale(s, 'hp');
     if (E.kind === 'boss') hp *= bossSize(s);
     return Math.round(hp);
   }
@@ -4142,7 +4142,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
 
   function solveAmount(s, c) {
     var b = s.battle, en = b.enemy, st = statOf(c);
-    var n = c.solve + (st ? s.stats[st] : 0);
+    var n = c.solve + (st ? s.stats[st] * D.PLAYER.statPow : 0);
     var m = 1;
     if (en.weak.indexOf(c.type) >= 0) m *= D.RULES.weak;
     if (en.resist.indexOf(c.type) >= 0) m *= D.RULES.resist;
@@ -4158,7 +4158,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
       p.solve = solveAmount(s, c);
       p.backfire = en.backfire.indexOf(c.type) >= 0;
     }
-    if (c.guard) p.guard = c.guard + (st ? s.stats[st] : 0);
+    if (c.guard) p.guard = c.guard + (st ? s.stats[st] * D.PLAYER.statPow : 0);
     p.weak = en.weak.indexOf(c.type) >= 0;
     p.resist = en.resist.indexOf(c.type) >= 0;
     return p;
@@ -4216,7 +4216,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
           msg(s, '「' + c.name + '」で その場は おさまった。でも あとで こじれて、問題の いきおい +' + D.RULES.backfireGrow + '。', 'backfire');
         }
       }
-      if (c.guard) b.guard += Math.round((c.guard + (st ? s.stats[st] : 0)) * helpBoost(s, c));
+      if (c.guard) b.guard += Math.round((c.guard + (st ? s.stats[st] * D.PLAYER.statPow : 0)) * helpBoost(s, c));
       if (c.draw) drawCards(s, c.draw);
       if (c.judge === 'impulse' && !entry.backfire) msg(s, '「' + c.name + '」で すっきりした。でも…', 'impulse');
     } else {
@@ -4274,10 +4274,12 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
   }
 
   // 苦手意識：その場面では ストレスが ふえる
+  // 層が 進むほど 課題が 大きく・きびしく なる（3層版のみ）
+  function actScale(s, k) { var a = D.MAP.actScale && D.MAP.actScale[k]; return (a && s.acts > 1 && a[s.act]) || 1; }
   function stressOf(s, mv) {
     var en = s.battle.enemy, ctx = D.ENEMIES[en.id].ctx;
     var ng = (s.nigate[ctx] || 0) * D.RULES.nigateStress;
-    return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul * (en.bossMul || 1) * (en.heroMul || 1));
+    return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul * (en.bossMul || 1) * (en.heroMul || 1) * actScale(s, 'stress') * (1 + D.MAP.rust * (s.slackTotal || 0)));
   }
   // 余裕（＝上限−ストレス）は0より下がらない。下がった分は「動けない」中の つらさとして数える
   function hurt(s, dmg) {
@@ -4626,7 +4628,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
     var e = o.effects, y0 = s.yoyu, t0 = s.trust, it0 = s.items.length;
     if (e.trust) addTrust(s, e.trust, 'event:' + s.event.id, false);
     if (e.yoyu) s.yoyu = Math.max(1, Math.min(s.maxYoyu, s.yoyu + e.yoyu));
-    if (e.slack) { s.slack = (s.slack || 0) + e.slack; log(s, { k: 'slack', n: s.slack }); }
+    if (e.slack) { s.slackTotal = (s.slackTotal || 0) + e.slack; s.slack = (s.slack || 0) + e.slack; log(s, { k: 'slack', n: s.slack }); }
     var evolved = null;
     if (e.evolve) {
       var ei = s.deck.indexOf(e.evolve[0]);
@@ -5446,7 +5448,8 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
       h('div', { class: 'maprow2' }, [itemSlots(false)]),
       h('p', { class: 'hint', text: left > 0 ? 'つぎは どうする？（ボスまで あと ' + left + ' だん）' : 'いよいよ ボス' }),
       h('div', { class: 'nextrow n' + cur.length }, opts),
-      (S.slack ? h('p', { class: 'slacknote', text: 'ゴロゴロ ' + S.slack + '回：ボスが ' + Math.round(D.MAP.slackBoss * S.slack * 100) + '% 大きく なっている' }) : null)
+      (S.slackTotal ? h('p', { class: 'slacknote', text: 'ゴロゴロ ' + S.slackTotal + '回：体が なまって、課題が ' + Math.round(D.MAP.rust * S.slackTotal * 100) + '% きつく 感じる' + (S.slack ? '（この層の ボスも ' + Math.round(D.MAP.slackBoss * S.slack * 100) + '% 大きい）' : '') }) : null),
+      S.acts > 1 && S.act > 0 ? h('p', { class: 'slacknote', text: (S.act + 1) + 'そう目：課題が 大きく、きびしく なっている' }) : null
     ]);
   }
 

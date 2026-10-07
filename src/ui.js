@@ -331,7 +331,8 @@
       h('div', { class: 'maprow2' }, [itemSlots(false)]),
       h('p', { class: 'hint', text: left > 0 ? 'つぎは どうする？（ボスまで あと ' + left + ' だん）' : 'いよいよ ボス' }),
       h('div', { class: 'nextrow n' + cur.length }, opts),
-      (S.slack ? h('p', { class: 'slacknote', text: 'ゴロゴロ ' + S.slack + '回：ボスが ' + Math.round(D.MAP.slackBoss * S.slack * 100) + '% 大きく なっている' }) : null)
+      (S.slackTotal ? h('p', { class: 'slacknote', text: 'ゴロゴロ ' + S.slackTotal + '回：体が なまって、課題が ' + Math.round(D.MAP.rust * S.slackTotal * 100) + '% きつく 感じる' + (S.slack ? '（この層の ボスも ' + Math.round(D.MAP.slackBoss * S.slack * 100) + '% 大きい）' : '') }) : null),
+      S.acts > 1 && S.act > 0 ? h('p', { class: 'slacknote', text: (S.act + 1) + 'そう目：課題が 大きく、きびしく なっている' }) : null
     ]);
   }
 

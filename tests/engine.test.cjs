@@ -624,3 +624,11 @@ test('Z：すべて ふつう', () => {
   assert.deepStrictEqual(s.stats, { think: 0, act: 0, relate: 0 });
   assert.strictEqual(D.HEROES.zeta.name, 'Z');
 });
+
+test('層が 進むと 課題が 大きく、ゴロゴロの 回数で ストレスが きつくなる', () => {
+  const a = E.newRun(3, 3, 'hanoko'); E._battle(a, 'dunno');
+  const b = E.newRun(3, 3, 'hanoko'); b.act = 2; E._battle(b, 'dunno');
+  assert.ok(b.battle.enemy.maxHp > a.battle.enemy.maxHp);
+  const c = E.newRun(3, 3, 'hanoko'); c.slackTotal = 5; E._battle(c, 'dunno');
+  assert.ok(E.intent(c).n > E.intent(a).n);
+});

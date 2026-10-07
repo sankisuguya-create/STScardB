@@ -25,7 +25,7 @@
     low: { p: 0.35, label: '失敗するかも' }
   };
 
-  var PLAYER = { stressStart: 10, statMin: -2, weakFail: 0.2, overStress: 0.6, overFail: 0.2, panicStress: 0.8, overPanic: 2, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
+  var PLAYER = { stressStart: 10, statMin: -2, weakFail: 0.2, statPow: 2, overStress: 0.6, overFail: 0.2, panicStress: 0.8, overPanic: 2, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
 
   var RULES = {
     stressThreshold: 0.3,      // 余裕（＝上限−ストレス）がこの割合未満でカッとなるが手札にまざる
@@ -661,7 +661,7 @@
       title: 'ゴロゴロ する', slack: true,
       text: '今日は 何も しないで、ゲームを したり ねころんだり。気もちは 楽だけど、やる ことは 先のばしに なった…',
       options: [
-        { label: 'ゴロゴロする', effects: { yoyu: 22, slack: 1 }, result: 'ストレスは 少し へった。でも、ボスが 少し 大きくなった気が する…' }
+        { label: 'ゴロゴロする', effects: { yoyu: 22, slack: 1 }, result: 'ストレスは へった。でも、体が なまって、これからの 課題が 少し きつく 感じそう…' }
       ]
     },
     second_chance: {
@@ -688,7 +688,7 @@
     { id: 'easy', name: '楽そうな道', note: '課題は 1つ だけで 休める。でも 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'slack', 'rest', 'battle', 'slack', 'event', 'event'] }
   ];
 
-  var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.15, mysteryElite: 0.05, troublePer: 0.06, selfFail: 0.05, selfFailPer: 0.03, selfFailMax: 0.3, troubleMax: 0.6, slackBoss: 0.05, actHealAmount: 0, relatedShare: 0.5, hearts: 3, heartHp: 0.18, heartStress: 0.2, bossBase: 1.15, actHeal: 1 };
+  var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.15, mysteryElite: 0.05, troublePer: 0.06, actScale: { hp: [1, 1.3, 1.6], stress: [1, 1.2, 1.4] }, rust: 0.07, selfFail: 0.05, selfFailPer: 0.03, selfFailMax: 0.3, troubleMax: 0.6, slackBoss: 0.05, actHealAmount: 0, relatedShare: 0.5, hearts: 3, heartHp: 0.18, heartStress: 0.2, bossBase: 1.15, actHeal: 1 };
 
   // カードを 使った時の「どうなったか」（場面 × カードの系統）
   var OUTCOME = {

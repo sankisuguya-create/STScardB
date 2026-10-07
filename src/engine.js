@@ -206,7 +206,7 @@
   function helpBoost(s, c) { var H = D.HEROES[s.hero]; return (H && H.helpBoost && c && c.help) ? H.helpBoost : 1; }
   function heroMod(s, E) { var H = D.HEROES[s.hero]; return (H && H.ctxMod && H.ctxMod[E.ctx]) || 1; }
   function bossHp(s, E) {
-    var hp = E.hp * D.RULES.hpScale * heroMod(s, E);
+    var hp = E.hp * D.RULES.hpScale * heroMod(s, E) * actScale(s, 'hp');
     if (E.kind === 'boss') hp *= bossSize(s);
     return Math.round(hp);
   }
@@ -359,7 +359,7 @@
 
   function solveAmount(s, c) {
     var b = s.battle, en = b.enemy, st = statOf(c);
-    var n = c.solve + (st ? s.stats[st] : 0);
+    var n = c.solve + (st ? s.stats[st] * D.PLAYER.statPow : 0);
     var m = 1;
     if (en.weak.indexOf(c.type) >= 0) m *= D.RULES.weak;
     if (en.resist.indexOf(c.type) >= 0) m *= D.RULES.resist;
@@ -375,7 +375,7 @@
       p.solve = solveAmount(s, c);
       p.backfire = en.backfire.indexOf(c.type) >= 0;
     }
-    if (c.guard) p.guard = c.guard + (st ? s.stats[st] : 0);
+    if (c.guard) p.guard = c.guard + (st ? s.stats[st] * D.PLAYER.statPow : 0);
     p.weak = en.weak.indexOf(c.type) >= 0;
     p.resist = en.resist.indexOf(c.type) >= 0;
     return p;
@@ -433,7 +433,7 @@
           msg(s, '「' + c.name + '」で その場は おさまった。でも あとで こじれて、問題の いきおい +' + D.RULES.backfireGrow + '。', 'backfire');
         }
       }
-      if (c.guard) b.guard += Math.round((c.guard + (st ? s.stats[st] : 0)) * helpBoost(s, c));
+      if (c.guard) b.guard += Math.round((c.guard + (st ? s.stats[st] * D.PLAYER.statPow : 0)) * helpBoost(s, c));
       if (c.draw) drawCards(s, c.draw);
       if (c.judge === 'impulse' && !entry.backfire) msg(s, '「' + c.name + '」で すっきりした。でも…', 'impulse');
     } else {
@@ -491,10 +491,12 @@
   }
 
   // 苦手意識：その場面では ストレスが ふえる
+  // 層が 進むほど 課題が 大きく・きびしく なる（3層版のみ）
+  function actScale(s, k) { var a = D.MAP.actScale && D.MAP.actScale[k]; return (a && s.acts > 1 && a[s.act]) || 1; }
   function stressOf(s, mv) {
     var en = s.battle.enemy, ctx = D.ENEMIES[en.id].ctx;
     var ng = (s.nigate[ctx] || 0) * D.RULES.nigateStress;
-    return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul * (en.bossMul || 1) * (en.heroMul || 1));
+    return Math.round((mv.n * D.RULES.stressScale + en.str + ng) * en.stressMul * (en.bossMul || 1) * (en.heroMul || 1) * actScale(s, 'stress') * (1 + D.MAP.rust * (s.slackTotal || 0)));
   }
   // 余裕（＝上限−ストレス）は0より下がらない。下がった分は「動けない」中の つらさとして数える
   function hurt(s, dmg) {
@@ -843,7 +845,7 @@
     var e = o.effects, y0 = s.yoyu, t0 = s.trust, it0 = s.items.length;
     if (e.trust) addTrust(s, e.trust, 'event:' + s.event.id, false);
     if (e.yoyu) s.yoyu = Math.max(1, Math.min(s.maxYoyu, s.yoyu + e.yoyu));
-    if (e.slack) { s.slack = (s.slack || 0) + e.slack; log(s, { k: 'slack', n: s.slack }); }
+    if (e.slack) { s.slackTotal = (s.slackTotal || 0) + e.slack; s.slack = (s.slack || 0) + e.slack; log(s, { k: 'slack', n: s.slack }); }
     var evolved = null;
     if (e.evolve) {
       var ei = s.deck.indexOf(e.evolve[0]);
