@@ -2,7 +2,7 @@
 // node scripts/build.mjs  /  --check で dist が最新かを確かめる
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 const r = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
-const js = ['src/data.js', 'src/engine.js', 'src/platform.js', 'src/sprites.js', 'src/illust.js', 'src/ui.js'].map(r).join('\n').replace(/<\/script/gi, '<\\/script');
+const js = ['src/data.js', 'src/fit.js', 'src/engine.js', 'src/platform.js', 'src/sprites.js', 'src/illust.js', 'src/ui.js'].map(r).join('\n').replace(/<\/script/gi, '<\\/script');
 const html = r('src/index.template.html').replace('/*@@STYLE@@*/', () => r('src/style.css')).replace('/*@@SCRIPT@@*/', () => js);
 import { createRequire } from 'node:module';
 const D = createRequire(import.meta.url)('../src/data.js');
@@ -30,6 +30,12 @@ function contentMd(D) {
     L.push(`### ${e.scene}（${e.kind}）`, '', `- 状きょう：${e.intro}`, `- 3つの姿：${e.forms.join(' → ')}`);
     if (e.view) L.push(`- ほんとう：${e.view.name}（${e.view.truth === 'hostile' ? '本当に いやなこと' : 'わざとではない'}）`);
     L.push(`- つぎに起きそうなこと：${e.moves.map((m) => m.say).join('／')}`, `- 場面カード：${e.situ.map((id) => D.CARDS[id].name).join('、')}`, `- 相手から見ると：${e.other}`, '');
+  }
+  L.push('## 課題 × カードの 結果文（src/fit.js）', '');
+  for (const [eid, row] of Object.entries(D.FIT || {})) {
+    L.push(`### ${D.ENEMIES[eid].scene}（${Object.keys(row).length}まい）`, '', '| カード | うまくいった | うまくいかなかった |', '|---|---|---|');
+    for (const [cid, [ok, ng]] of Object.entries(row)) L.push(`| ${D.CARDS[cid].name} | ${ok} | ${ng} |`);
+    L.push('');
   }
   L.push('## できごと', '');
   for (const ev of Object.values(D.EVENTS)) {

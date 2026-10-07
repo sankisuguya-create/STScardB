@@ -492,7 +492,7 @@
   // お試し版：4段＋ボス。各段は2マスから1つ選ぶ
   // 1層＝7段＋ボス。課題の半分以上は ボスに 関連する課題（related）。関連する課題を 乗りこえるたびに ボスの ハートが へる
   var ACTS = [
-    { name: '教室', boss: 'test', related: ['dunno', 'homework', 'forgot_item'], others: ['bumped', 'left_out'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'forgot', 'friend_trouble', 'library', 'family_talk', 'recess'] },
+    { name: '教室', boss: 'test', related: ['dunno', 'homework'], others: ['forgot_item', 'bumped', 'left_out'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'forgot', 'friend_trouble', 'library', 'family_talk', 'recess'] },
     { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'friend_trouble', 'library', 'family_talk', 'recess'] },
     { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'library', 'family_talk', 'friend_trouble', 'recess'] }
   ];
@@ -533,6 +533,6 @@
   });
 
   var DATA = { ROUTES: ROUTES, TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT, OUTCOME: OUTCOME, TROUBLE_ENEMIES: ['payback', 'bad_rep', 'cold_class'] };
-  if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
+  if (typeof module !== 'undefined' && module.exports) { DATA.FIT = require('./fit.js'); module.exports = DATA; }
   else root.SST_DATA = DATA;
 })(this);

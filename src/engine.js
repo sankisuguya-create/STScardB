@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 11;
+  var ENGINE_VER = 12;
 
   // --- 乱数 ---
   function rand(s) {
@@ -24,6 +24,12 @@
   }
 
   function card(id) { return D.CARDS[id]; }
+  // 課題ごとの 対応表（src/fit.js）に あるカードだけが 使える。表が ない課題（れんしゅう）は 場面タグで 判定
+  function fitsEnemy(id, eid) {
+    var E = D.ENEMIES[eid], F = D.FIT && D.FIT[eid];
+    if (F) return !!F[id] && fits(id, E.ctx, E.term, E.solo);
+    return fits(id, E.ctx, E.term, E.solo);
+  }
   function fits(id, ctx, term, solo) {
     var c = D.CARDS[id];
     if (term === 'short' && c.term === 'long') return false;
@@ -191,7 +197,7 @@
       backfire: (E.backfire || []).slice(), stressMul: 1, heroMul: heroMod(s, E), bossMul: E.kind === 'boss' ? 1 - D.MAP.heartStress * lostHearts(s) : 1
     };
     var bench = [], cards = [];
-    s.deck.forEach(function (id) { (fits(id, E.ctx, E.term, E.solo) ? cards : bench).push({ id: id }); });
+    s.deck.forEach(function (id) { (fitsEnemy(id, eid) ? cards : bench).push({ id: id }); });
     var draw = shuffle(s, cards);
     s.battle = {
       enemy: en, draw: draw, hand: [], discard: [], exhaust: [], bench: bench,
@@ -420,7 +426,7 @@
     }
     if (ok && h.temp && c.judge === 'good') b.playedOk[h.id] = 1;
     log(s, entry);
-    var out = outcomeText(s, c, ok, entry);
+    var out = outcomeText(s, c, ok, entry, h.id);
     (s.popups || (s.popups = [])).push({ k: 'play', card: h.id, name: c.name, ok: ok, tone: out.tone, text: out.text,
       notes: b.msgs.slice(m0).filter(function (m) { return m.tag !== 'curse'; }).map(function (m) { return m.text; }),
       solve: Math.max(0, hp0 - en.hp), guard: b.guard - g0, heal: s.yoyu - y0, hpFrom: Math.max(0, hp0), hpTo: Math.max(0, en.hp), hpMax: en.maxHp });
@@ -433,7 +439,12 @@
   }
 
   // カードの「どうなったか」：場面 × カードの系統
-  function outcomeText(s, c, ok, entry) {
+  function outcomeText(s, c, ok, entry, id) {
+    var F = D.FIT && D.FIT[s.battle.enemy.id] && D.FIT[s.battle.enemy.id][id];
+    if (F && F[ok ? 0 : 1]) {
+      var tone = !ok ? 'fail' : (entry.backfire || c.judge === 'impulse') ? 'bad' : c.judge === 'good' ? 'good' : 'plain';
+      return { tone: tone, text: F[ok ? 0 : 1] };
+    }
     var O = D.OUTCOME[D.ENEMIES[s.battle.enemy.id].ctx] || D.OUTCOME.study;
     if (!ok) return { tone: 'fail', text: O.fail };
     if (c.escape) return { tone: 'good', text: '安全な ところへ はなれられた。' };
@@ -614,10 +625,10 @@
     var want = s.trust >= D.RULES.highTrust ? D.RULES.rewardChoicesHighTrust : D.RULES.rewardChoices;
     var situ = shuffle(s, Object.keys(b.playedOk)).slice(0, 2);
     if (b.teacherCard && situ.indexOf(b.teacherCard) < 0) situ = [b.teacherCard].concat(situ).slice(0, 2);
-    var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0 && fits(id, ctx, term, solo); }));
+    var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0 && fitsEnemy(id, b.enemy.id); }));
     var out = situ.concat(pool).slice(0, want);
     var chance = (b.enemy.kind === 'elite' ? D.RULES.rareChanceElite : D.RULES.rareChance)[s.act] || 0;
-    var adv = shuffle(s, D.ADVANCED.filter(function (id) { var c = card(id); return !c.signature && meetsReq(s, c) && s.deck.indexOf(id) < 0 && fits(id, ctx, term, solo); }));
+    var adv = shuffle(s, D.ADVANCED.filter(function (id) { var c = card(id); return !c.signature && meetsReq(s, c) && s.deck.indexOf(id) < 0 && fitsEnemy(id, b.enemy.id); }));
     if (adv.length && rand(s) < chance) { if (out.length >= want) out[out.length - 1] = adv[0]; else out.push(adv[0]); }
     return out;
   }
@@ -658,7 +669,8 @@
       organize(s);
     }
     if (id === 'friend') {
-      var fc = rand(s) < D.SUPPORT_RULES.junkChance ? 'junk_advice' : pick(s, D.FRIEND_CARDS);
+      var fitF = D.FRIEND_CARDS.filter(function (x) { return fitsEnemy(x, en.id); });
+      var fc = rand(s) < D.SUPPORT_RULES.junkChance || !fitF.length ? 'junk_advice' : pick(s, fitF);
       s.deck.push(fc); addToHand(s, { id: fc });
       log(s, { k: 'gain', card: fc, why: 'friend' });
       msg(s, '友だちの アドバイス：「' + card(fc).name + '」' + (fc === 'junk_advice' ? '（あまり 役に立たなかった…）' : ''), fc === 'junk_advice' ? 'fail' : 'next');
@@ -872,7 +884,7 @@
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, _battle: function (s, eid) { s.floor++; if (s.pos == null) s.pos = 0; startBattle(s, eid); s.phase = 'battle'; return s; }, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, fitsEnemy: fitsEnemy, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, _battle: function (s, eid) { s.floor++; if (s.pos == null) s.pos = 0; startBattle(s, eid); s.phase = 'battle'; return s; }, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D

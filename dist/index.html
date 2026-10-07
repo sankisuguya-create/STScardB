@@ -939,7 +939,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   // お試し版：4段＋ボス。各段は2マスから1つ選ぶ
   // 1層＝7段＋ボス。課題の半分以上は ボスに 関連する課題（related）。関連する課題を 乗りこえるたびに ボスの ハートが へる
   var ACTS = [
-    { name: '教室', boss: 'test', related: ['dunno', 'homework', 'forgot_item'], others: ['bumped', 'left_out'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'forgot', 'friend_trouble', 'library', 'family_talk', 'recess'] },
+    { name: '教室', boss: 'test', related: ['dunno', 'homework'], others: ['forgot_item', 'bumped', 'left_out'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'forgot', 'friend_trouble', 'library', 'family_talk', 'recess'] },
     { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'friend_trouble', 'library', 'family_talk', 'recess'] },
     { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'library', 'family_talk', 'friend_trouble', 'recess'] }
   ];
@@ -980,8 +980,15 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   });
 
   var DATA = { ROUTES: ROUTES, TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT, OUTCOME: OUTCOME, TROUBLE_ENEMIES: ['payback', 'bad_rep', 'cold_class'] };
-  if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
+  if (typeof module !== 'undefined' && module.exports) { DATA.FIT = require('./fit.js'); module.exports = DATA; }
   else root.SST_DATA = DATA;
+})(this);
+
+// 課題 × カードの 対応表と 結果文（作成中）
+(function (root) {
+  var FIT = {};
+  if (typeof module !== 'undefined' && module.exports) module.exports = FIT;
+  else root.SST_DATA.FIT = FIT;
 })(this);
 
 // ゲームの規則。状態と操作から次の状態を作る。DOM・保存には触れない。
@@ -990,7 +997,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 11;
+  var ENGINE_VER = 12;
 
   // --- 乱数 ---
   function rand(s) {
@@ -1010,6 +1017,12 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   }
 
   function card(id) { return D.CARDS[id]; }
+  // 課題ごとの 対応表（src/fit.js）に あるカードだけが 使える。表が ない課題（れんしゅう）は 場面タグで 判定
+  function fitsEnemy(id, eid) {
+    var E = D.ENEMIES[eid], F = D.FIT && D.FIT[eid];
+    if (F) return !!F[id] && fits(id, E.ctx, E.term, E.solo);
+    return fits(id, E.ctx, E.term, E.solo);
+  }
   function fits(id, ctx, term, solo) {
     var c = D.CARDS[id];
     if (term === 'short' && c.term === 'long') return false;
@@ -1177,7 +1190,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
       backfire: (E.backfire || []).slice(), stressMul: 1, heroMul: heroMod(s, E), bossMul: E.kind === 'boss' ? 1 - D.MAP.heartStress * lostHearts(s) : 1
     };
     var bench = [], cards = [];
-    s.deck.forEach(function (id) { (fits(id, E.ctx, E.term, E.solo) ? cards : bench).push({ id: id }); });
+    s.deck.forEach(function (id) { (fitsEnemy(id, eid) ? cards : bench).push({ id: id }); });
     var draw = shuffle(s, cards);
     s.battle = {
       enemy: en, draw: draw, hand: [], discard: [], exhaust: [], bench: bench,
@@ -1406,7 +1419,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     }
     if (ok && h.temp && c.judge === 'good') b.playedOk[h.id] = 1;
     log(s, entry);
-    var out = outcomeText(s, c, ok, entry);
+    var out = outcomeText(s, c, ok, entry, h.id);
     (s.popups || (s.popups = [])).push({ k: 'play', card: h.id, name: c.name, ok: ok, tone: out.tone, text: out.text,
       notes: b.msgs.slice(m0).filter(function (m) { return m.tag !== 'curse'; }).map(function (m) { return m.text; }),
       solve: Math.max(0, hp0 - en.hp), guard: b.guard - g0, heal: s.yoyu - y0, hpFrom: Math.max(0, hp0), hpTo: Math.max(0, en.hp), hpMax: en.maxHp });
@@ -1419,7 +1432,12 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   }
 
   // カードの「どうなったか」：場面 × カードの系統
-  function outcomeText(s, c, ok, entry) {
+  function outcomeText(s, c, ok, entry, id) {
+    var F = D.FIT && D.FIT[s.battle.enemy.id] && D.FIT[s.battle.enemy.id][id];
+    if (F && F[ok ? 0 : 1]) {
+      var tone = !ok ? 'fail' : (entry.backfire || c.judge === 'impulse') ? 'bad' : c.judge === 'good' ? 'good' : 'plain';
+      return { tone: tone, text: F[ok ? 0 : 1] };
+    }
     var O = D.OUTCOME[D.ENEMIES[s.battle.enemy.id].ctx] || D.OUTCOME.study;
     if (!ok) return { tone: 'fail', text: O.fail };
     if (c.escape) return { tone: 'good', text: '安全な ところへ はなれられた。' };
@@ -1600,10 +1618,10 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     var want = s.trust >= D.RULES.highTrust ? D.RULES.rewardChoicesHighTrust : D.RULES.rewardChoices;
     var situ = shuffle(s, Object.keys(b.playedOk)).slice(0, 2);
     if (b.teacherCard && situ.indexOf(b.teacherCard) < 0) situ = [b.teacherCard].concat(situ).slice(0, 2);
-    var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0 && fits(id, ctx, term, solo); }));
+    var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0 && fitsEnemy(id, b.enemy.id); }));
     var out = situ.concat(pool).slice(0, want);
     var chance = (b.enemy.kind === 'elite' ? D.RULES.rareChanceElite : D.RULES.rareChance)[s.act] || 0;
-    var adv = shuffle(s, D.ADVANCED.filter(function (id) { var c = card(id); return !c.signature && meetsReq(s, c) && s.deck.indexOf(id) < 0 && fits(id, ctx, term, solo); }));
+    var adv = shuffle(s, D.ADVANCED.filter(function (id) { var c = card(id); return !c.signature && meetsReq(s, c) && s.deck.indexOf(id) < 0 && fitsEnemy(id, b.enemy.id); }));
     if (adv.length && rand(s) < chance) { if (out.length >= want) out[out.length - 1] = adv[0]; else out.push(adv[0]); }
     return out;
   }
@@ -1644,7 +1662,8 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
       organize(s);
     }
     if (id === 'friend') {
-      var fc = rand(s) < D.SUPPORT_RULES.junkChance ? 'junk_advice' : pick(s, D.FRIEND_CARDS);
+      var fitF = D.FRIEND_CARDS.filter(function (x) { return fitsEnemy(x, en.id); });
+      var fc = rand(s) < D.SUPPORT_RULES.junkChance || !fitF.length ? 'junk_advice' : pick(s, fitF);
       s.deck.push(fc); addToHand(s, { id: fc });
       log(s, { k: 'gain', card: fc, why: 'friend' });
       msg(s, '友だちの アドバイス：「' + card(fc).name + '」' + (fc === 'junk_advice' ? '（あまり 役に立たなかった…）' : ''), fc === 'junk_advice' ? 'fail' : 'next');
@@ -1858,7 +1877,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, _battle: function (s, eid) { s.floor++; if (s.pos == null) s.pos = 0; startBattle(s, eid); s.phase = 'battle'; return s; }, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, fitsEnemy: fitsEnemy, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, _battle: function (s, eid) { s.floor++; if (s.pos == null) s.pos = 0; startBattle(s, eid); s.phase = 'battle'; return s; }, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D
@@ -2358,8 +2377,16 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
       (c.chance || (D.STATS[c.type] && S && S.stats[c.type] < 0)) ? h('div', { class: 'chance c-' + (c.chance || 'weak'), text: (D.STATS[c.type] && S && S.stats[c.type] < 0) ? '失敗するかも（にがて）' : D.CHANCE[c.chance].label }) : null,
       tags.length ? h('div', { class: 'tags' }, tags) : null,
       lock ? h('div', { class: 'lock', text: lock }) : null,
-      c.ctx && opts.showCtx ? h('div', { class: 'ctx', text: '使える場面：' + c.ctx.map(function (k) { return D.CTX_LABEL[k]; }).join('・') }) : null
+      opts.showCtx ? scenesOf(c) : null
     ]);
+  }
+
+  // そのカードが 使える 課題（対応表 src/fit.js から）
+  function scenesOf(c) {
+    if (!D.FIT) return null;
+    var id = Object.keys(D.CARDS).filter(function (k) { return D.CARDS[k] === c; })[0];
+    var names = Object.keys(D.FIT).filter(function (eid) { return D.FIT[eid][id] && D.ENEMIES[eid]; }).map(function (eid) { return D.ENEMIES[eid].scene; });
+    return h('div', { class: 'ctx', text: names.length ? '使える場面：' + names.join('・') : '使える場面：なし' });
   }
 
   function lockText(c) {

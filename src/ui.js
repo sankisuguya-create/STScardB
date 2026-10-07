@@ -297,8 +297,16 @@
       (c.chance || (D.STATS[c.type] && S && S.stats[c.type] < 0)) ? h('div', { class: 'chance c-' + (c.chance || 'weak'), text: (D.STATS[c.type] && S && S.stats[c.type] < 0) ? '失敗するかも（にがて）' : D.CHANCE[c.chance].label }) : null,
       tags.length ? h('div', { class: 'tags' }, tags) : null,
       lock ? h('div', { class: 'lock', text: lock }) : null,
-      c.ctx && opts.showCtx ? h('div', { class: 'ctx', text: '使える場面：' + c.ctx.map(function (k) { return D.CTX_LABEL[k]; }).join('・') }) : null
+      opts.showCtx ? scenesOf(c) : null
     ]);
+  }
+
+  // そのカードが 使える 課題（対応表 src/fit.js から）
+  function scenesOf(c) {
+    if (!D.FIT) return null;
+    var id = Object.keys(D.CARDS).filter(function (k) { return D.CARDS[k] === c; })[0];
+    var names = Object.keys(D.FIT).filter(function (eid) { return D.FIT[eid][id] && D.ENEMIES[eid]; }).map(function (eid) { return D.ENEMIES[eid].scene; });
+    return h('div', { class: 'ctx', text: names.length ? '使える場面：' + names.join('・') : '使える場面：なし' });
   }
 
   function lockText(c) {
