@@ -549,3 +549,24 @@ test('友だちの まね：カードが 1まい 上位に しんかする', () 
   for (const [eid, row] of Object.entries(D.FIT)) if (row.try_it) assert.ok(E.fitsEnemy('trial_error', eid) && row.trial_error, eid);
   for (const [eid, row] of Object.entries(D.FIT)) if (row.endure) assert.ok(row.no_worry && row.later_down && row.switch_on, eid);
 });
+
+test('ひと休みは 連続しない', () => {
+  for (let seed = 1; seed < 200; seed++) {
+    const s = E.newRun(seed, 1, 'hanoko');
+    for (let c = 0; c < 3; c++) for (let r = 0; r < s.map.rows.length - 2; r++) {
+      assert.ok(!(s.map.rows[r][c].kind === 'rest' && s.map.rows[r + 1][c] && s.map.rows[r + 1][c].kind === 'rest'), seed + ':' + r);
+    }
+  }
+});
+
+test('一日を 思い出す：出会った 課題の よい行動から カードを 1まい もらう', () => {
+  const s = E.newRun(3, 1, 'hanoko');
+  E._battle(s, 'forgot_item');
+  s.phase = 'rest';
+  const rc = E.recallChoices(s);
+  assert.ok(rc.length > 0 && rc.every((id) => D.CARDS[id].judge === 'good' && D.ENEMIES.forgot_item.situ.includes(id)));
+  const n = s.deck.length;
+  E.rest(s, 'recall', rc[0]);
+  assert.strictEqual(s.deck.length, n + 1);
+  assert.ok(s.deck.includes(rc[0]));
+});

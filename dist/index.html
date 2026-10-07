@@ -440,6 +440,8 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
 .changes .fx { font-size: 1rem; padding: 4px 10px; }
 .intro .troublebadge { margin-bottom: 8px; }
 .fx.evo { background: #ffe8a3; border-color: #b8860b; font-weight: 800; }
+.recall { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.recall .recallsrc { color: var(--sub); font-weight: 700; }
 
 </style>
 </head>
@@ -811,6 +813,63 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     other: '遊んでいた子：「この前は びっくりした。でも、また いっしょに やろう」'
   };
 
+
+  // ===== 自分の しっぱい（？マスで ときどき 出る）=====
+  ENEMIES.got_rough = {
+    selfFail: true, art: 'bumped', term: 'short',
+    intro: '休み時間、おにごっこで テンションが 上がって、友だちを 強く たたいて しまった。友だちが うでを おさえて 下を 向いている。',
+    forms: ['あばれる 火の 手', 'うでを おさえる 友だち', 'びっくりして いたい 友だち'],
+    ctx: 'conflict', scene: 'もり上がって たたいた', kind: 'normal', hp: 26,
+    moves: [{ t: 'stress', n: 7, say: '友だちが だまって しまった' }, { t: 'inject', card: 'kattonaru', say: '「わざとじゃ ない！」と 言いたくなる（カッとなる が まざる）' }, { t: 'stress', n: 8, say: 'まわりの 子が 見ている' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['apologize', 'ask_ok', 'hide_it'],
+    other: '友だち：「いたかったけど、すぐ あやまって くれたから いいよ」'
+  };
+  ENEMIES.said_too_much = {
+    selfFail: true, art: 'rumor',
+    intro: 'みんなで わらっているうちに、調子に のって 友だちの ことを「へんなの」と 言いすぎた。友だちが 笑わなく なった。',
+    forms: ['とげとげ ことばの つる', 'だまりこんだ 友だち', '本当は 気にしていた 友だち'],
+    ctx: 'tease', scene: '言いすぎた', kind: 'normal', hp: 26,
+    moves: [{ t: 'stress', n: 7, say: '友だちが 目を 合わせない' }, { t: 'inject', card: 'warukuchi', say: 'ごまかして もっと 言いたくなる（悪口が まざる）' }, { t: 'stress', n: 7, say: '気まずい 空気が 続く' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['apologize', 'tell_feeling', 'spread'],
+    other: '友だち：「言われて いやだった。でも、あやまって くれて うれしかった」'
+  };
+  ENEMIES.joined_in = {
+    selfFail: true, art: 'teased',
+    intro: 'クラスの 何人かが ある子を からかっていた。気づいたら 自分も いっしょに わらって、まねを していた。その子が 一人で 帰っていく。',
+    forms: ['わらい声の むれ', 'からかわれた あの子', '一人で がまんしていた あの子'],
+    ctx: 'tease', scene: 'からかいに 加わった', kind: 'normal', hp: 30,
+    moves: [{ t: 'stress', n: 7, say: 'あの子の 顔が うかぶ' }, { t: 'grow', n: 2, say: 'からかいが 毎日の ことに なりそう' }, { t: 'stress', n: 8, say: '「みんなも やってたし」と 思いたくなる' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['not_join', 'tell_teacher', 'apologize'],
+    other: 'あの子：「次の 日、声を かけて くれて ほっとした」'
+  };
+  ENEMIES.skipped_hw = {
+    selfFail: true, solo: true, art: 'homework',
+    intro: 'きのう ゲームに むちゅうに なって、宿題を やらずに ねて しまった。朝の 会で「宿題を 出してください」の 声。',
+    forms: ['サボりの おばけ', '出せない 宿題', 'やれば おわる 量の 宿題'],
+    ctx: 'study', scene: '宿題を サボった', kind: 'normal', hp: 24,
+    moves: [{ t: 'stress', n: 7, say: '先生が こっちを 見る' }, { t: 'inject', card: 'put_off', say: '「あとで やればいい」と 思いたくなる' }, { t: 'stress', n: 7, say: 'ほかの 子は もう 出している' }],
+    weak: ['think', 'act'], resist: [], backfire: ['impulse'], situ: ['say_honest', 'plan_time', 'hide_it'],
+    other: '先生：「正直に 言って くれたね。休み時間に いっしょに やろう」'
+  };
+  ENEMIES.ran_hall = {
+    selfFail: true, art: 'bumped', term: 'short',
+    intro: '早く 遊びたくて ろうかを 走ったら、曲がり角で 下の 学年の 子と ぶつかった。その子が しりもちを ついている。',
+    forms: ['ろうかを かける つむじ風', 'しりもちを ついた 子', 'びっくりした 下の 学年の 子'],
+    ctx: 'conflict', scene: 'ろうかを 走った', kind: 'normal', hp: 22,
+    moves: [{ t: 'stress', n: 7, say: 'その子が 泣きそうに なる' }, { t: 'stress', n: 7, say: '先生が 歩いて くる' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['ask_ok', 'apologize', 'walk_away'],
+    other: '下の 学年の 子：「手を かして くれて ありがとう」'
+  };
+  ENEMIES.chatting = {
+    selfFail: true, art: 'dunno', term: 'short',
+    intro: 'じゅぎょう中、となりの 子と 話していたら 楽しくて 声が 大きく なった。先生に「今は 何の 時間？」と 言われた。',
+    forms: ['おしゃべり ことり', 'こっちを 見る 先生', 'じゅぎょうに もどってほしい 先生'],
+    ctx: 'study', scene: 'じゅぎょう中の おしゃべり', kind: 'normal', hp: 20,
+    moves: [{ t: 'stress', n: 6, say: 'みんなが ふり向く' }, { t: 'stress', n: 6, say: '何の 話を しているか わからなく なった' }],
+    weak: ['think', 'relate'], resist: [], backfire: ['impulse'], situ: ['say_honest', 'review_notes', 'hide_it'],
+    other: '先生：「すぐ 切りかえられたね」'
+  };
+
   // れんしゅう用の 課題（はじめの 操作説明だけで 使う。マップには 出ない）
   ENEMIES.tutorial = {
     forms: ['ころがる 消しゴム虫', 'どこかへ 行った 消しゴム', 'つくえの 下の 消しゴム'],
@@ -1038,12 +1097,12 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'library', 'family_talk', 'friend_trouble', 'friend_fun', 'friend_switch', 'neighbor', 'friend_later', 'recess'] }
   ];
   var ROUTES = [
-    { id: 'hard', name: 'しんどいが 力が つく道', note: '課題に 向き合う マスが 多い（4つ）。ボスが 弱くなり、成長しやすい', nodes: ['battle', 'mystery', 'battle', 'event', 'battle', 'mystery', 'battle', 'event', 'rest'] },
-    { id: 'normal', name: 'ふつうの道', note: '課題に 向き合う マスは 2つ。休みも ある', nodes: ['battle', 'event', 'mystery', 'rest', 'event', 'battle', 'mystery', 'event', 'rest'] },
-    { id: 'easy', name: '楽そうな道', note: '課題は 1つ だけで 休める。でも 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'slack', 'rest', 'battle', 'slack', 'event', 'rest'] }
+    { id: 'hard', name: 'しんどいが 力が つく道', note: '課題に 向き合う マスが 多い（4つ）。ボスが 弱くなり、成長しやすい', nodes: ['battle', 'mystery', 'battle', 'event', 'battle', 'mystery', 'battle', 'event', 'event'] },
+    { id: 'normal', name: 'ふつうの道', note: '課題に 向き合う マスは 2つ。休みも ある', nodes: ['battle', 'event', 'mystery', 'rest', 'event', 'battle', 'mystery', 'event', 'event'] },
+    { id: 'easy', name: '楽そうな道', note: '課題は 1つ だけで 休める。でも 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'slack', 'rest', 'battle', 'slack', 'event', 'slack'] }
   ];
 
-  var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.15, mysteryElite: 0.05, troublePer: 0.06, troubleMax: 0.6, slackBoss: 0.05, actHealAmount: 0, relatedShare: 0.5, hearts: 3, heartHp: 0.18, heartStress: 0.2, bossBase: 1.15, actHeal: 1 };
+  var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.15, mysteryElite: 0.05, troublePer: 0.06, selfFail: 0.12, troubleMax: 0.6, slackBoss: 0.05, actHealAmount: 0, relatedShare: 0.5, hearts: 3, heartHp: 0.18, heartStress: 0.2, bossBase: 1.15, actHeal: 1 };
 
   // カードを 使った時の「どうなったか」（場面 × カードの系統）
   var OUTCOME = {
@@ -1073,7 +1132,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     });
   });
 
-  var DATA = { ROUTES: ROUTES, TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT, OUTCOME: OUTCOME, TROUBLE_ENEMIES: ['payback', 'bad_rep', 'cold_class'] };
+  var DATA = { ROUTES: ROUTES, TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT, OUTCOME: OUTCOME, TROUBLE_ENEMIES: ['payback', 'bad_rep', 'cold_class'], SELF_FAIL_ENEMIES: ['got_rough', 'said_too_much', 'joined_in', 'skipped_hw', 'ran_hall', 'chatting'] };
   if (typeof module !== 'undefined' && module.exports) { DATA.FIT = require('./fit.js'); module.exports = DATA; }
   else root.SST_DATA = DATA;
 })(this);
@@ -2969,7 +3028,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 13;
+  var ENGINE_VER = 14;
 
   // --- 乱数 ---
   function rand(s) {
@@ -3034,9 +3093,15 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     var M = D.MAP, act = D.ACTS[s.act], rows = [], edges = [];
     for (var r = 0; r < M.rows; r++) rows.push([]);
     D.ROUTES.forEach(function (R, c) {
-      var mid = R.nodes.slice(1, R.nodes.length - 1);
-      shuffle(s, mid);
-      var kinds = [R.nodes[0]].concat(mid, [R.nodes[R.nodes.length - 1]]);
+      // ひと休みが 続かないように 並べる（さいごの 段は いつも ひと休み）
+      var kinds, mid = R.nodes.slice(1, R.nodes.length - 1);
+      for (var tries = 0; tries < 50; tries++) {
+        shuffle(s, mid);
+        kinds = [R.nodes[0]].concat(mid, [R.nodes[R.nodes.length - 1]]);
+        while (kinds.length < M.rows) kinds.push('event');
+        kinds[M.rows - 1] = 'rest';
+        if (!kinds.some(function (k, i) { return k === 'rest' && kinds[i + 1] === 'rest'; })) break;
+      }
       for (var r2 = 0; r2 < M.rows; r2++) {
         var kind = r2 === M.rows - 1 ? 'rest' : (kinds[r2] || 'event');
         var n = { col: c, kind: kind, route: R.id };
@@ -3101,7 +3166,8 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     if (n.kind === 'mystery') {
       var act = D.ACTS[s.act];
       var mr = rand(s), tp = Math.min(D.MAP.troubleMax, (s.impulse || 0) * D.MAP.troublePer);
-      if (tp > 0 && rand(s) < tp) { startBattle(s, pick(s, D.TROUBLE_ENEMIES)); s.phase = 'intro'; s.mysteryBattle = true; log(s, { k: 'troubleMon', p: tp }); }
+      if (rand(s) < D.MAP.selfFail) { startBattle(s, pick(s, D.SELF_FAIL_ENEMIES)); s.phase = 'intro'; s.mysteryBattle = true; log(s, { k: 'selfFail' }); }
+      else if (tp > 0 && rand(s) < tp) { startBattle(s, pick(s, D.TROUBLE_ENEMIES)); s.phase = 'intro'; s.mysteryBattle = true; log(s, { k: 'troubleMon', p: tp }); }
       else if (mr < D.MAP.mysteryElite) { startBattle(s, pick(s, act.elites)); s.phase = 'intro'; }
       else if (mr < D.MAP.mysteryElite + D.MAP.mysteryBattle) {
         var pool = act.others.concat(rand(s) < D.RULES.dangerChance * 2 ? act.dangers : []);
@@ -3111,7 +3177,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     else if (n.kind === 'slack') { s.usedEvents.push('slack'); s.event = { id: 'slack', done: null }; s.phase = 'event'; log(s, { k: 'event', id: 'slack' }); }
     else if (n.kind === 'battle' || n.kind === 'elite' || n.kind === 'boss') { startBattle(s, n.enemy); s.phase = 'intro'; }
     else if (n.kind === 'event') startEvent(s);
-    else if (n.kind === 'rest') { s.phase = 'rest'; }
+    else if (n.kind === 'rest') { s.phase = 'rest'; s.recallSeed = Math.floor(rand(s) * 1e6); }
     s.nodeKind = n.kind;
     return s;
   }
@@ -3157,6 +3223,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
 
   function startBattle(s, eid) {
     var E = D.ENEMIES[eid];
+    s.seen = (s.seen || []).concat([eid]).slice(-6);
     var en = {
       id: eid, name: E.forms[0], form: 0, hp: bossHp(s, E), maxHp: bossHp(s, E), kind: E.kind, str: 0, mi: 0,
       revealed: false, weak: E.weak.slice(), resist: E.resist.slice(),
@@ -3695,6 +3762,11 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
       s.deck.push('consult_family'); log(s, { k: 'gain', card: 'consult_family', why: 'rest' });
       heal(s, Math.round(s.maxYoyu * D.RULES.restHeal));
       log(s, { k: 'rest', d: s.yoyu - before });
+    } else if (choice === 'recall') {
+      var cid = deckIdx;
+      if (recallChoices(s).indexOf(cid) < 0) throw new Error('bad recall');
+      s.deck.push(cid); log(s, { k: 'gain', card: cid, why: 'recall' });
+      s.seen = [];
     } else if (choice === 'remove') {
       var id = s.deck[deckIdx];
       if (!id) throw new Error('bad card');
@@ -3702,6 +3774,20 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
       log(s, { k: 'remove', card: id });
     } else throw new Error('bad choice');
     return advance(s);
+  }
+
+  // 一日を 思い出す：さいきん 出会った 課題で、ほかの人が 見せた（場面の）よい行動から、自分の 新しい 選択肢を つくる
+  function recallChoices(s) {
+    var out = [];
+    (s.seen || []).forEach(function (eid) {
+      (D.ENEMIES[eid].situ || []).forEach(function (id) {
+        var c = card(id);
+        if (c && c.judge === 'good' && s.deck.indexOf(id) < 0 && out.indexOf(id) < 0) out.push(id);
+      });
+    });
+    var rs = s.recallSeed || 0;
+    out.sort(function (a, b) { return ((a.length * 31 + rs) % 97) - ((b.length * 31 + rs) % 97) || (a < b ? -1 : 1); });
+    return out.slice(0, 3);
   }
 
   // --- できごと ---
@@ -3856,7 +3942,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, fitsEnemy: fitsEnemy, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, _battle: function (s, eid) { s.floor++; if (s.pos == null) s.pos = 0; startBattle(s, eid); s.phase = 'battle'; return s; }, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, fitsEnemy: fitsEnemy, recallChoices: recallChoices, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, _battle: function (s, eid) { s.floor++; if (s.pos == null) s.pos = 0; startBattle(s, eid); s.phase = 'battle'; return s; }, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D
@@ -4111,7 +4197,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   }
 
   var selSup = null;
-  var lastDealKey = '', lastMoyaKey = '', lastClearKey = '', lastPlay = null, shownPlay = null, lastHitKey = '';
+  var recalling = false, lastDealKey = '', lastMoyaKey = '', lastClearKey = '', lastPlay = null, shownPlay = null, lastHitKey = '';
   // ストレスの 割合で 主人公の 見た目を かえる
   function heroMood() {
     if (!S) return 0;
@@ -4246,8 +4332,9 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   // 戦いの前に、状きょうを 語る ページ
   function introScreen() {
     var en = S.battle.enemy, EN = D.ENEMIES[en.id];
-    var kind = EN.trouble ? 'トラブル' : en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : en.kind === 'danger' ? 'あぶない場面' : '課題';
+    var kind = EN.selfFail ? '自分の しっぱい' : EN.trouble ? 'トラブル' : en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : en.kind === 'danger' ? 'あぶない場面' : '課題';
     return h('main', { class: 'intro k-' + en.kind }, [
+      EN.selfFail ? h('div', { class: 'troublebadge', text: '自分の しっぱい：自分が してしまった ことに 向き合う' }) : null,
       EN.trouble ? h('div', { class: 'troublebadge', text: 'トラブル：これまでの 衝動的な 行動が 原因で 起きた（衝動カードを 使うほど ？マスで 出やすくなる）' }) : null,
       h('div', { class: 'intro-kind', text: kind + '：' + EN.scene }),
       h('div', { class: 'intro-art' }, [sprite(SST_SPRITES.enemyKey(EN.art || en.id, en.form), en.form, 'mon')]),
@@ -4379,7 +4466,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     var itText = it.t === 'stress' ? 'ストレス +' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
     var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
     var bubble = h('section', { class: 'bubble k-' + en.kind }, [
-      h('div', { class: 'ekind', text: (EN.trouble ? 'トラブル' : en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
+      h('div', { class: 'ekind', text: (EN.selfFail ? '自分の しっぱい' : EN.trouble ? 'トラブル' : en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
       h('h2', { class: 'ename' }, [en.name, en.kind === 'boss' ? hearts(S.hearts) : null]),
       h('div', { class: 'meter hp' }, [
         h('span', { class: 'lbl', text: '問題の大きさ' }),
@@ -4493,6 +4580,21 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
 
   // --- ひと休み ---
   function restScreen() {
+    if (recalling) {
+      var rc = E.recallChoices(S);
+      return h('main', { class: 'rest' }, [
+        h('h2', { text: '一日を 思い出す' }),
+        h('p', { class: 'story', text: 'ねる前に、今日 あったことを 思い出してみた。あの時、こうも できたかも…' }),
+        h('div', { class: 'choices' }, rc.map(function (id) {
+          var src = (S.seen || []).filter(function (eid) { return (D.ENEMIES[eid].situ || []).indexOf(id) >= 0; }).pop();
+          var el = cardView(E.card(id), { showCtx: true });
+          var wrap = h('div', { class: 'recall' }, [h('small', { class: 'recallsrc', text: src ? '「' + D.ENEMIES[src].scene + '」の 時を 思い出して' : '' }), el]);
+          el.addEventListener('click', function () { recalling = false; act(function () { E.rest(S, 'recall', id); }); });
+          return wrap;
+        })),
+        h('button', { class: 'secondary', onclick: function () { recalling = false; render(); }, text: 'もどる' })
+      ]);
+    }
     if (removing) {
       return h('main', { class: 'rest' }, [
         h('h2', { text: '自分を 見つめ直す：もう 使わない カードを 1まい えらぶ' }),
@@ -4522,6 +4624,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
       equipPanel,
       h('div', { class: 'two' }, [
         h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['家で ゆっくり 休む', h('small', { text: '家族と すごして、ストレスを ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' へらす。「お家の人に そうだんする」カードが もらえる' })]),
+        h('button', { class: 'secondary big', disabled: !E.recallChoices(S).length, onclick: function () { recalling = true; render(); } }, ['一日を 思い出す', h('small', { text: E.recallChoices(S).length ? 'あったことや まわりの 人の ふるまいから、自分の 新しい 選択肢を 考える（カードを 1まい もらう）' : '思い出せる ことが まだ ない' })]),
         h('button', { class: 'secondary big', onclick: function () { removing = true; render(); } }, ['自分を 見つめ直す', h('small', { text: 'いらない くせを 1つ 卒業する' })])
       ])
     ]);

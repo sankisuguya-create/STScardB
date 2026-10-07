@@ -52,7 +52,7 @@
   }
 
   var selSup = null;
-  var lastDealKey = '', lastMoyaKey = '', lastClearKey = '', lastPlay = null, shownPlay = null, lastHitKey = '';
+  var recalling = false, lastDealKey = '', lastMoyaKey = '', lastClearKey = '', lastPlay = null, shownPlay = null, lastHitKey = '';
   // ストレスの 割合で 主人公の 見た目を かえる
   function heroMood() {
     if (!S) return 0;
@@ -187,8 +187,9 @@
   // 戦いの前に、状きょうを 語る ページ
   function introScreen() {
     var en = S.battle.enemy, EN = D.ENEMIES[en.id];
-    var kind = EN.trouble ? 'トラブル' : en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : en.kind === 'danger' ? 'あぶない場面' : '課題';
+    var kind = EN.selfFail ? '自分の しっぱい' : EN.trouble ? 'トラブル' : en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : en.kind === 'danger' ? 'あぶない場面' : '課題';
     return h('main', { class: 'intro k-' + en.kind }, [
+      EN.selfFail ? h('div', { class: 'troublebadge', text: '自分の しっぱい：自分が してしまった ことに 向き合う' }) : null,
       EN.trouble ? h('div', { class: 'troublebadge', text: 'トラブル：これまでの 衝動的な 行動が 原因で 起きた（衝動カードを 使うほど ？マスで 出やすくなる）' }) : null,
       h('div', { class: 'intro-kind', text: kind + '：' + EN.scene }),
       h('div', { class: 'intro-art' }, [sprite(SST_SPRITES.enemyKey(EN.art || en.id, en.form), en.form, 'mon')]),
@@ -320,7 +321,7 @@
     var itText = it.t === 'stress' ? 'ストレス +' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
     var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
     var bubble = h('section', { class: 'bubble k-' + en.kind }, [
-      h('div', { class: 'ekind', text: (EN.trouble ? 'トラブル' : en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
+      h('div', { class: 'ekind', text: (EN.selfFail ? '自分の しっぱい' : EN.trouble ? 'トラブル' : en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
       h('h2', { class: 'ename' }, [en.name, en.kind === 'boss' ? hearts(S.hearts) : null]),
       h('div', { class: 'meter hp' }, [
         h('span', { class: 'lbl', text: '問題の大きさ' }),
@@ -434,6 +435,21 @@
 
   // --- ひと休み ---
   function restScreen() {
+    if (recalling) {
+      var rc = E.recallChoices(S);
+      return h('main', { class: 'rest' }, [
+        h('h2', { text: '一日を 思い出す' }),
+        h('p', { class: 'story', text: 'ねる前に、今日 あったことを 思い出してみた。あの時、こうも できたかも…' }),
+        h('div', { class: 'choices' }, rc.map(function (id) {
+          var src = (S.seen || []).filter(function (eid) { return (D.ENEMIES[eid].situ || []).indexOf(id) >= 0; }).pop();
+          var el = cardView(E.card(id), { showCtx: true });
+          var wrap = h('div', { class: 'recall' }, [h('small', { class: 'recallsrc', text: src ? '「' + D.ENEMIES[src].scene + '」の 時を 思い出して' : '' }), el]);
+          el.addEventListener('click', function () { recalling = false; act(function () { E.rest(S, 'recall', id); }); });
+          return wrap;
+        })),
+        h('button', { class: 'secondary', onclick: function () { recalling = false; render(); }, text: 'もどる' })
+      ]);
+    }
     if (removing) {
       return h('main', { class: 'rest' }, [
         h('h2', { text: '自分を 見つめ直す：もう 使わない カードを 1まい えらぶ' }),
@@ -463,6 +479,7 @@
       equipPanel,
       h('div', { class: 'two' }, [
         h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['家で ゆっくり 休む', h('small', { text: '家族と すごして、ストレスを ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' へらす。「お家の人に そうだんする」カードが もらえる' })]),
+        h('button', { class: 'secondary big', disabled: !E.recallChoices(S).length, onclick: function () { recalling = true; render(); } }, ['一日を 思い出す', h('small', { text: E.recallChoices(S).length ? 'あったことや まわりの 人の ふるまいから、自分の 新しい 選択肢を 考える（カードを 1まい もらう）' : '思い出せる ことが まだ ない' })]),
         h('button', { class: 'secondary big', onclick: function () { removing = true; render(); } }, ['自分を 見つめ直す', h('small', { text: 'いらない くせを 1つ 卒業する' })])
       ])
     ]);

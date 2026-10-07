@@ -431,3 +431,5 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
 .changes .fx { font-size: 1rem; padding: 4px 10px; }
 .intro .troublebadge { margin-bottom: 8px; }
 .fx.evo { background: #ffe8a3; border-color: #b8860b; font-weight: 800; }
+.recall { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.recall .recallsrc { color: var(--sub); font-weight: 700; }

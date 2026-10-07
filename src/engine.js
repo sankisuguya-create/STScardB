@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 13;
+  var ENGINE_VER = 14;
 
   // --- 乱数 ---
   function rand(s) {
@@ -69,9 +69,15 @@
     var M = D.MAP, act = D.ACTS[s.act], rows = [], edges = [];
     for (var r = 0; r < M.rows; r++) rows.push([]);
     D.ROUTES.forEach(function (R, c) {
-      var mid = R.nodes.slice(1, R.nodes.length - 1);
-      shuffle(s, mid);
-      var kinds = [R.nodes[0]].concat(mid, [R.nodes[R.nodes.length - 1]]);
+      // ひと休みが 続かないように 並べる（さいごの 段は いつも ひと休み）
+      var kinds, mid = R.nodes.slice(1, R.nodes.length - 1);
+      for (var tries = 0; tries < 50; tries++) {
+        shuffle(s, mid);
+        kinds = [R.nodes[0]].concat(mid, [R.nodes[R.nodes.length - 1]]);
+        while (kinds.length < M.rows) kinds.push('event');
+        kinds[M.rows - 1] = 'rest';
+        if (!kinds.some(function (k, i) { return k === 'rest' && kinds[i + 1] === 'rest'; })) break;
+      }
       for (var r2 = 0; r2 < M.rows; r2++) {
         var kind = r2 === M.rows - 1 ? 'rest' : (kinds[r2] || 'event');
         var n = { col: c, kind: kind, route: R.id };
@@ -136,7 +142,8 @@
     if (n.kind === 'mystery') {
       var act = D.ACTS[s.act];
       var mr = rand(s), tp = Math.min(D.MAP.troubleMax, (s.impulse || 0) * D.MAP.troublePer);
-      if (tp > 0 && rand(s) < tp) { startBattle(s, pick(s, D.TROUBLE_ENEMIES)); s.phase = 'intro'; s.mysteryBattle = true; log(s, { k: 'troubleMon', p: tp }); }
+      if (rand(s) < D.MAP.selfFail) { startBattle(s, pick(s, D.SELF_FAIL_ENEMIES)); s.phase = 'intro'; s.mysteryBattle = true; log(s, { k: 'selfFail' }); }
+      else if (tp > 0 && rand(s) < tp) { startBattle(s, pick(s, D.TROUBLE_ENEMIES)); s.phase = 'intro'; s.mysteryBattle = true; log(s, { k: 'troubleMon', p: tp }); }
       else if (mr < D.MAP.mysteryElite) { startBattle(s, pick(s, act.elites)); s.phase = 'intro'; }
       else if (mr < D.MAP.mysteryElite + D.MAP.mysteryBattle) {
         var pool = act.others.concat(rand(s) < D.RULES.dangerChance * 2 ? act.dangers : []);
@@ -146,7 +153,7 @@
     else if (n.kind === 'slack') { s.usedEvents.push('slack'); s.event = { id: 'slack', done: null }; s.phase = 'event'; log(s, { k: 'event', id: 'slack' }); }
     else if (n.kind === 'battle' || n.kind === 'elite' || n.kind === 'boss') { startBattle(s, n.enemy); s.phase = 'intro'; }
     else if (n.kind === 'event') startEvent(s);
-    else if (n.kind === 'rest') { s.phase = 'rest'; }
+    else if (n.kind === 'rest') { s.phase = 'rest'; s.recallSeed = Math.floor(rand(s) * 1e6); }
     s.nodeKind = n.kind;
     return s;
   }
@@ -192,6 +199,7 @@
 
   function startBattle(s, eid) {
     var E = D.ENEMIES[eid];
+    s.seen = (s.seen || []).concat([eid]).slice(-6);
     var en = {
       id: eid, name: E.forms[0], form: 0, hp: bossHp(s, E), maxHp: bossHp(s, E), kind: E.kind, str: 0, mi: 0,
       revealed: false, weak: E.weak.slice(), resist: E.resist.slice(),
@@ -730,6 +738,11 @@
       s.deck.push('consult_family'); log(s, { k: 'gain', card: 'consult_family', why: 'rest' });
       heal(s, Math.round(s.maxYoyu * D.RULES.restHeal));
       log(s, { k: 'rest', d: s.yoyu - before });
+    } else if (choice === 'recall') {
+      var cid = deckIdx;
+      if (recallChoices(s).indexOf(cid) < 0) throw new Error('bad recall');
+      s.deck.push(cid); log(s, { k: 'gain', card: cid, why: 'recall' });
+      s.seen = [];
     } else if (choice === 'remove') {
       var id = s.deck[deckIdx];
       if (!id) throw new Error('bad card');
@@ -737,6 +750,20 @@
       log(s, { k: 'remove', card: id });
     } else throw new Error('bad choice');
     return advance(s);
+  }
+
+  // 一日を 思い出す：さいきん 出会った 課題で、ほかの人が 見せた（場面の）よい行動から、自分の 新しい 選択肢を つくる
+  function recallChoices(s) {
+    var out = [];
+    (s.seen || []).forEach(function (eid) {
+      (D.ENEMIES[eid].situ || []).forEach(function (id) {
+        var c = card(id);
+        if (c && c.judge === 'good' && s.deck.indexOf(id) < 0 && out.indexOf(id) < 0) out.push(id);
+      });
+    });
+    var rs = s.recallSeed || 0;
+    out.sort(function (a, b) { return ((a.length * 31 + rs) % 97) - ((b.length * 31 + rs) % 97) || (a < b ? -1 : 1); });
+    return out.slice(0, 3);
   }
 
   // --- できごと ---
@@ -891,7 +918,7 @@
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, fitsEnemy: fitsEnemy, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, _battle: function (s, eid) { s.floor++; if (s.pos == null) s.pos = 0; startBattle(s, eid); s.phase = 'battle'; return s; }, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, fitsEnemy: fitsEnemy, recallChoices: recallChoices, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, _battle: function (s, eid) { s.floor++; if (s.pos == null) s.pos = 0; startBattle(s, eid); s.phase = 'battle'; return s; }, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D
