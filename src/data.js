@@ -208,7 +208,7 @@
       ctxMod: { study: 1.5, conflict: 1.5, join: 1.5, tease: 1.5, stage: 1.5, danger: 1.5 }, good: 'まわりを たよる こと（相談カード・アイテムが 強い）', bad: 'ぜんぶの 場面',
       items: ['teacher', 'friend', 'family'], helpBoost: 1.35, helpSafe: true,
       message: 'こういう 人も いる。たよる ことは 弱さじゃない。' },
-    zeta: { name: 'Z', note: 'すべて ふつう', stats: { think: 0, act: 0, relate: 0 }, maxYoyu: 50, cards: [], look: 'hayatsu',
+    zeta: { name: 'Z', note: 'すべて ふつう', stats: { think: 0, act: 0, relate: 0 }, maxYoyu: 50, cards: [], look: 'plain',
       ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.0, stage: 1.0, danger: 1.0 }, good: 'とくに なし', bad: 'とくに なし' }
   };
 

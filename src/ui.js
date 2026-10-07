@@ -94,7 +94,8 @@
   }
   function sprite(key, form, cls, mood) {
     var cv = document.createElement('canvas');
-    cv.className = 'px ' + (cls || '') + (/^hero_/.test(key) || key === 'teacher' || key === 'friend' || key === 'family' ? ' silhouette' : '');
+    if (/^hero_/.test(key) && root.SST_HEROES) { cv.className = 'px hero64 ' + (cls || ''); SST_HEROES.draw(cv, key.slice(5), mood || 0); return cv; }
+    cv.className = 'px ' + (cls || '') + (key === 'teacher' || key === 'friend' || key === 'family' ? ' silhouette' : '');
     if (root.SST_SPRITES && SST_SPRITES.has(key)) SST_SPRITES.draw(cv, key, form || 0, mood || 0);
     return cv;
   }
