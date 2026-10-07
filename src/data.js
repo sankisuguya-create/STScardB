@@ -459,6 +459,16 @@
 
   var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.15, mysteryElite: 0.05, slackBoss: 0.05, actHealAmount: 0, relatedShare: 0.5, hearts: 3, heartHp: 0.18, heartStress: 0.2, bossBase: 1.15, actHeal: 1 };
 
+  // カードを 使った時の「どうなったか」（場面 × カードの系統）
+  var OUTCOME = {
+    study: { think: 'じゅんばんに 考えたら、ときかたが 少し 見えてきた。', act: '手を 動かしたら、少しずつ すすみ出した。', relate: '思いきって 伝えたら、手を かして もらえた。', calm: 'いきが ととのって、問題が 落ちついて 読めた。', basic: 'じっと こらえて、なんとか その場を もたせた。', impulse: 'その場は ごまかせた。でも わからないまま。', help: '先生や 友だちが 手を かしてくれた。', fail: 'やってみたけど、まだ わからない。', backfire: 'ごまかした分、あとで もっと こまりそう。' },
+    conflict: { think: '相手の 気もちを 考えたら、言い方が 見えてきた。', act: '自分から 動いて、空気が 少し かわった。', relate: '気もちを 伝えたら、相手も 少し 落ちついた。', calm: '気もちが しずまって、言葉を えらべた。', basic: 'ぐっと こらえた。ケンカには ならなかった。', impulse: 'その場は スッとした。でも 相手は もっと おこった。', help: '大人が 間に 入ってくれた。', fail: 'うまく 伝わらず、まだ ぎくしゃく している。', backfire: '言いすぎて、あとで こじれそう。' },
+    join: { think: 'どう 声を かけるか、作戦が 立った。', act: '思いきって 近づいたら、場所を あけてくれた。', relate: '「入れて」と 言えたら、なかまに 入れた。', calm: 'どきどきが おさまって、声が 出せそう。', basic: 'がまんして 見ていた。時間は すぎた。', impulse: 'わりこんだら、みんなが しらけた。', help: '友だちが いっしょに 声を かけてくれた。', fail: '声が 小さくて、気づいて もらえなかった。', backfire: '気まずく なって、次は もっと 入りにくい。' },
+    tease: { think: 'どう こたえるか 考えて、落ちついて いられた。', act: 'はっきり 動いたら、からかいが 止まった。', relate: '「やめて」と 言えた。相手が だまった。', calm: 'いやな 気もちが 少し 小さく なった。', basic: 'たえた。でも 心に のこっている。', impulse: 'やり返したら、もっと からかわれた。', help: '大人に 話したら、止めて もらえた。', fail: '言えたけど、まだ やまない。', backfire: 'やり返した分、あとで もっと ひどく なりそう。' },
+    stage: { think: '話す じゅんばんを 考えたら、見通しが ついた。', act: 'まず 一言 言えたら、声が 出てきた。', relate: '友だちの うなずきで、安心できた。', calm: '深く いきを すって、ふるえが おさまった。', basic: 'なんとか 立っていられた。', impulse: 'ふざけて ごまかしたら、空気が かたまった。', help: 'みんなが 応えんして くれた。', fail: 'ことばに つまった。でも まだ 続けられる。', backfire: 'ごまかした分、次は もっと きんちょうしそう。' },
+    danger: { think: 'あぶないと 気づけた。', act: 'すぐに 動いて、きょりが とれた。', relate: '大きな 声で 人を よべた。', calm: 'あわてずに、にげ道を 見つけた。', basic: 'その場に いたら、もっと あぶなく なった。', impulse: 'むちゃを したら、もっと あぶなく なった。', help: '大人が すぐ 来てくれた。', fail: 'うまく いかなかった。べつの 手を さがそう。', backfire: 'あぶない ことが 大きく なった。' }
+  };
+
   var TEXT = {
     title: 'こころの 冒険',
     lose: 'つかれちゃった。でも、ナイストライ！',
@@ -477,7 +487,7 @@
     });
   });
 
-  var DATA = { ROUTES: ROUTES, TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
+  var DATA = { ROUTES: ROUTES, TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT, OUTCOME: OUTCOME };
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
   else root.SST_DATA = DATA;
 })(this);

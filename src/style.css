@@ -376,3 +376,52 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
 .hero canvas.mood4 { filter: grayscale(.8) brightness(.85); }
 @keyframes tremble { 50% { transform: translateX(2px); } }
 .hero .moodlabel { font-size: .75rem; font-weight: 800; color: #ffd6d6; text-shadow: 0 1px 0 var(--line); }
+
+/* --- カードの 結果ポップアップ・ボス縮小 --- */
+.popwrap { position: fixed; left: 50%; top: 290px; transform: translateX(-50%); z-index: 60; width: min(440px, calc(100vw - 32px)); }
+.popwrap.modal { inset: 0; left: 0; top: 0; transform: none; width: auto; display: grid; place-items: center; background: rgba(18,23,42,.55); padding: 16px; }
+.playpop { background: var(--paper); color: var(--ink); border: 3px solid var(--line); border-left-width: 10px; border-radius: 12px; padding: 10px 14px; box-shadow: var(--shadow); cursor: pointer; animation: popin .25s ease-out both; }
+.playpop.tone-good { border-left-color: var(--good); }
+.playpop.tone-bad { border-left-color: var(--impulse); }
+.playpop.tone-fail { border-left-color: var(--warn); }
+.playpop.tone-plain { border-left-color: var(--basic); }
+.playpop .pphead { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.playpop .pphead b { font-size: 1.05rem; }
+.playpop .ppres { font-size: .85rem; font-weight: 700; color: var(--sub); }
+.playpop.tone-good .ppres { color: var(--good); } .playpop.tone-bad .ppres { color: var(--bad); } .playpop.tone-fail .ppres { color: var(--warn); }
+.playpop .pptext { margin: 4px 0; font-size: 1.1rem; font-weight: 700; line-height: 1.5; }
+.playpop .ppnotes small { display: block; color: var(--sub); font-size: .82rem; }
+.playpop .pptap { display: block; text-align: right; color: var(--sub); font-size: .75rem; }
+.playpop.inline { text-align: left; cursor: default; animation: none; box-shadow: none; margin-bottom: 10px; }
+.fx.heal { background: #d3f9d8; } .fx.solve { background: #fff3bf; }
+@keyframes popin { from { transform: translateY(-10px) scale(.95); opacity: 0; } to { transform: none; opacity: 1; } }
+.heartpop { background: var(--paper); border: 3px solid var(--line); border-radius: 14px; padding: 16px; width: min(440px, 100%); box-shadow: var(--shadow); text-align: center; animation: popin .3s ease-out both; }
+.heartpop .hpttl { font-family: var(--display); font-size: 1.3rem; margin-bottom: 6px; }
+.heartpop .popstage { position: relative; height: 170px; display: grid; place-items: center; background: linear-gradient(var(--stage-top), var(--stage-bot)); border-radius: 10px; overflow: hidden; }
+.heartpop canvas.popboss { width: 150px; height: 150px; transform-origin: 50% 90%; animation: bossshrink 1.6s .5s ease-in-out both; }
+@keyframes bossshrink { 0% { transform: scale(var(--from)); filter: none; } 30% { filter: brightness(2.5); } 45% { transform: scale(var(--from)) translateX(-6px); filter: none; } 100% { transform: scale(var(--to)); } }
+.heartpop .heartbreak { position: absolute; top: 12px; right: 20px; font-size: 2.4rem; color: #ff6b6b; text-shadow: 0 3px 0 var(--line); animation: heartbreak 1.2s .3s ease-in both; }
+@keyframes heartbreak { 0% { transform: scale(1); opacity: 1; } 40% { transform: scale(1.4) rotate(-10deg); opacity: 1; } 100% { transform: translateY(60px) rotate(30deg) scale(.4); opacity: 0; } }
+.heartpop .meter { margin: 10px 0 4px; }
+.heartpop .fill.shrink { width: var(--w1); animation: barshrink 1.6s .5s ease-in-out both; }
+@keyframes barshrink { from { width: var(--w0); } to { width: var(--w1); } }
+.heartpop .hpline { font-size: 1.4rem; }
+.heartpop .story { margin: 6px 0 12px; }
+
+/* --- モンスターが ダメージを 受けた 時 --- */
+.monster { position: relative; }
+.monster.hit canvas.mon, .monster.hit svg { animation: dmgflash .45s steps(3) 1 !important; }
+@keyframes dmgflash { 0%, 66% { filter: brightness(3) saturate(0); } 33%, 100% { filter: none; } }
+.monster .slash { position: absolute; left: 10%; top: 45%; width: 80%; height: 10px; background: linear-gradient(90deg, transparent, #fff 30%, #ffd23f 70%, transparent); transform: rotate(-28deg) scaleX(0); border-radius: 6px; pointer-events: none; animation: slash .4s ease-out both; box-shadow: 0 0 12px #ffd23f; }
+@keyframes slash { 0% { transform: rotate(-28deg) scaleX(0); opacity: 1; } 60% { transform: rotate(-28deg) scaleX(1); opacity: 1; } 100% { transform: rotate(-28deg) scaleX(1.1); opacity: 0; } }
+.monster .spark { position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; background: #ffd23f; border: 2px solid var(--line); pointer-events: none; animation: spark .6s .1s ease-out both; }
+@keyframes spark { from { transform: rotate(var(--a)) translateX(0) scale(1); opacity: 1; } to { transform: rotate(var(--a)) translateX(110px) scale(.3); opacity: 0; } }
+.monster.miss canvas.mon { animation: missdodge .4s ease-out 1 !important; }
+@keyframes missdodge { 50% { transform: translateX(14px); } }
+.meter.hp .bar { position: relative; }
+.meter.hp .bar .ghost { position: absolute; left: 0; top: 0; bottom: 0; background: #fff3bf; width: var(--w1); animation: barshrink .7s .25s ease-in both; }
+.meter.hp .bar .fill { position: relative; }
+.bubble.dmg .meter.hp b { animation: numshake .4s steps(4) 1; display: inline-block; }
+@keyframes numshake { 25% { transform: translateX(-3px); color: var(--bad); } 75% { transform: translateX(3px); color: var(--bad); } }
+@media (max-width: 760px) { .popwrap { top: 64px; } .heartpop .popstage { height: 130px; } .heartpop canvas.popboss { width: 110px; height: 110px; } .monster .spark { display: none; } .monster .spark:nth-of-type(odd) { display: block; } }
+@media (prefers-reduced-motion: reduce) { .monster .slash, .monster .spark { display: none; } }

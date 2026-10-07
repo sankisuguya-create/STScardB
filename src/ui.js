@@ -333,7 +333,17 @@
     if (lastPlay && lastPlay !== shownPlay) {
       shownPlay = lastPlay;
       fx.push(h('div', { class: 'playfx t-' + lastPlay.type, text: lastPlay.name }));
-      if (lastPlay.solve) { fx.push(h('div', { class: 'numpop solve', text: '−' + lastPlay.solve })); monster.classList.add('hit'); }
+      var pp = (S.popups || []).filter(function (p) { return p.k === 'play'; }).pop();
+      var dealt = pp ? pp.solve : 0;
+      if (dealt) {
+        fx.push(h('div', { class: 'numpop solve', text: '−' + dealt }));
+        monster.classList.add('hit');
+        monster.appendChild(h('div', { class: 'slash' }));
+        for (var sp = 0; sp < 6; sp++) monster.appendChild(h('i', { class: 'spark', style: '--a:' + (sp * 60 + 15) + 'deg' }));
+        var bfill = bubble.querySelector('.meter.hp .bar');
+        if (bfill && pp.hpMax) bfill.insertBefore(h('div', { class: 'ghost', style: '--w0:' + Math.round(pp.hpFrom / pp.hpMax * 100) + '%;--w1:' + Math.round(pp.hpTo / pp.hpMax * 100) + '%' }), bfill.firstChild);
+        bubble.classList.add('dmg');
+      } else if (pp && !pp.ok) monster.classList.add('miss');
       if (lastPlay.guard) fx.push(h('div', { class: 'numpop guard', text: '心の準備 +' + lastPlay.guard }));
     }
     var hk = b.lastHit ? (S.floor + ':' + b.lastHit.turn) : '';
@@ -344,7 +354,7 @@
       if (b.lastHit.blocked) fx.push(h('div', { class: 'numpop block', text: '心の準備で ' + b.lastHit.blocked + ' 受けとめた' }));
     }
     var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, bubble, monster].concat(fx));
-    var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.slice(-3).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
+    var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.filter(function (m) { return !m.play; }).slice(-3).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
     var energy = h('div', { class: 'orb', title: '元気' }, [h('b', { text: b.energy + '/' + D.PLAYER.energy }), h('small', { text: '元気' })]);
     var dealKey = S.floor + ':' + b.turn;
     var deal = dealKey !== lastDealKey; lastDealKey = dealKey;
@@ -359,7 +369,7 @@
       el.addEventListener('click', function () {
         selSup = null;
         if (!ok) { sel = i; render(); return; }
-        if (sel === i) { var pv = E.preview(S, i); lastPlay = { name: c.name, solve: pv.solve, guard: pv.guard, type: c.type, key: Date.now() }; act(function () { E.playCard(S, i); }); }
+        if (sel === i) { var pv = E.preview(S, i); lastPlay = { name: c.name, solve: pv.solve, guard: pv.guard, type: c.type, key: Date.now() }; dropPopups('play'); act(function () { E.playCard(S, i); }); }
         else { sel = i; render(); }
       });
       return el;
@@ -616,6 +626,55 @@
     ].concat(body, [nav]));
   }
 
+  // --- ポップアップ（カードの 結果・ボスが 小さくなる） ---
+  var popTimer = null, popTimerKey = null;
+  function dropPopups(kind) { S.popups = (S.popups || []).filter(function (p) { return kind ? p.k !== kind : false; }); }
+  function playPopView(p, inline) {
+    var chips = [];
+    if (p.solve) chips.push(h('span', { class: 'fx solve', text: '問題 −' + p.solve }));
+    if (p.guard > 0) chips.push(h('span', { class: 'fx guard', text: '心の準備 +' + p.guard }));
+    if (p.heal > 0) chips.push(h('span', { class: 'fx heal', text: 'ストレス −' + p.heal }));
+    return h('div', { class: 'playpop tone-' + p.tone + (inline ? ' inline' : ''), role: 'status' }, [
+      h('div', { class: 'pphead' }, [h('b', { text: '「' + p.name + '」' }), h('span', { class: 'ppres', text: !p.ok ? 'うまく いかなかった' : p.tone === 'bad' ? 'その場は…' : 'うまく いった' })]),
+      h('p', { class: 'pptext', text: p.text }),
+      chips.length ? h('div', { class: 'fxs' }, chips) : null,
+      p.notes && p.notes.length ? h('div', { class: 'ppnotes' }, p.notes.slice(-2).map(function (n) { return h('small', { text: n }); })) : null,
+      inline ? null : h('small', { class: 'pptap', text: 'タップで とじる' })
+    ]);
+  }
+  function popupLayer() {
+    var ps = S.popups || [];
+    if (!ps.length) return null;
+    var heart = ps.filter(function (p) { return p.k === 'heart'; })[0];
+    var plays = ps.filter(function (p) { return p.k === 'play'; });
+    var play = plays[plays.length - 1];
+    if (heart && S.phase !== 'battle') {
+      var BE = D.ENEMIES[heart.boss];
+      var big = sprite(SST_SPRITES.enemyKey(BE.art || heart.boss, 0), 0, 'popboss');
+      big.style.setProperty('--from', heart.from / D.MAP.bossBase); big.style.setProperty('--to', heart.to / D.MAP.bossBase);
+      var pct = function (v) { return Math.round(v / D.MAP.bossBase * 100); };
+      var bar = h('div', { class: 'bar' }, [h('div', { class: 'fill shrink', style: '--w0:' + pct(heart.from) + '%;--w1:' + pct(heart.to) + '%' })]);
+      return h('div', { class: 'popwrap modal' }, [h('div', { class: 'heartpop' }, [
+        play ? playPopView(play, true) : null,
+        h('div', { class: 'hpttl', text: 'ボス「' + heart.name + '」が 小さくなった！' }),
+        h('div', { class: 'popstage' }, [big, h('div', { class: 'heartbreak', text: '♥' })]),
+        h('div', { class: 'meter hp' }, [h('span', { class: 'lbl', text: 'ボスの 大きさ' }), bar]),
+        h('div', { class: 'hpline' }, [hearts(heart.left)]),
+        h('p', { class: 'story', text: heart.left > 0 ? '課題に 向き合うたび、ボスは 弱くなる。あと ' + heart.left + 'つ。' : 'ボスの ハートが ぜんぶ なくなった。じゅんびは ばっちり！' }),
+        h('button', { class: 'primary', onclick: function () { S.popups = S.popups.filter(function (p) { return p !== heart && p.k !== 'play'; }); save(); render(); }, text: 'つぎへ' })
+      ])]);
+    }
+    if (!play) return null;
+    var key = play.card + ':' + play.text + ':' + ps.length + ':' + S.floor;
+    if (popTimerKey !== key) {
+      popTimerKey = key; clearTimeout(popTimer);
+      popTimer = setTimeout(function () { if (S && (S.popups || []).indexOf(play) >= 0) { dropPopups('play'); render(); } }, 4500);
+    }
+    var el = playPopView(play, false);
+    el.addEventListener('click', function () { dropPopups('play'); render(); });
+    return h('div', { class: 'popwrap' }, [el]);
+  }
+
   function render() {
     if (!S) return;
     var screen;
@@ -629,7 +688,10 @@
     else if (S.phase === 'tutorialdone') screen = tutorialDoneScreen();
     else screen = endScreen();
     var cc = coach();
-    app.replaceChildren.apply(app, cc ? [topBar(), cc, screen] : [topBar(), screen]);
+    var pop = popupLayer();
+    var kids = cc ? [topBar(), cc, screen] : [topBar(), screen];
+    if (pop) kids.push(pop);
+    app.replaceChildren.apply(app, kids);
     app.setAttribute('data-phase', S.phase);
   }
 

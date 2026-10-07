@@ -31,6 +31,7 @@ const fs = require('node:fs');
   await snap('00f-tutorialdone'); await page.tap('main button.primary');
   let overflow = [];
   for (let step = 0; step < 1500; step++) {
+    if (await page.$('.popwrap.modal')) { await snap('09-heartpop'); await page.waitForTimeout(2200); await snap('09b-heartpop-after'); await page.tap('.popwrap.modal button.primary'); continue; }
     const phase = await page.getAttribute('#app', 'data-phase');
     const ov = await page.evaluate(() => {
       if (document.documentElement.scrollWidth <= window.innerWidth) return null;
@@ -42,8 +43,9 @@ const fs = require('node:fs');
     if (phase === 'map') { await snap('01-map'); const nodes = await page.$$('.mnode.here'); await nodes[step % nodes.length].tap(); }
     else if (phase === 'battle') {
       await snap('02-battle');
+      if (await page.$('.playpop')) await page.tap('.playpop');
       const playable = await page.$$('.hand .card:not(.off)');
-      if (playable.length) { await playable[0].tap(); await snap('03-selected'); await page.tap('.hand .card.selected'); }
+      if (playable.length) { await playable[0].tap(); await snap('03-selected'); await page.tap('.hand .card.selected'); await page.waitForTimeout(250); await snap('03b-playpop'); }
       else await page.tap('.endturn');
     }
     else if (phase === 'reward') { await snap('04-reward'); const c = await page.$('.choices .card'); if (c) await c.tap(); else await page.tap('.reward > button.secondary'); }

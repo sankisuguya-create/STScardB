@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 7;
+  var ENGINE_VER = 8;
 
   // --- 乱数 ---
   function rand(s) {
@@ -39,7 +39,7 @@
     var s = {
       hero: heroId && D.HEROES[heroId] ? heroId : 'hayatsu',
       ver: ENGINE_VER, seed: seed >>> 0, rng: seed >>> 0, mode: mode || 1,
-      phase: 'map', act: 0, floor: 0, row: 0, pos: null, acts: (mode === 3 ? 3 : 1), hearts: D.MAP.hearts,
+      phase: 'map', act: 0, floor: 0, row: 0, pos: null, acts: (mode === 3 ? 3 : 1), hearts: D.MAP.hearts, popups: [],
       yoyu: HERO.maxYoyu, maxYoyu: HERO.maxYoyu + D.PLAYER.stressStart,
       trust: D.PLAYER.trustStart,
       stats: { think: HERO.stats.think, act: HERO.stats.act, relate: HERO.stats.relate },
@@ -157,6 +157,8 @@
 
   // --- 戦い ---
   // ボスは、なくした ハートの数だけ 弱くなる
+  // ボスの 大きさ（ハートが へると 小さくなる）
+  function bossSize(s) { return D.MAP.bossBase * (1 - D.MAP.heartHp * lostHearts(s)) * (1 + D.MAP.slackBoss * (s.slack || 0)); }
   function lostHearts(s) { return D.MAP.hearts - s.hearts; }
   // ストレス過多：失敗しやすく、パニックが 入る
   function overStressed(s) { return (s.maxYoyu - s.yoyu) / s.maxYoyu > D.PLAYER.overStress; }
@@ -173,7 +175,7 @@
   function heroMod(s, E) { var H = D.HEROES[s.hero]; return (H && H.ctxMod && H.ctxMod[E.ctx]) || 1; }
   function bossHp(s, E) {
     var hp = E.hp * D.RULES.hpScale * heroMod(s, E);
-    if (E.kind === 'boss') hp *= D.MAP.bossBase * (1 - D.MAP.heartHp * lostHearts(s)) * (1 + D.MAP.slackBoss * (s.slack || 0));
+    if (E.kind === 'boss') hp *= bossSize(s);
     return Math.round(hp);
   }
 
@@ -345,6 +347,7 @@
     if (!canPlay(s, i)) throw new Error('cannot play');
     var b = s.battle, h = b.hand.splice(i, 1)[0], c = card(h.id), st = statOf(c), en = b.enemy;
     b.energy -= c.cost;
+    var m0 = b.msgs.length, hp0 = en.hp, g0 = b.guard, y0 = s.yoyu;
     if (st) b.usage[st]++;
     if (c.type === 'calm') {
       b.calm = true;
@@ -413,11 +416,27 @@
     }
     if (ok && h.temp && c.judge === 'good') b.playedOk[h.id] = 1;
     log(s, entry);
+    var out = outcomeText(s, c, ok, entry);
+    (s.popups || (s.popups = [])).push({ k: 'play', card: h.id, name: c.name, ok: ok, tone: out.tone, text: out.text,
+      notes: b.msgs.slice(m0).filter(function (m) { return m.tag !== 'curse'; }).map(function (m) { return m.text; }),
+      solve: Math.max(0, hp0 - en.hp), guard: b.guard - g0, heal: s.yoyu - y0, hpFrom: Math.max(0, hp0), hpTo: Math.max(0, en.hp), hpMax: en.maxHp });
+    for (var mk = m0; mk < b.msgs.length; mk++) b.msgs[mk].play = true;
 
     if (h.temp || c.exhaust) b.exhaust.push(h); else b.discard.push(h);
     if (ok && c.escape) { escapeBattle(s); return s; }
     if (en.hp <= 0) winBattle(s);
     return s;
+  }
+
+  // カードの「どうなったか」：場面 × カードの系統
+  function outcomeText(s, c, ok, entry) {
+    var O = D.OUTCOME[D.ENEMIES[s.battle.enemy.id].ctx] || D.OUTCOME.study;
+    if (!ok) return { tone: 'fail', text: O.fail };
+    if (c.escape) return { tone: 'good', text: '安全な ところへ はなれられた。' };
+    if (entry.backfire) return { tone: 'bad', text: O.backfire };
+    if (c.judge === 'impulse') return { tone: 'bad', text: O.impulse };
+    if (c.help) return { tone: 'good', text: O.help };
+    return { tone: c.judge === 'good' ? 'good' : 'plain', text: O[c.type] || O.basic };
   }
 
   // 苦手意識：その場面では ストレスが ふえる
@@ -564,8 +583,11 @@
     }
     noteUnlocks(s, s.trust, statsBefore);
     if (s.nodeRelated && !passed && s.hearts > 0) {
+      var sz0 = bossSize(s);
       s.hearts--;
       log(s, { k: 'heart', left: s.hearts, enemy: en.id });
+      var BE = D.ENEMIES[D.ACTS[s.act].boss];
+      (s.popups || (s.popups = [])).push({ k: 'heart', boss: D.ACTS[s.act].boss, name: BE.scene, from: sz0, to: bossSize(s), left: s.hearts, max: D.MAP.hearts });
     }
     if (en.kind === 'boss') { bossDown(s); return; }
     s.phase = 'reward';
