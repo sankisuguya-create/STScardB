@@ -40,9 +40,9 @@
         h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + pct + '%' })]),
         h('b', { text: stress + '/' + S.maxYoyu })
       ]),
-      h('button', { class: 'chip trust', title: STAT_HELP.trust, onclick: function () { statHelp = 'trust'; render(); } }, [h('span', { class: 'ico', 'aria-label': '信頼', text: '🤝' }), h('b', { text: String(S.trust) })]),
+      h('button', { class: 'chip trust', title: STAT_HELP.trust, onclick: function () { statHelp = 'trust'; render(); } }, [statIcon('trust'), h('b', { text: String(S.trust) })]),
       h('div', { class: 'stats' }, Object.keys(D.STATS).map(function (k) {
-        return h('button', { class: 'chip st-' + k, title: STAT_HELP[k], onclick: function () { statHelp = k; render(); } }, [h('span', { class: 'ico', 'aria-label': D.STATS[k].name, text: STAT_ICON[k] }), h('b', { text: String(S.stats[k]) })]);
+        return h('button', { class: 'chip st-' + k, title: STAT_HELP[k], onclick: function () { statHelp = k; render(); } }, [statIcon(k), h('b', { text: String(S.stats[k]) })]);
       })),
       h('div', { class: 'nigates' }, Object.keys(S.nigate || {}).map(function (k) {
         return h('div', { class: 'chip nigate', title: '苦手意識' }, [h('span', { class: 'lbl', text: '苦手：' + D.CTX_LABEL[k] }), h('b', { text: String(S.nigate[k]) })]);
@@ -52,7 +52,21 @@
   }
 
   var selSup = null;
-  var STAT_ICON = { think: '💡', act: '👟', relate: '🧑‍🤝‍🧑' };
+  // 能力の アイコン：かしこさ＝デフォルメの 脳、行動＝💪、なかま力＝「友」、信頼＝中央に 向かう 3つの 👍
+  var BRAIN_SVG = '<svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true">' +
+    '<path d="M16 5c-2-2-6-2-7.5 0.5C5.5 5.5 3.5 8 4.5 11 2.5 12.5 2.5 16 4.5 17.5 3.5 20.5 6 23.5 9 23c1 2.5 4.5 3.5 7 1.5 2.5 2 6 1 7-1.5 3 .5 5.5-2.5 4.5-5.5 2-1.5 2-5 0-6.5 1-3-1-5.5-4-5.5C22 3 18 3 16 5z" fill="#ff9fb8" stroke="#12172a" stroke-width="1.6" stroke-linejoin="round"/>' +
+    '<path d="M16 6v18M9 10c2 1 2 3 0 4M23 10c-2 1-2 3 0 4M8 18c2-1 4 0 4 2M24 18c-2-1-4 0-4 2" fill="none" stroke="#d4567a" stroke-width="1.4" stroke-linecap="round"/>' +
+    '<circle cx="12.5" cy="15" r="1.3" fill="#12172a"/><circle cx="19.5" cy="15" r="1.3" fill="#12172a"/>' +
+    '<path d="M14.5 18.2q1.5 1.2 3 0" fill="none" stroke="#12172a" stroke-width="1.2" stroke-linecap="round"/></svg>';
+  function statIcon(k) {
+    var name = k === 'trust' ? '信頼' : D.STATS[k].name;
+    if (k === 'think') { var sp = h('span', { class: 'ico ico-brain', role: 'img', 'aria-label': name }); sp.innerHTML = BRAIN_SVG; return sp; }
+    if (k === 'act') return h('span', { class: 'ico', role: 'img', 'aria-label': name, text: '💪' });
+    if (k === 'relate') return h('span', { class: 'ico ico-tomo', role: 'img', 'aria-label': name, text: '友' });
+    return h('span', { class: 'ico ico-trust', role: 'img', 'aria-label': name }, [
+      h('i', { class: 't1', text: '👍' }), h('i', { class: 't2', text: '👍' }), h('i', { class: 't3', text: '👍' })
+    ]);
+  }
   var STAT_HELP = {
     trust: '信頼（0〜10）：まわりの 人からの 信頼。よい関わりで 上がり（1回の 戦いで +2まで）、衝動的な 行動や ふうんな できごとで 下がる。7以上：戦いの はじめに 友だちが そばに いて 心の準備 +6。8以上：報酬の カードが 1まい ふえる。3以下：やり直しの チャンスが 来る。',
     think: 'かしこさ：「考える」カードの 効き目に たされる。手札の 上限は 5＋かしこさ。2以上で 戦いの はじめに 問題の 正体が 1だん 見える。マイナスだと 考えるカードが 失敗しやすい（−1ごとに 20%）。',
