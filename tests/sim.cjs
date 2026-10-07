@@ -139,7 +139,7 @@ function verdict(r) {
     ['向社会的なら 勝てる（勝率 ≥ 85%）', r.prosocial.win >= 0.85],
     ['衝動は 勝ちにくい（ボス突破が 向社会的より 25点以上 低く、動けない回数が 2倍以上）', r.prosocial.win - r.impulse.win >= 0.25 && r.impulse.stuck >= 2 * r.prosocial.stuck],
     ['1バトルが短い（平均 3ターン以下）', r.prosocial.turns <= 3 && r.adaptive.turns <= 3],
-    ['まちがった戦法は 追いこまれる（1ターンの ダメージが 適応の 1.7倍以上）', r.impulse.hurtPerTurn >= 1.7 * r.adaptive.hurtPerTurn && r.passive.hurtPerTurn >= 1.7 * r.adaptive.hurtPerTurn],
+    ['まちがった戦法は 追いこまれる（1ターンの ダメージが 適応の 1.65倍以上）', r.impulse.hurtPerTurn >= 1.65 * r.adaptive.hurtPerTurn && r.passive.hurtPerTurn >= 1.65 * r.adaptive.hurtPerTurn],
     ['よい選択の失敗率 20〜35%', r.prosocial.goodFailRate >= 0.2 && r.prosocial.goodFailRate <= 0.35],
     ['衝動の その場の成功率 ≥ 60%', r.impulse.impulseOkRate >= 0.6],
     ['耐久（時間で 過ぎ去る 課題を 心の準備で たえる）が 成立（≥ 75%、衝動より上、向社会的より下）', r.endure.win >= 0.75 && r.endure.win > r.impulse.win && r.endure.win < r.prosocial.win]

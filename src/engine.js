@@ -142,7 +142,7 @@
     if (n.kind === 'mystery') {
       var act = D.ACTS[s.act];
       var mr = rand(s), tp = Math.min(D.MAP.troubleMax, (s.impulse || 0) * D.MAP.troublePer);
-      if (rand(s) < D.MAP.selfFail) { startBattle(s, pick(s, D.SELF_FAIL_ENEMIES)); s.phase = 'intro'; s.mysteryBattle = true; log(s, { k: 'selfFail' }); }
+      if (rand(s) < Math.min(D.MAP.selfFailMax, D.MAP.selfFail + (s.impulse || 0) * D.MAP.selfFailPer)) { startBattle(s, pick(s, D.SELF_FAIL_ENEMIES)); s.phase = 'intro'; s.mysteryBattle = true; log(s, { k: 'selfFail' }); }
       else if (tp > 0 && rand(s) < tp) { startBattle(s, pick(s, D.TROUBLE_ENEMIES)); s.phase = 'intro'; s.mysteryBattle = true; log(s, { k: 'troubleMon', p: tp }); }
       else if (mr < D.MAP.mysteryElite) { startBattle(s, pick(s, act.elites)); s.phase = 'intro'; }
       else if (mr < D.MAP.mysteryElite + D.MAP.mysteryBattle) {
