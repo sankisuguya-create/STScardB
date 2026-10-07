@@ -58,14 +58,24 @@
     '<path d="M16 6v18M9 10c2 1 2 3 0 4M23 10c-2 1-2 3 0 4M8 18c2-1 4 0 4 2M24 18c-2-1-4 0-4 2" fill="none" stroke="#d4567a" stroke-width="1.4" stroke-linecap="round"/>' +
     '<circle cx="12.5" cy="15" r="1.3" fill="#12172a"/><circle cx="19.5" cy="15" r="1.3" fill="#12172a"/>' +
     '<path d="M14.5 18.2q1.5 1.2 3 0" fill="none" stroke="#12172a" stroke-width="1.2" stroke-linecap="round"/></svg>';
+  // 信頼：まん中の 人に、左右から 👍 が 向けられている
+  function thumb(x, y, flip, sleeve) {
+    return '<g transform="translate(' + x + ' ' + y + ')' + (flip ? ' scale(-1 1)' : '') + '">' +
+      '<rect x="-7" y="1.5" width="4" height="4.5" rx="1" fill="' + sleeve + '" stroke="#12172a" stroke-width=".8"/>' +
+      '<rect x="-3.4" y="1" width="5.6" height="5.4" rx="1.6" fill="#f2a477" stroke="#12172a" stroke-width=".8"/>' +
+      '<path d="M-1.2 1.4V-2.6Q-1.2-4 .1-4Q1.3-4 1.3-2.6V1.4" fill="#f2a477" stroke="#12172a" stroke-width=".8" stroke-linejoin="round"/></g>';
+  }
+  var TRUST_SVG = '<svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">' +
+    '<path d="M9 31Q9 22 16 22Q23 22 23 31Z" fill="#12172a"/><circle cx="16" cy="15.5" r="4.6" fill="#12172a"/>' +
+    '<path d="M16 7.6l-1.3-1.2a.9.9 0 0 1 1.3-1.2.9.9 0 0 1 1.3 1.2Z" fill="#ef5a7a"/>' +
+    thumb(7.5, 8, false, '#4c6ef5') + thumb(6.5, 20, false, '#e8590c') +
+    thumb(24.5, 8, true, '#2f9e44') + thumb(25.5, 20, true, '#7048e8') + '</svg>';
   function statIcon(k) {
     var name = k === 'trust' ? '信頼' : D.STATS[k].name;
     if (k === 'think') { var sp = h('span', { class: 'ico ico-brain', role: 'img', 'aria-label': name }); sp.innerHTML = BRAIN_SVG; return sp; }
     if (k === 'act') return h('span', { class: 'ico', role: 'img', 'aria-label': name, text: '💪' });
     if (k === 'relate') return h('span', { class: 'ico ico-tomo', role: 'img', 'aria-label': name, text: '友' });
-    return h('span', { class: 'ico ico-trust', role: 'img', 'aria-label': name }, [
-      h('i', { class: 't1', text: '👍' }), h('i', { class: 't2', text: '👍' }), h('i', { class: 't3', text: '👍' })
-    ]);
+    var tr = h('span', { class: 'ico ico-trust', role: 'img', 'aria-label': name }); tr.innerHTML = TRUST_SVG; return tr;
   }
   var STAT_HELP = {
     trust: '信頼（0〜10）：まわりの 人からの 信頼。よい関わりで 上がり（1回の 戦いで +2まで）、衝動的な 行動や ふうんな できごとで 下がる。7以上：戦いの はじめに 友だちが そばに いて 心の準備 +6。8以上：報酬の カードが 1まい ふえる。3以下：やり直しの チャンスが 来る。',

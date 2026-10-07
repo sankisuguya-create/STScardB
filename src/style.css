@@ -479,3 +479,5 @@ canvas.silhouette { filter: brightness(0) drop-shadow(0 0 1.5px rgba(200, 215, 2
 .item canvas.silhouette, .supoffer canvas.silhouette { filter: brightness(0) opacity(.75); }
 canvas.silhouette.mood2 { filter: brightness(0) drop-shadow(0 0 2px rgba(140, 170, 255, .9)); }
 canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-shadow(0 0 3px rgba(120, 140, 220, .9)) opacity(.85); }
+.chip .ico-trust { overflow: visible; width: 26px; height: 26px; }
+.chip .ico-trust svg { display: block; }
