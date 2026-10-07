@@ -274,9 +274,9 @@
   // ===== 層ごとの ボスと 関連する課題 =====
   ENEMIES.test = {
       term: 'short',
-      intro: '今日は 算数の テスト。つくえの 上に テスト用紙が くばられた。「はじめ」の 声が かかる。',
-    forms: ['100点の 大まじん', 'むずかしそうな テスト用紙', 'いつもの 小テスト'],
-    solo: true, pass: { turns: 4, say: 'テストの 時間が おわった。とけなかった 問題が 頭に のこる。', leave: true }, ctx: 'study', scene: 'テスト', kind: 'boss', hp: 42,
+      intro: '今日は 漢字50問の 大テスト。まちがえやすい 字も 出ると 先生が 言っていた。「はじめ」の 声が かかる。',
+    forms: ['漢字の 大まじん', '50問の テスト用紙', '練習した 漢字が ならぶ テスト'],
+    solo: true, pass: { turns: 4, say: 'テストの 時間が おわった。とけなかった 問題が 頭に のこる。', leave: true }, ctx: 'study', scene: '漢字大テスト', kind: 'boss', hp: 42,
     moves: [{ t: 'stress', n: 7, say: '時間が どんどん へっていく' }, { t: 'inject', card: 'panic', say: '頭が まっ白に なりそう（パニックが まざる）' }, { t: 'stress', n: 9, say: 'まわりの えんぴつの 音が 気になる' }, { t: 'worry', say: '「わからない 問題が ある…」' }],
     weak: ['think'], resist: [], backfire: [], situ: ['review_notes', 'breathe_first', 'give_up'],
     other: '先生：「さいごまで あきらめずに 見直したね」'
@@ -427,6 +427,133 @@
     moves: [{ t: 'inject', card: 'shame', say: 'みんなに 見られて 恥ずかしい（恥ずかしさが まざる）' }, { t: 'stress', n: 6, say: 'みんなが ふり向く' }, { t: 'stress', n: 6, say: '何の 話を しているか わからなく なった' }],
     weak: ['think', 'relate'], resist: [], backfire: ['impulse'], situ: ['say_honest', 'review_notes', 'hide_it'],
     other: '先生：「すぐ 切りかえられたね」'
+  };
+
+  ENEMIES.kanji_practice = {
+    solo: true, art: 'homework',
+    intro: '漢字大テストまで あと 3日。家で 漢字ドリルを 開いた。書いても 書いても、なかなか おぼえられない。',
+    forms: ['漢字の 山おばけ', 'まっ白な 練習ノート', '毎日 少しずつの 練習'],
+    ctx: 'study', scene: '漢字の 自己練習', kind: 'normal', hp: 26,
+    moves: [{ t: 'stress', n: 6, say: 'なかなか おぼえられない' }, { t: 'grow', n: 2, say: 'あきてくる' }, { t: 'inject', card: 'put_off', say: '「あとで やればいい」と 思いたくなる' }, { t: 'stress', n: 7, say: 'ゲームが 気に なる' }],
+    weak: ['think', 'act'], resist: [], backfire: ['impulse'], situ: ['plan_time', 'review_notes', 'put_off'],
+    other: 'お家の人：「毎日 少しずつ 書いてて えらいね」'
+  };
+  ENEMIES.weak_kanji = {
+    art: 'dunno',
+    intro: 'ミニテストで、また 同じ 漢字を まちがえた。「にがてな 字」が いくつも ある。どう 対策 しよう？',
+    forms: ['にがて漢字の むれ', '赤ペンだらけの ミニテスト', 'あと 少しで 書ける 字'],
+    ctx: 'study', scene: '苦手な 漢字の 対策', kind: 'normal', hp: 28,
+    moves: [{ t: 'stress', n: 6, say: 'また 同じ 所を まちがえる' }, { t: 'stress', n: 7, say: '「どうせ おぼえられない」と 思えてくる' }, { t: 'grow', n: 2, say: 'テストの 日が 近づく' }],
+    weak: ['think', 'relate'], resist: [], backfire: ['impulse'], situ: ['ask_teacher', 'review_notes', 'skip_it'],
+    other: '先生：「まちがえた 字を 集めて 練習したのが よかったね」'
+  };
+  ENEMIES.lost_game = {
+    art: 'team', pass: { turns: 3, say: '休み時間が おわった。くやしさは 少し のこった。', leave: true },
+    intro: '昼休みの ドッジボール。さいごの 一人で 当てられて、チームが 負けた。あいての チームが よろこんでいる。',
+    forms: ['くやしさの ほのお', 'よろこぶ あいての チーム', 'いい 試合を した みんな'],
+    ctx: 'join', scene: '試合に 負けた', kind: 'normal', hp: 22,
+    moves: [{ t: 'stress', n: 7, say: 'くやしさが こみ上げる' }, { t: 'inject', card: 'kattonaru', say: '「ずるい！」と 言いたくなる（カッとなる が まざる）' }, { t: 'stress', n: 6, say: '「自分の せいで 負けた」と 思えてくる' }],
+    weak: ['relate', 'think'], resist: [], backfire: ['impulse'], situ: ['name_feeling', 'thanks', 'sulk'],
+    other: 'あいての チームの 子：「いい 試合だったね！ また やろう」'
+  };
+  ENEMIES.saw_exclusion = {
+    art: 'left_out',
+    intro: 'クラスの 何人かが「あの子は 入れないでおこう」と ひそひそ 話している。その子は 一人で 下を 向いている。自分は どうする？',
+    forms: ['見て見ぬふりの きり', 'ひそひそ 話す グループ', '声を かけて ほしそうな あの子'],
+    ctx: 'tease', scene: '仲間外れを 見かけた', kind: 'boss', hp: 50,
+    moves: [{ t: 'stress', n: 8, say: '「自分も 外されたら…」と こわくなる' }, { t: 'inject', card: 'look_away', say: '見なかった ことに したくなる（現実から 目を そらす が まざる）' }, { t: 'stress', n: 9, say: 'あの子が 一人で 帰っていく' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['invite_other', 'tell_teacher', 'not_join'],
+    view: { truth: 'benign', weak: ['relate', 'think'], resist: [], backfire: ['impulse'], stressMul: 0.8 },
+    other: 'あの子：「声を かけて くれて、すごく うれしかった」'
+  };
+  ENEMIES.whisper_group = {
+    art: 'rumor',
+    intro: '「ねえ、あの子って さ…」 友だちに ひそひそ話に さそわれた。だれかの 悪口みたいだ。',
+    forms: ['ひそひそ こうもりの むれ', 'こっちを 見て わらう 友だち', '話に 入れて ほしいだけの 友だち'],
+    ctx: 'tease', scene: 'ひそひそ話に さそわれた', kind: 'normal', hp: 26,
+    moves: [{ t: 'inject', card: 'warukuchi', say: '話を 合わせたくなる（悪口が まざる）' }, { t: 'stress', n: 7, say: '「入らないの？」と 見られる' }, { t: 'stress', n: 7, say: '話が どんどん 広がる' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['not_join', 'say_stop', 'spread'],
+    other: '友だち：「言われて 気づいた。悪口は やめるね」'
+  };
+  ENEMIES.alone_kid = {
+    art: 'left_out',
+    intro: '休み時間、いつも 一人で 本を 読んでいる 子が いる。声を かけたいけど、どう 思われるか 気になる。',
+    forms: ['とおくの 小さな かげ', '一人で いる あの子', 'じつは 話したかった あの子'],
+    ctx: 'join', scene: '一人で いる 子', kind: 'normal', hp: 24,
+    pass: { turns: 3, say: '休み時間が おわった。声は かけられなかった。', leave: true },
+    moves: [{ t: 'stress', n: 6, say: '「へんに 思われるかも」と まよう' }, { t: 'worry', say: '「よけいな お世話かも」と 考えてしまう' }, { t: 'stress', n: 7, say: '休み時間が おわっていく' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['invite_other', 'talk', 'next_time'],
+    other: 'あの子：「じつは、話しかけて ほしかったんだ」'
+  };
+  ENEMIES.duty_fight = {
+    art: 'team',
+    intro: '給食当番の 日。配る 量や 順番で もめて、「ずるい！」「ちゃんと やって！」の 声が 飛びかう。',
+    forms: ['ずるい！の 大うず', 'もめている 当番の みんな', 'うまく 回したいだけの みんな'],
+    ctx: 'join', scene: '給食当番で もめる', kind: 'boss', hp: 48,
+    moves: [{ t: 'stress', n: 8, say: '「ずるい！」と 言われる' }, { t: 'smear', n: 2, card: 'kattonaru', say: 'いらいらして、頭に 血が のぼる（カードが「カッとなる」に ぬりつぶされる）' }, { t: 'grow', n: 2, say: '給食の 時間が へっていく' }],
+    weak: ['think', 'relate'], resist: [], backfire: ['impulse'], situ: ['sort_out', 'listen_all', 'force_own'],
+    view: { truth: 'benign', weak: ['think', 'relate'], resist: [], backfire: ['impulse'], stressMul: 0.8 },
+    other: '当番の みんな：「役わりを 決めたら スムーズに なったね」'
+  };
+  ENEMIES.line_cut = {
+    art: 'bumped', term: 'short',
+    intro: '水飲み場の 列に ならんでいたら、あとから 来た 子が 前に わりこんだ。',
+    forms: ['わりこみ ムシ', '前に 入った あの子', '列に 気づかなかった あの子'],
+    ctx: 'conflict', scene: '順番を ぬかされた', kind: 'normal', hp: 22,
+    pass: { turns: 3, say: '水は 飲めた。でも もやもやは のこった。', leave: true },
+    moves: [{ t: 'stress', n: 7, say: '「ずるい！」と 思う' }, { t: 'inject', card: 'tataku', say: 'おしたくなる（たたく が まざる）' }, { t: 'stress', n: 6, say: 'まわりも 見ている' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['firm_reply', 'tell_teacher', 'hit_back'],
+    view: { truth: 'benign', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.6 },
+    other: 'わりこんだ 子：「あ、ならんでたんだ。ごめん！」'
+  };
+  ENEMIES.ball_grab = {
+    art: 'bumped', term: 'short',
+    intro: '休み時間、一つしか ない ボールを 同時に つかんだ。「ぼくが 先！」「わたしが 先！」',
+    forms: ['ひっぱりあいの 大だこ', 'ボールを はなさない あの子', '同じく 遊びたい あの子'],
+    ctx: 'conflict', scene: 'ボールの 取り合い', kind: 'normal', hp: 24,
+    moves: [{ t: 'stress', n: 7, say: 'ひっぱり合いに なる' }, { t: 'smear', n: 2, card: 'kattonaru', say: 'かっと なって くる（カードが「カッとなる」に ぬりつぶされる）' }, { t: 'stress', n: 7, say: '休み時間が へっていく' }],
+    weak: ['relate', 'think'], resist: [], backfire: ['impulse'], situ: ['their_view', 'talk', 'okoru'],
+    other: 'あの子：「じゃんけんで 決めて、次は 交代しよう」'
+  };
+  ENEMIES.duty_skip = {
+    art: 'team',
+    intro: 'そうじ当番。同じ はんの 子が ほうきで チャンバラを していて、ぜんぜん そうじを しない。',
+    forms: ['さぼり だらけ だぬき', 'ふざけている あの子', 'やり方が わからない あの子'],
+    ctx: 'join', scene: '当番を さぼる 子', kind: 'normal', hp: 24,
+    moves: [{ t: 'stress', n: 6, say: '自分ばかり やっている' }, { t: 'inject', card: 'okoru', say: 'もんくを 言いたくなる（怒る が まざる）' }, { t: 'stress', n: 7, say: 'そうじの 時間が おわりそう' }],
+    weak: ['relate', 'think'], resist: [], backfire: ['impulse'], situ: ['lead', 'talk', 'force_own'],
+    other: 'あの子：「やること 決めて もらって、やりやすかった」'
+  };
+  ENEMIES.relay = {
+    art: 'presentation', term: 'short', anxiety: true,
+    intro: '運動会の リレー。バトンを 受け取る 順番が 近づいてくる。全校の 前で 走るのは はじめてだ。',
+    forms: ['大かんせいの 大波', 'こっちを 見る 全校の みんな', 'おうえん している みんな'],
+    ctx: 'stage', scene: '運動会の リレー', kind: 'boss', hp: 46,
+    pass: { turns: 4, say: 'リレーが おわった。力を 出しきれなかった 気が する。', leave: true },
+    moves: [{ t: 'stress', n: 7, say: '心ぞうが どきどきする' }, { t: 'inject', card: 'panic', say: '足が すくみそう（パニックが まざる）' }, { t: 'stress', n: 9, say: 'バトンが 近づいてくる' }],
+    weak: ['act'], resist: [], backfire: [], situ: ['breathe_first', 'friend_face', 'give_up'],
+    other: 'チームの 子：「さいごまで 全力で 走って くれて ありがとう」'
+  };
+  ENEMIES.baton_practice = {
+    art: 'practice',
+    intro: 'リレーの 練習。バトンパスで 何回も 落としてしまう。本番まで あと 少し。',
+    forms: ['バトン落としの つむじ風', '何回も 落ちる バトン', 'あと 少しで つながる バトン'],
+    ctx: 'stage', scene: 'バトンパスの 練習', kind: 'normal', hp: 28,
+    pass: { turns: 4, say: '練習の 時間が おわった。不安は のこったまま。', leave: true },
+    moves: [{ t: 'stress', n: 7, say: 'また 落とした' }, { t: 'grow', n: 2, say: '本番が 近づく' }, { t: 'stress', n: 7, say: '「足を ひっぱってる？」と 思えてくる' }],
+    weak: ['act', 'relate'], resist: [], backfire: [], situ: ['practice_again', 'ask_tip', 'quit_it'],
+    other: 'チームの 子：「声を かけ合ったら うまく いったね」'
+  };
+  ENEMIES.team_pick = {
+    art: 'team',
+    intro: '運動会の チーム分け。「足が おそい 人は いやだ」と だれかが 言った。話し合いが ぎすぎすしている。',
+    forms: ['ぎすぎす 四つ頭', '言い合う クラスの みんな', '勝ちたい だけの みんな'],
+    ctx: 'join', scene: 'チーム分けで もめる', kind: 'normal', hp: 28,
+    pass: { turns: 4, say: '時間ぎれで、先生が チームを 決めた。', leave: true },
+    moves: [{ t: 'stress', n: 7, say: 'だれも ゆずらない' }, { t: 'grow', n: 2, say: '話が こじれていく' }, { t: 'stress', n: 7, say: '自分も 何か 言われそう' }],
+    weak: ['relate', 'think'], resist: ['impulse'], backfire: ['impulse'], situ: ['listen_all', 'vote', 'force_own'],
+    view: { truth: 'benign', weak: ['relate', 'think'], resist: [], backfire: ['impulse'], stressMul: 0.7 },
+    other: 'クラスの 子：「みんなで 決めたら、なっとく できた」'
   };
 
   // れんしゅう用の 課題（はじめの 操作説明だけで 使う。マップには 出ない）
@@ -677,11 +804,16 @@
 
   // お試し版：4段＋ボス。各段は2マスから1つ選ぶ
   // 1層＝7段＋ボス。課題の半分以上は ボスに 関連する課題（related）。関連する課題を 乗りこえるたびに ボスの ハートが へる
-  var ACTS = [
-    { name: '教室', boss: 'test', related: ['dunno', 'homework'], others: ['forgot_item', 'bumped', 'left_out'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'forgot', 'friend_trouble', 'library', 'family_talk', 'friend_retry', 'friend_shrug', 'lost_wallet', 'rainy_day', 'wrongly_blamed', 'recess'] },
-    { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'friend_trouble', 'library', 'family_talk', 'friend_heavy', 'friend_later', 'new_kid', 'friend_switch', 'telephone', 'recess'] },
-    { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'library', 'family_talk', 'friend_trouble', 'friend_fun', 'friend_switch', 'neighbor', 'friend_later', 'group_late', 'recess'] }
+  // 層ごとに 2つの エピソードが あり、毎回 ランダムで 1つずつ えらんで 3層を つくる
+  var ACT_SETS = [
+    [{ name: '教室', boss: 'test', related: ['kanji_practice', 'weak_kanji', 'dunno'], others: ['forgot_item', 'bumped', 'left_out', 'lost_game', 'homework'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'forgot', 'friend_trouble', 'library', 'family_talk', 'friend_retry', 'friend_shrug', 'lost_wallet', 'rainy_day', 'wrongly_blamed', 'recess'] },
+     { name: '当番', boss: 'duty_fight', related: ['line_cut', 'ball_grab', 'duty_skip'], others: ['forgot_item', 'dunno', 'lost_game', 'homework'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'forgot', 'friend_trouble', 'library', 'family_talk', 'friend_retry', 'friend_shrug', 'lost_wallet', 'rainy_day', 'wrongly_blamed', 'recess'] }],
+    [{ name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno', 'lost_game'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'friend_trouble', 'library', 'family_talk', 'friend_heavy', 'friend_later', 'new_kid', 'friend_switch', 'telephone', 'recess'] },
+     { name: 'クラス', boss: 'saw_exclusion', related: ['whisper_group', 'alone_kid', 'rumor'], others: ['left_out', 'misunder', 'lost_game'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'friend_trouble', 'library', 'family_talk', 'friend_heavy', 'friend_later', 'new_kid', 'friend_switch', 'telephone', 'recess'] }],
+    [{ name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor', 'lost_game'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'library', 'family_talk', 'friend_trouble', 'friend_fun', 'friend_switch', 'neighbor', 'friend_later', 'group_late', 'recess'] },
+     { name: '運動会', boss: 'relay', related: ['baton_practice', 'team_pick'], others: ['left_out', 'lost_game', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'library', 'family_talk', 'friend_trouble', 'friend_fun', 'friend_switch', 'neighbor', 'friend_later', 'group_late', 'recess'] }]
   ];
+  var ACTS = ACT_SETS.map(function (set) { return set[0]; });
   var ROUTES = [
     { id: 'hard', name: 'しんどいが 力が つく道', note: '課題に 向き合う マスが 多い（4つ）。ボスが 弱くなり、成長しやすい', nodes: ['battle', 'mystery', 'battle', 'event', 'battle', 'mystery', 'battle', 'event', 'event'] },
     { id: 'normal', name: 'ふつうの道', note: '課題に 向き合う マスは 2つ。休みも ある', nodes: ['battle', 'event', 'mystery', 'rest', 'event', 'battle', 'mystery', 'event', 'event'] },
@@ -718,7 +850,7 @@
     });
   });
 
-  var DATA = { ROUTES: ROUTES, TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT, OUTCOME: OUTCOME, TROUBLE_ENEMIES: ['payback', 'bad_rep', 'cold_class'], SELF_FAIL_ENEMIES: ['got_rough', 'said_too_much', 'joined_in', 'skipped_hw', 'ran_hall', 'chatting'] };
+  var DATA = { ROUTES: ROUTES, TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, ACT_SETS: ACT_SETS, TEXT: TEXT, OUTCOME: OUTCOME, TROUBLE_ENEMIES: ['payback', 'bad_rep', 'cold_class'], SELF_FAIL_ENEMIES: ['got_rough', 'said_too_much', 'joined_in', 'skipped_hw', 'ran_hall', 'chatting'] };
   if (typeof module !== 'undefined' && module.exports) { DATA.FIT = require('./fit.js'); module.exports = DATA; }
   else root.SST_DATA = DATA;
 })(this);

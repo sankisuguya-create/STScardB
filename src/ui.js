@@ -213,7 +213,7 @@
     return h('span', { class: 'hearts', 'aria-label': 'ボスの ハート ' + n }, out);
   }
   function bossBanner() {
-    var A = D.ACTS[S.act], B = D.ENEMIES[A.boss];
+    var A = E.actOf(S), B = D.ENEMIES[A.boss];
     return h('div', { class: 'bossbanner' }, [
       h('div', { class: 'bb-act', text: (S.acts > 1 ? (S.act + 1) + 'そう目「' + A.name + '」' : '「' + A.name + '」') + 'の ボス' }),
       h('div', { class: 'bb-name' }, [h('span', { text: B.scene }), hearts(S.hearts)]),
@@ -259,7 +259,7 @@
   }
 
   function actClearScreen() {
-    var A = D.ACTS[S.act];
+    var A = E.actOf(S);
     return h('main', { class: 'title actclear' }, [
       h('h1', { text: S.actLost ? (S.act) + 'そう目 おわり' : (S.act) + 'そう目 クリア！' }),
       S.actLost ? h('p', { class: 'story', text: 'ボスは 乗りこえられなかった。でも 毎日は 続く。' }) : null,

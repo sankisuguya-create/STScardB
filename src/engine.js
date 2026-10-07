@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 18;
+  var ENGINE_VER = 19;
 
   // --- 乱数 ---
   function rand(s) {
@@ -56,6 +56,7 @@
       map: null, battle: null, reward: null, event: null,
       log: [], result: null
     };
+    s.actPick = D.ACT_SETS.map(function (set) { return Math.floor(rand(s) * set.length); });
     s.map = buildMap(s);
     log(s, { k: 'trust', d: 0, v: s.trust, why: 'start' });
     return s;
@@ -65,12 +66,14 @@
   // マスの課題は はじめに 決めておく（マップで 名前が 見える）。課題の半分以上は ボスに 関連する課題
   // マップ：3本の 一本道（しんどいが 力が つく道／ふつうの道／楽そうな道）。
   // ボスに 関連する 課題は「課題に 向き合う」として 名前を 見せる。関連しない 課題（トラブル・アクシデント・失敗）は「？」マスに かくれ、できごとの ことも ある
+  // その層の エピソード（層ごとに 2つから ランダム）
+  function actOf(s) { var set = D.ACT_SETS[s.act]; return set[(s.actPick && s.actPick[s.act]) || 0] || set[0]; }
   // 休む マス（ひと休み・ゴロゴロ）は となり合わせに しない
   function isRestLike(k) { return k === 'rest' || k === 'slack'; }
   // 段ごとに 1〜3この 中から えらぶ。★課題に 向き合う は 4段に 出る（1段は それしか ない、3段は ゴロゴロと えらべる）
   // → 1層で 向き合う 課題は 最少 1、最多 4。休む マス（ひと休み・ゴロゴロ）は となりの 段に 続けて 出さない。
   function buildMap(s) {
-    var M = D.MAP, act = D.ACTS[s.act], rows = [], edges = [], last = M.rows - 1;
+    var M = D.MAP, act = actOf(s), rows = [], edges = [], last = M.rows - 1;
     var slackRows, forced, restRow;
     for (var tries = 0; tries < 500; tries++) {
       var cand = shuffle(s, [0, 1, 2, 3, 4, 5, 6, 7]);
@@ -108,7 +111,7 @@
   function reachable(s) {
     var row = s.map.rows[s.row];
     if (!row) return [];
-    if (s.row === 0 || row[0].kind === 'boss') return row.map(function (n, i) { return i; });
+    if (s.row === 0 || row[0].kind === 'boss' || s.map.free) return row.map(function (n, i) { return i; });
     var from = s.pos;
     return row.map(function (n, i) { return i; }).filter(function (i) {
       return s.map.edges.some(function (e) { return e.r === s.row - 1 && e.from === from && e.to === row[i].col; });
@@ -154,7 +157,7 @@
     s.nodeRelated = !!n.related;
     if (n.related) s.actFaced = (s.actFaced || 0) + 1;
     if (n.kind === 'mystery') {
-      var act = D.ACTS[s.act];
+      var act = actOf(s);
       var mr = rand(s), tp = Math.min(D.MAP.troubleMax, (s.impulse || 0) * D.MAP.troublePer);
       if (rand(s) < Math.min(D.MAP.selfFailMax, D.MAP.selfFail + (s.impulse || 0) * D.MAP.selfFailPer)) { startBattle(s, pick(s, D.SELF_FAIL_ENEMIES)); s.phase = 'intro'; s.mysteryBattle = true; log(s, { k: 'selfFail' }); }
       else if (tp > 0 && rand(s) < tp) { startBattle(s, pick(s, D.TROUBLE_ENEMIES)); s.phase = 'intro'; s.mysteryBattle = true; log(s, { k: 'troubleMon', p: tp }); }
@@ -667,8 +670,8 @@
       var sz0 = bossSize(s);
       s.hearts--;
       log(s, { k: 'heart', left: s.hearts, enemy: en.id });
-      var BE = D.ENEMIES[D.ACTS[s.act].boss];
-      (s.popups || (s.popups = [])).push({ k: 'heart', boss: D.ACTS[s.act].boss, name: BE.scene, from: sz0, to: bossSize(s), left: s.hearts, max: D.MAP.hearts });
+      var BE = D.ENEMIES[actOf(s).boss];
+      (s.popups || (s.popups = [])).push({ k: 'heart', boss: actOf(s).boss, name: BE.scene, from: sz0, to: bossSize(s), left: s.hearts, max: D.MAP.hearts });
     }
     if (b.chainWin && E.chain) {
       var cr = E.chain.reward;
@@ -842,7 +845,7 @@
 
   // --- できごと ---
   function startEvent(s) {
-    var act = D.ACTS[s.act];
+    var act = actOf(s);
     var id;
     if (s.trust <= D.RULES.lowTrust && s.usedEvents.indexOf('second_chance') < 0) id = 'second_chance';
     else {
@@ -1020,7 +1023,7 @@
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, fitsEnemy: fitsEnemy, takeReview: takeReview, recallChoices: recallChoices, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, _battle: function (s, eid) { s.floor++; if (s.pos == null) s.pos = 0; startBattle(s, eid); s.phase = 'battle'; return s; }, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, actOf: actOf, fitsEnemy: fitsEnemy, takeReview: takeReview, recallChoices: recallChoices, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, _battle: function (s, eid) { s.floor++; if (s.pos == null) s.pos = 0; startBattle(s, eid); s.phase = 'battle'; return s; }, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D

@@ -126,7 +126,7 @@ test('アイテム：戦いごとに1回、なくならない。先生は場面�
     assert.strictEqual(s.phase, 'reward');
     assert.ok(s.reward.choices.includes(tc));
     E.pickReward(s, null);
-    toBattle(s);
+    E.chooseNode(s, E.reachable(s)[0]);
     if (s.phase === 'battle' && D.ENEMIES[s.battle.enemy.id].term !== 'short' && !D.ENEMIES[s.battle.enemy.id].solo) assert.ok(E.canUseSupport(s, 'teacher'));
     return;
   }
@@ -593,11 +593,11 @@ test('お邪魔カード：使えず 手札に のこり、整えるカードで
 });
 
 test('大げんか：気づく→認める→あやまる→仲直り で 勝つと 特別な 報酬', () => {
-  const s = E.newRun(9, 3, 'tario'); s.act = 1;
+  const s = E.newRun(9, 3, 'tario'); s.act = 1; s.actPick = [0, 0, 0];
   E._battle(s, 'friend_fight');
   const b = s.battle;
-  b.enemy.form = 1; b.hand = [{ id: 'sort_out', temp: true }]; b.energy = 3; b.enemy.hp = 999;
-  E.playCard(s, 0);
+  b.enemy.form = 1; b.enemy.hp = 999; s.yoyu = s.maxYoyu;
+  for (let k = 0; k < 6 && !b.hand.some((h) => h.id === 'notice_fault'); k++) { b.hand = [{ id: 'sort_out', temp: true }]; b.energy = 3; E.playCard(s, 0); }
   const step = (id) => { b.energy = 3; const i = b.hand.findIndex((h) => h.id === id); assert.ok(i >= 0, id + ' が 手札に ない'); E.playCard(s, i); };
   step('notice_fault'); step('admit_fault'); step('apologize');
   const r0 = s.stats.relate, t0 = s.trust;
@@ -646,4 +646,13 @@ test('上書き：感情が 手札を ぬりつぶす。整理する カード�
   E.playCard(s, b.hand.length - 1);
   assert.ok(!b.hand.concat(b.draw, b.discard).some((h) => h.over));
   assert.deepStrictEqual(E.checkInvariants(s), []);
+});
+
+test('層ごとに 2つの エピソードから ランダムに えらばれる', () => {
+  const seen = [new Set(), new Set(), new Set()];
+  for (let seed = 1; seed < 60; seed++) { const s = E.newRun(seed, 3); s.actPick.forEach((p, i) => seen[i].add(D.ACT_SETS[i][p].boss)); }
+  seen.forEach((st) => assert.strictEqual(st.size, 2));
+  const all = D.ACT_SETS.flat();
+  all.forEach((a) => a.related.concat(a.others, [a.boss]).forEach((id) => assert.ok(D.ENEMIES[id], a.name + ' ' + id)));
+  assert.strictEqual(D.ENEMIES.test.scene, '漢字大テスト');
 });
