@@ -61,11 +61,11 @@
     var M = D.MAP, act = D.ACTS[s.act], rows = [], edges = [];
     for (var r = 0; r < M.rows; r++) rows.push([]);
     D.ROUTES.forEach(function (R, c) {
-      var mid = R.nodes.slice(1);
+      var mid = R.nodes.slice(1, R.nodes.length - 1);
       shuffle(s, mid);
-      var kinds = [R.nodes[0]].concat(mid);
+      var kinds = [R.nodes[0]].concat(mid, [R.nodes[R.nodes.length - 1]]);
       for (var r2 = 0; r2 < M.rows; r2++) {
-        var kind = r2 === M.rows - 1 ? 'rest' : kinds[r2];
+        var kind = r2 === M.rows - 1 ? 'rest' : (kinds[r2] || 'event');
         var n = { col: c, kind: kind, route: R.id };
         if (kind === 'battle') { n.enemy = pick(s, act.related); n.related = true; }
         if (kind === 'elite') n.enemy = pick(s, act.elites);
@@ -127,7 +127,9 @@
     s.nodeRelated = !!n.related;
     if (n.kind === 'mystery') {
       var act = D.ACTS[s.act];
-      if (rand(s) < D.MAP.mysteryBattle) {
+      var mr = rand(s);
+      if (mr < D.MAP.mysteryElite) { startBattle(s, pick(s, act.elites)); s.phase = 'intro'; }
+      else if (mr < D.MAP.mysteryElite + D.MAP.mysteryBattle) {
         var pool = act.others.concat(rand(s) < D.RULES.dangerChance * 2 ? act.dangers : []);
         startBattle(s, pick(s, pool)); s.phase = 'intro'; s.mysteryBattle = true;
       } else startEvent(s);
@@ -156,11 +158,14 @@
   // --- 戦い ---
   // ボスは、なくした ハートの数だけ 弱くなる
   function lostHearts(s) { return D.MAP.hearts - s.hearts; }
+  // ストレス過多：失敗しやすく、パニックが 入る
+  function overStressed(s) { return (s.maxYoyu - s.yoyu) / s.maxYoyu > D.PLAYER.overStress; }
   function fragile(s) { var H = D.HEROES[s.hero]; return H && H.fragile; }
   // ピンチ（余裕が少ない）の時、回復が 弱まる
   function heal(s, n) {
     var f = fragile(s);
     if (f && s.yoyu < s.maxYoyu * f.pinch) n = Math.ceil(n * f.healMul);
+    if (s.phase === 'battle' && overStressed(s)) n = Math.ceil(n * D.PLAYER.overHeal);
     s.yoyu = Math.min(s.maxYoyu, s.yoyu + n);
   }
   // 助けを もとめる カード・アイテムが 強くなる 主人公（キトリ）
@@ -222,6 +227,10 @@
       for (var sp = 0; sp < fragile(s).slumpPanic; sp++) addToHand(s, { id: 'panic', temp: true });
       s.slump--;
       msg(s, 'この前の ことが 頭から はなれない…（落ちこみ：あと ' + s.slump + '回）', 'worry');
+    }
+    if (first && overStressed(s)) {
+      for (var op = 0; op < D.PLAYER.overPanic; op++) addToHand(s, { id: 'panic', temp: true });
+      msg(s, 'ストレスが 多すぎて、頭が まわらない…（ストレス過多）', 'worry');
     }
     if (first && s.trust >= D.RULES.allyTrust) {
       b.guard += D.RULES.allyGuard;
@@ -346,6 +355,7 @@
     var okP = c.chance ? D.CHANCE[c.chance].p : 1;
     var Hh = D.HEROES[s.hero];
     if (st && s.stats[st] < 0 && !(c.help && Hh && Hh.helpSafe)) okP -= D.PLAYER.weakFail * -s.stats[st];
+    if (c.chance && overStressed(s)) okP -= D.PLAYER.overFail;
     var ok = okP >= 1 ? true : rand(s) < okP;
     var entry = { k: 'play', card: h.id, enemy: en.id, ok: ok, judge: c.judge, style: c.style, temp: !!h.temp, revealedBefore: en.revealed };
 
@@ -732,7 +742,7 @@
   function bossDown(s) {
     if (s.act < s.acts - 1) {
       s.act++; s.row = 0; s.pos = null; s.hearts = D.MAP.hearts; s.slack = 0;
-      s.yoyu = s.maxYoyu;
+      s.yoyu = Math.min(s.maxYoyu, s.yoyu + Math.round(s.maxYoyu * D.MAP.actHealAmount));
       s.map = buildMap(s);
       s.phase = 'actclear';
       s.battle = null;

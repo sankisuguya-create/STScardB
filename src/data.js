@@ -25,14 +25,14 @@
     low: { p: 0.35, label: '失敗するかも' }
   };
 
-  var PLAYER = { stressStart: 10, statMin: -2, weakFail: 0.2, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
+  var PLAYER = { stressStart: 10, statMin: -2, weakFail: 0.2, overStress: 0.6, overFail: 0.3, overPanic: 2, overHeal: 0.3, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
 
   var RULES = {
     stressThreshold: 0.3,      // 余裕（＝上限−ストレス）がこの割合未満でカッとなるが手札にまざる
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 2.0, resist: 0.35, anxiety: 0.6,
-    restHeal: 0.3, rareChance: [0.04, 0.35, 0.45], rareChanceElite: [0.12, 0.8, 0.9], dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 12, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 2.6,
+    restHeal: 0.3, rareChance: [0.04, 0.35, 0.45], rareChanceElite: [0.12, 0.8, 0.9], dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 30, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 2.6,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -430,7 +430,7 @@
       title: 'ゴロゴロ する', slack: true,
       text: '今日は 何も しないで、ゲームを したり ねころんだり。気もちは 楽だけど、やる ことは 先のばしに なった…',
       options: [
-        { label: 'ゴロゴロする', effects: { yoyu: 10, slack: 1 }, result: 'ストレスは 少し へった。でも、ボスが 少し 大きくなった気が する…' }
+        { label: 'ゴロゴロする', effects: { yoyu: 22, slack: 1 }, result: 'ストレスは 少し へった。でも、ボスが 少し 大きくなった気が する…' }
       ]
     },
     second_chance: {
@@ -452,11 +452,12 @@
     { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['library', 'family_talk', 'friend_trouble'] }
   ];
   var ROUTES = [
-    { id: 'hard', name: 'しんどいが 力が つく道', note: '課題に 向き合う マスが 多い。ボスが 弱くなり、成長しやすい', nodes: ['battle', 'battle', 'elite', 'battle', 'mystery', 'battle', 'elite', 'battle', 'battle'] },
-    { id: 'normal', name: 'ふつうの道', note: 'いろいろな マスが まざる', nodes: ['battle', 'mystery', 'battle', 'event', 'rest', 'battle', 'mystery', 'battle', 'event'] },
-    { id: 'easy', name: '楽そうな道', note: '一見 楽。でも 課題を 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'mystery', 'slack', 'battle', 'event', 'slack', 'mystery'] }
+    { id: 'hard', name: 'しんどいが 力が つく道', note: '課題に 向き合う マスが 多い（4つ）。ボスが 弱くなり、成長しやすい', nodes: ['battle', 'mystery', 'battle', 'event', 'battle', 'mystery', 'battle', 'event', 'rest'] },
+    { id: 'normal', name: 'ふつうの道', note: '課題に 向き合う マスは 2つ。休みも ある', nodes: ['battle', 'event', 'mystery', 'rest', 'event', 'battle', 'mystery', 'event', 'rest'] },
+    { id: 'easy', name: '楽そうな道', note: '課題は 1つ だけで 休める。でも 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'slack', 'rest', 'battle', 'slack', 'event', 'rest'] }
   ];
-  var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.5, slackBoss: 0.12, relatedShare: 0.5, hearts: 3, heartHp: 0.22, heartStress: 0.2, bossBase: 1.35, actHeal: 1 };
+
+  var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.15, mysteryElite: 0.05, slackBoss: 0.05, actHealAmount: 0, relatedShare: 0.5, hearts: 3, heartHp: 0.18, heartStress: 0.2, bossBase: 1.15, actHeal: 1 };
 
   var TEXT = {
     title: 'こころの 冒険',

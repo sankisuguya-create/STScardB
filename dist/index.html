@@ -418,14 +418,14 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     low: { p: 0.35, label: '失敗するかも' }
   };
 
-  var PLAYER = { stressStart: 10, statMin: -2, weakFail: 0.2, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
+  var PLAYER = { stressStart: 10, statMin: -2, weakFail: 0.2, overStress: 0.6, overFail: 0.3, overPanic: 2, overHeal: 0.3, maxYoyu: 50, energy: 3, hand: 5, statMax: 5, trustStart: 5, trustMax: 10 };
 
   var RULES = {
     stressThreshold: 0.3,      // 余裕（＝上限−ストレス）がこの割合未満でカッとなるが手札にまざる
     growthUses: 3,             // 1回の戦いで同じ種類を3回使うと成長
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 2.0, resist: 0.35, anxiety: 0.6,
-    restHeal: 0.3, rareChance: [0.04, 0.35, 0.45], rareChanceElite: [0.12, 0.8, 0.9], dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 12, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 2.6,
+    restHeal: 0.3, rareChance: [0.04, 0.35, 0.45], rareChanceElite: [0.12, 0.8, 0.9], dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 30, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 2.6,
     rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
   };
 
@@ -823,7 +823,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
       title: 'ゴロゴロ する', slack: true,
       text: '今日は 何も しないで、ゲームを したり ねころんだり。気もちは 楽だけど、やる ことは 先のばしに なった…',
       options: [
-        { label: 'ゴロゴロする', effects: { yoyu: 10, slack: 1 }, result: 'ストレスは 少し へった。でも、ボスが 少し 大きくなった気が する…' }
+        { label: 'ゴロゴロする', effects: { yoyu: 22, slack: 1 }, result: 'ストレスは 少し へった。でも、ボスが 少し 大きくなった気が する…' }
       ]
     },
     second_chance: {
@@ -845,11 +845,12 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['library', 'family_talk', 'friend_trouble'] }
   ];
   var ROUTES = [
-    { id: 'hard', name: 'しんどいが 力が つく道', note: '課題に 向き合う マスが 多い。ボスが 弱くなり、成長しやすい', nodes: ['battle', 'battle', 'elite', 'battle', 'mystery', 'battle', 'elite', 'battle', 'battle'] },
-    { id: 'normal', name: 'ふつうの道', note: 'いろいろな マスが まざる', nodes: ['battle', 'mystery', 'battle', 'event', 'rest', 'battle', 'mystery', 'battle', 'event'] },
-    { id: 'easy', name: '楽そうな道', note: '一見 楽。でも 課題を 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'mystery', 'slack', 'battle', 'event', 'slack', 'mystery'] }
+    { id: 'hard', name: 'しんどいが 力が つく道', note: '課題に 向き合う マスが 多い（4つ）。ボスが 弱くなり、成長しやすい', nodes: ['battle', 'mystery', 'battle', 'event', 'battle', 'mystery', 'battle', 'event', 'rest'] },
+    { id: 'normal', name: 'ふつうの道', note: '課題に 向き合う マスは 2つ。休みも ある', nodes: ['battle', 'event', 'mystery', 'rest', 'event', 'battle', 'mystery', 'event', 'rest'] },
+    { id: 'easy', name: '楽そうな道', note: '課題は 1つ だけで 休める。でも 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'slack', 'rest', 'battle', 'slack', 'event', 'rest'] }
   ];
-  var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.5, slackBoss: 0.12, relatedShare: 0.5, hearts: 3, heartHp: 0.22, heartStress: 0.2, bossBase: 1.35, actHeal: 1 };
+
+  var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.15, mysteryElite: 0.05, slackBoss: 0.05, actHealAmount: 0, relatedShare: 0.5, hearts: 3, heartHp: 0.18, heartStress: 0.2, bossBase: 1.15, actHeal: 1 };
 
   var TEXT = {
     title: 'こころの 冒険',
@@ -937,11 +938,11 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     var M = D.MAP, act = D.ACTS[s.act], rows = [], edges = [];
     for (var r = 0; r < M.rows; r++) rows.push([]);
     D.ROUTES.forEach(function (R, c) {
-      var mid = R.nodes.slice(1);
+      var mid = R.nodes.slice(1, R.nodes.length - 1);
       shuffle(s, mid);
-      var kinds = [R.nodes[0]].concat(mid);
+      var kinds = [R.nodes[0]].concat(mid, [R.nodes[R.nodes.length - 1]]);
       for (var r2 = 0; r2 < M.rows; r2++) {
-        var kind = r2 === M.rows - 1 ? 'rest' : kinds[r2];
+        var kind = r2 === M.rows - 1 ? 'rest' : (kinds[r2] || 'event');
         var n = { col: c, kind: kind, route: R.id };
         if (kind === 'battle') { n.enemy = pick(s, act.related); n.related = true; }
         if (kind === 'elite') n.enemy = pick(s, act.elites);
@@ -1003,7 +1004,9 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     s.nodeRelated = !!n.related;
     if (n.kind === 'mystery') {
       var act = D.ACTS[s.act];
-      if (rand(s) < D.MAP.mysteryBattle) {
+      var mr = rand(s);
+      if (mr < D.MAP.mysteryElite) { startBattle(s, pick(s, act.elites)); s.phase = 'intro'; }
+      else if (mr < D.MAP.mysteryElite + D.MAP.mysteryBattle) {
         var pool = act.others.concat(rand(s) < D.RULES.dangerChance * 2 ? act.dangers : []);
         startBattle(s, pick(s, pool)); s.phase = 'intro'; s.mysteryBattle = true;
       } else startEvent(s);
@@ -1032,11 +1035,14 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   // --- 戦い ---
   // ボスは、なくした ハートの数だけ 弱くなる
   function lostHearts(s) { return D.MAP.hearts - s.hearts; }
+  // ストレス過多：失敗しやすく、パニックが 入る
+  function overStressed(s) { return (s.maxYoyu - s.yoyu) / s.maxYoyu > D.PLAYER.overStress; }
   function fragile(s) { var H = D.HEROES[s.hero]; return H && H.fragile; }
   // ピンチ（余裕が少ない）の時、回復が 弱まる
   function heal(s, n) {
     var f = fragile(s);
     if (f && s.yoyu < s.maxYoyu * f.pinch) n = Math.ceil(n * f.healMul);
+    if (s.phase === 'battle' && overStressed(s)) n = Math.ceil(n * D.PLAYER.overHeal);
     s.yoyu = Math.min(s.maxYoyu, s.yoyu + n);
   }
   // 助けを もとめる カード・アイテムが 強くなる 主人公（キトリ）
@@ -1098,6 +1104,10 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
       for (var sp = 0; sp < fragile(s).slumpPanic; sp++) addToHand(s, { id: 'panic', temp: true });
       s.slump--;
       msg(s, 'この前の ことが 頭から はなれない…（落ちこみ：あと ' + s.slump + '回）', 'worry');
+    }
+    if (first && overStressed(s)) {
+      for (var op = 0; op < D.PLAYER.overPanic; op++) addToHand(s, { id: 'panic', temp: true });
+      msg(s, 'ストレスが 多すぎて、頭が まわらない…（ストレス過多）', 'worry');
     }
     if (first && s.trust >= D.RULES.allyTrust) {
       b.guard += D.RULES.allyGuard;
@@ -1222,6 +1232,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     var okP = c.chance ? D.CHANCE[c.chance].p : 1;
     var Hh = D.HEROES[s.hero];
     if (st && s.stats[st] < 0 && !(c.help && Hh && Hh.helpSafe)) okP -= D.PLAYER.weakFail * -s.stats[st];
+    if (c.chance && overStressed(s)) okP -= D.PLAYER.overFail;
     var ok = okP >= 1 ? true : rand(s) < okP;
     var entry = { k: 'play', card: h.id, enemy: en.id, ok: ok, judge: c.judge, style: c.style, temp: !!h.temp, revealedBefore: en.revealed };
 
@@ -1608,7 +1619,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   function bossDown(s) {
     if (s.act < s.acts - 1) {
       s.act++; s.row = 0; s.pos = null; s.hearts = D.MAP.hearts; s.slack = 0;
-      s.yoyu = s.maxYoyu;
+      s.yoyu = Math.min(s.maxYoyu, s.yoyu + Math.round(s.maxYoyu * D.MAP.actHealAmount));
       s.map = buildMap(s);
       s.phase = 'actclear';
       s.battle = null;
@@ -2106,7 +2117,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     var A = D.ACTS[S.act];
     return h('main', { class: 'title' }, [
       h('h1', { text: (S.act) + 'そう目 クリア！' }),
-      h('p', { class: 'sub', text: 'ストレスが 0に なった。次は「' + A.name + '」' }),
+      h('p', { class: 'sub', text: 'ストレスは そのまま 次の そうへ。ストレスが 多い ときは、楽な 道で 休むのも 一つの 手。次は「' + A.name + '」' }),
       bossBanner(),
       h('button', { class: 'primary big', onclick: function () { act(function () { E.nextAct(S); }); }, text: '次の そうへ' })
     ]);

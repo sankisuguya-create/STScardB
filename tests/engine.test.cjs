@@ -382,7 +382,7 @@ test('ハヤツ：ピンチの時は 回復が 半分、モヤモヤの 減り�
   assert.strictEqual(s.yoyu, 10 + Math.ceil(Math.round(s.maxYoyu * D.RULES.restHeal) * 0.5));
   const t = E.newRun(1, 1, 'hayatsu'); E.chooseNode(t, E.reachable(t)[0]);
   if (t.phase !== 'battle') return;
-  t.yoyu = 40; t.battle.guard = 999; t.battle.hand = [{ id: 'moyamoya' }]; t.deck.push('moyamoya');
+  t.yoyu = t.maxYoyu; t.battle.guard = 999; t.battle.hand = [{ id: 'moyamoya' }]; t.deck.push('moyamoya');
   const y0 = t.yoyu; E.endTurn(t);
   assert.ok(y0 - t.yoyu >= D.RULES.moyaDrain * 2);
 });
@@ -452,4 +452,15 @@ test('短期の 課題（テストなど）では「時間を かけて」の �
     return;
   }
   assert.fail();
+});
+
+test('ストレス過多：最初の手札に パニックが 入る', () => {
+  const eid = Object.keys(D.ENEMIES).find((k) => D.ENEMIES[k].kind !== 'boss');
+  const t = E.newRun(3, 3, 'hanoko'); t.yoyu = 1;
+  const u = E._battle(t, eid);
+  assert.ok(u.battle.hand.filter((h) => h.id === 'panic').length >= D.PLAYER.overPanic);
+});
+
+test('層クリアで ストレスは 回復しない', () => {
+  assert.strictEqual(D.MAP.actHealAmount, 0);
 });

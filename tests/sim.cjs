@@ -77,7 +77,9 @@ function runOne(seed, polName, mode, hero) {
     else if (s.phase === 'actclear') E.nextAct(s);
     else if (s.phase === 'map') {
       const ok = E.reachable(s);
-      const want = s.row === 0 && process.env.ROUTE ? ok.find((i) => s.map.rows[0][i].route === process.env.ROUTE) : undefined;
+      let rt = process.env.ROUTE;
+      if (rt === 'smart') rt = (s.maxYoyu - s.yoyu) / s.maxYoyu > D.PLAYER.overStress ? 'easy' : 'hard';
+      const want = s.row === 0 && rt ? ok.find((i) => s.map.rows[0][i].route === rt) : undefined;
       E.chooseNode(s, want !== undefined ? want : ok[(seed + s.row) % ok.length]);
     } else if (s.phase === 'battle') playTurn(s, pol);
     else if (s.phase === 'reward') {
@@ -104,7 +106,7 @@ function stats(n) {
   for (const name of Object.keys(POLICIES)) {
     let taken = 0, turns = 0, battles = 0, wins = 0, goodTry = 0, goodFail = 0, impTry = 0, impOk = 0, floors = 0, grows = 0, trust = 0;
     for (let i = 0; i < n; i++) {
-      const s = runOne(1000 + i * 7919, name, 1, ['hanoko', 'tario', 'musuhi', 'hayatsu'][i % 4]);
+      const s = runOne(1000 + i * 7919, name, +(process.env.ACTS||1), ['hanoko', 'tario', 'musuhi', 'hayatsu'][i % 4]);
       if (s.result && s.result.won) wins++;
       floors += s.floor;
       trust += s.trust;

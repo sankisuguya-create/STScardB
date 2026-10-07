@@ -201,7 +201,7 @@
     var A = D.ACTS[S.act];
     return h('main', { class: 'title' }, [
       h('h1', { text: (S.act) + 'そう目 クリア！' }),
-      h('p', { class: 'sub', text: 'ストレスが 0に なった。次は「' + A.name + '」' }),
+      h('p', { class: 'sub', text: 'ストレスは そのまま 次の そうへ。ストレスが 多い ときは、楽な 道で 休むのも 一つの 手。次は「' + A.name + '」' }),
       bossBanner(),
       h('button', { class: 'primary big', onclick: function () { act(function () { E.nextAct(S); }); }, text: '次の そうへ' })
     ]);
