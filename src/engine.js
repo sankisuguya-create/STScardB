@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 16;
+  var ENGINE_VER = 17;
 
   // --- 乱数 ---
   function rand(s) {
@@ -67,31 +67,42 @@
   // ボスに 関連する 課題は「課題に 向き合う」として 名前を 見せる。関連しない 課題（トラブル・アクシデント・失敗）は「？」マスに かくれ、できごとの ことも ある
   // 休む マス（ひと休み・ゴロゴロ）は となり合わせに しない
   function isRestLike(k) { return k === 'rest' || k === 'slack'; }
+  // 段ごとに 1〜3この 中から えらぶ。★課題に 向き合う は 4段に 出る（1段は それしか ない、3段は ゴロゴロと えらべる）
+  // → 1層で 向き合う 課題は 最少 1、最多 4。休む マス（ひと休み・ゴロゴロ）は となりの 段に 続けて 出さない。
   function buildMap(s) {
-    var M = D.MAP, act = D.ACTS[s.act], rows = [], edges = [];
-    for (var r = 0; r < M.rows; r++) rows.push([]);
-    D.ROUTES.forEach(function (R, c) {
-      // ひと休みが 続かないように 並べる（さいごの 段は いつも ひと休み）
-      var kinds, mid = R.nodes.slice(1, R.nodes.length - 1);
-      for (var tries = 0; tries < 500; tries++) {
-        shuffle(s, mid);
-        kinds = [R.nodes[0]].concat(mid, [R.nodes[R.nodes.length - 1]]);
-        while (kinds.length < M.rows) kinds.push('event');
-        kinds[M.rows - 1] = 'rest';
-        if (!kinds.some(function (k, i) { return isRestLike(k) && isRestLike(kinds[i + 1]); })) break;
-      }
-      for (var r2 = 0; r2 < M.rows; r2++) {
-        var kind = r2 === M.rows - 1 ? 'rest' : (kinds[r2] || 'event');
-        var n = { col: c, kind: kind, route: R.id };
+    var M = D.MAP, act = D.ACTS[s.act], rows = [], edges = [], last = M.rows - 1;
+    var slackRows, forced, restRow;
+    for (var tries = 0; tries < 500; tries++) {
+      var cand = shuffle(s, [0, 1, 2, 3, 4, 5, 6, 7]);
+      slackRows = [];
+      cand.forEach(function (r) { if (slackRows.length < 3 && slackRows.every(function (q) { return Math.abs(q - r) > 1; })) slackRows.push(r); });
+      if (slackRows.length < 3) continue;
+      var others = cand.filter(function (r) { return slackRows.indexOf(r) < 0; });
+      forced = others[0];
+      var restOk = others.slice(1).filter(function (r) { return r < last - 1 && slackRows.every(function (q) { return Math.abs(q - r) > 1; }); });
+      restRow = restOk.length ? restOk[0] : -1;
+      break;
+    }
+    for (var r = 0; r < M.rows; r++) {
+      var kinds;
+      if (r === last) kinds = ['rest'];
+      else if (r === forced) kinds = ['battle'];
+      else if (slackRows.indexOf(r) >= 0) kinds = rand(s) < 0.5 ? ['battle', 'slack'] : ['battle', 'slack', rand(s) < 0.5 ? 'event' : 'mystery'];
+      else if (r === restRow) kinds = rand(s) < 0.5 ? ['rest', 'event'] : ['rest', 'mystery', 'event'];
+      else { var nk = 1 + Math.floor(rand(s) * 3); kinds = shuffle(s, ['mystery', 'event', rand(s) < 0.5 ? 'mystery' : 'event']).slice(0, nk); }
+      kinds = shuffle(s, kinds);
+      var cols = kinds.length === 1 ? [1] : kinds.length === 2 ? [0.5, 1.5] : [0, 1, 2];
+      rows.push(kinds.map(function (kind, i) {
+        var n = { col: cols[i], kind: kind };
         if (kind === 'battle') { n.enemy = pick(s, act.related); n.related = true; }
-        if (kind === 'elite') n.enemy = pick(s, act.elites);
-        rows[r2].push(n);
-        if (r2 < M.rows - 1) edges.push({ r: r2, from: c, to: c });
-      }
-    });
+        return n;
+      }));
+    }
+    for (var r2 = 0; r2 < last; r2++) rows[r2].forEach(function (a) { rows[r2 + 1].forEach(function (b) { edges.push({ r: r2, from: a.col, to: b.col }); }); });
     rows.push([{ col: (M.cols - 1) / 2, kind: 'boss', enemy: act.boss }]);
-    return { rows: rows, edges: edges };
+    return { rows: rows, edges: edges, free: true };
   }
+
 
   // いまの段で えらべる マス（前の段から 線で つながっているもの）
   function reachable(s) {
@@ -139,8 +150,9 @@
     var n = s.map.rows[s.row][i];
     s.floor++;
     s.pos = n.col;
-    if (n.route) s.route = n.route;
+    s.path = (s.row === 0 ? [] : (s.path || [])).concat([n.col]);
     s.nodeRelated = !!n.related;
+    if (n.related) s.actFaced = (s.actFaced || 0) + 1;
     if (n.kind === 'mystery') {
       var act = D.ACTS[s.act];
       var mr = rand(s), tp = Math.min(D.MAP.troubleMax, (s.impulse || 0) * D.MAP.troublePer);
@@ -613,7 +625,7 @@
     if (leave) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'pass:' + en.id }); }
     var statsBefore = { think: s.stats.think, act: s.stats.act, relate: s.stats.relate };
     Object.keys(D.STATS).forEach(function (st) {
-      if (b.usage[st] >= (s.route === 'hard' ? D.RULES.growthUses - 1 : D.RULES.growthUses) && s.stats[st] < D.PLAYER.statMax) {
+      if (b.usage[st] >= ((s.actFaced || 0) >= 3 ? D.RULES.growthUses - 1 : D.RULES.growthUses) && s.stats[st] < D.PLAYER.statMax) {
         s.stats[st]++;
         log(s, { k: 'grow', stat: st, to: s.stats[st], uses: b.usage[st], why: 'use' });
       }
@@ -859,7 +871,7 @@
     s.actGood = {}; s.actUsage = {};
     if (lost) { s.bossLost = (s.bossLost || 0) + 1; log(s, { k: 'bossLost', act: s.act }); }
     if (s.act < s.acts - 1) {
-      s.act++; s.row = 0; s.pos = null; s.hearts = D.MAP.hearts; s.slack = 0;
+      s.act++; s.row = 0; s.pos = null; s.actFaced = 0; s.hearts = D.MAP.hearts; s.slack = 0;
       s.yoyu = Math.min(s.maxYoyu, s.yoyu + Math.round(s.maxYoyu * D.MAP.actHealAmount));
       s.map = buildMap(s);
       s.phase = 'actclear';

@@ -8,6 +8,12 @@ const { runOne, stats, verdict } = require('./sim.cjs');
 // マスを えらぶと 状きょうの 説明（intro）を はさむ。検査では すぐ 戦いに 入る
 const _choose = E.chooseNode;
 E.chooseNode = (s, i) => { _choose(s, i); if (s.phase === 'intro') E.beginBattle(s); return s; };
+// 1段目の ★課題に 向き合う マスへ 行く（なければ 作る）
+const toBattle = (s) => {
+  let i = s.map.rows[0].findIndex((n) => n.kind === 'battle');
+  if (i < 0) { s.map.rows[0][0] = { col: s.map.rows[0][0].col, kind: 'battle', enemy: D.ACTS[s.act].related[0], related: true }; i = 0; }
+  return E.chooseNode(s, i);
+};
 
 test('全カード・全課題の参照が正しい', () => {
   const ids = Object.keys(D.CARDS);
@@ -49,7 +55,7 @@ test('失敗したら「次の手」が手札に入り、経験は数える', ()
   let found = false;
   for (let seed = 1; seed < 400 && !found; seed++) {
     const s = E.newRun(seed, 1);
-    E.chooseNode(s, 0);
+    toBattle(s);
     const i = s.battle.hand.findIndex((h) => D.CARDS[h.id].fail);
     if (i < 0) continue;
     const id = s.battle.hand[i].id, st = D.CARDS[id].type;
@@ -83,7 +89,7 @@ test('信頼3以下ならやり直しのできごとが出る', () => {
   s.trust = 2;
   s.phase = 'map'; s.row = 1; s.pos = null;
   s.map.rows[1] = [{ col: 0, kind: 'event' }]; s.map.edges.push({ r: 0, from: null, to: 0 });
-  E.chooseNode(s, 0);
+  toBattle(s);
   assert.strictEqual(s.event.id, 'second_chance');
 });
 
@@ -120,7 +126,7 @@ test('アイテム：戦いごとに1回、なくならない。先生は場面�
     assert.strictEqual(s.phase, 'reward');
     assert.ok(s.reward.choices.includes(tc));
     E.pickReward(s, null);
-    E.chooseNode(s, 0);
+    toBattle(s);
     if (s.phase === 'battle' && D.ENEMIES[s.battle.enemy.id].term !== 'short' && !D.ENEMIES[s.battle.enemy.id].solo) assert.ok(E.canUseSupport(s, 'teacher'));
     return;
   }
@@ -129,14 +135,14 @@ test('アイテム：戦いごとに1回、なくならない。先生は場面�
 
 test('整理するカードで 姿が3段階 現実に近づき、いきおいが弱まる。かしこさ2なら 1段階目から', () => {
   const s = E.newRun(11, 1, 'musuhi');
-  E.chooseNode(s, 0);
+  toBattle(s);
   const en = s.battle.enemy, E0 = D.ENEMIES[en.id];
   assert.strictEqual(en.form, 0); assert.strictEqual(en.name, E0.forms[0]);
   s.battle.hand.push({ id: 'sort_out', temp: true }); s.battle.energy = 3;
   E.playCard(s, s.battle.hand.length - 1);
   assert.strictEqual(en.form, 1); assert.ok(en.stressMul < 1);
   const s2 = E.newRun(11, 1, 'musuhi'); s2.stats.think = 2;
-  E.chooseNode(s2, 0);
+  toBattle(s2);
   assert.strictEqual(s2.battle.enemy.form, 1);
 });
 
@@ -225,7 +231,7 @@ test('心の余裕が0：ゲームは終わらず「動けない」になり、�
 
 test('きょりを おく：いきおいを0にし、ストレスを弱める', () => {
   const s = E.newRun(21, 1);
-  E.chooseNode(s, 0);
+  toBattle(s);
   s.battle.enemy.str = 5;
   const before = s.battle.enemy.stressMul;
   s.battle.hand.push({ id: 'keep_distance', temp: true }); s.battle.energy = 3;
@@ -243,18 +249,19 @@ test('信頼の理由（why）は すべて振り返りで 文に できる', ()
   }
 });
 
-test('マップ：10段＋ボス、線で つながった マスしか えらべない、課題の半分以上が ボスに 関連', () => {
-  for (let seed = 1; seed < 50; seed++) {
+test('マップ：10段＋ボス、段ごとに 1〜3この 中から 自由に えらぶ。向き合う 課題は 最少1・最多4', () => {
+  for (let seed = 1; seed < 200; seed++) {
     const s = E.newRun(seed, 1);
     assert.strictEqual(s.map.rows.length, D.MAP.rows + 1);
-    const battles = s.map.rows.flat().filter((n) => n.kind === 'battle');
-    assert.ok(battles.filter((n) => n.related).length >= battles.length / 2);
-    battles.forEach((n) => assert.ok(D.ENEMIES[n.enemy]));
-    E.chooseNode(s, E.reachable(s)[0]);
-    s.phase = 'map'; s.battle = null; s.row = 1;
-    const ok = E.reachable(s);
-    assert.strictEqual(ok.length, 1);
-    s.map.rows[1].forEach((n, i) => { if (!ok.includes(i)) assert.throws(() => E.chooseNode(s, i)); });
+    const rows = s.map.rows.slice(0, D.MAP.rows);
+    rows.forEach((row) => assert.ok(row.length >= 1 && row.length <= 3));
+    const minB = rows.filter((row) => row.every((n) => n.kind === 'battle')).length;
+    const maxB = rows.filter((row) => row.some((n) => n.kind === 'battle')).length;
+    assert.strictEqual(minB, 1, 'min'); assert.strictEqual(maxB, 4, 'max');
+    assert.ok(rows.some((row) => row.some((n) => n.kind === 'battle') && row.some((n) => n.kind === 'slack')), '向き合う／ゴロゴロ');
+    rows.flat().filter((n) => n.kind === 'battle').forEach((n) => assert.ok(n.related && D.ENEMIES[n.enemy]));
+    s.row = 3; s.pos = s.map.rows[2][0].col;
+    assert.strictEqual(E.reachable(s).length, s.map.rows[3].length);
   }
 });
 
@@ -267,7 +274,7 @@ test('関連する課題を 乗りこえると ボスの ハートが へり、�
   E.playCard(s, s.battle.hand.length - 1);
   assert.strictEqual(s.hearts, D.MAP.hearts - 1);
   const s2 = E.newRun(7, 1); s2.hearts = 0; s2.phase = 'map'; s2.row = D.MAP.rows;
-  E.chooseNode(s2, 0);
+  toBattle(s2);
   const full = Math.round(D.ENEMIES[D.ACTS[0].boss].hp * D.RULES.hpScale);
   assert.ok(s2.battle.enemy.maxHp < full);
 });
@@ -337,7 +344,9 @@ test('問題行動を えらぶと、次に 道と関係なく トラブルが �
 test('すべての課題に 状きょうの 説明が ある。マスを えらぶと 説明の 画面になる', () => {
   Object.entries(D.ENEMIES).forEach(([k, e]) => assert.ok(e.intro && e.intro.length > 10, k));
   const s = E.newRun(1, 1);
-  _choose(s, E.reachable(s)[0]);
+  let bi = s.map.rows[0].findIndex((n) => n.kind === 'battle');
+  if (bi < 0) { s.map.rows[0][0] = { col: 1, kind: 'battle', enemy: 'dunno', related: true }; bi = 0; }
+  _choose(s, bi);
   assert.strictEqual(s.phase, 'intro');
   E.beginBattle(s);
   assert.strictEqual(s.phase, 'battle');
@@ -415,17 +424,6 @@ test('苦手（成長が マイナス）の 種類の カードは 失敗する�
     if (!s.log.filter((e) => e.k === 'play').pop().ok) fails++;
   }
   assert.ok(fails > 10, String(fails));
-});
-
-test('マップの 線は 一本道（分かれ道も 合流も ない）', () => {
-  let merges = 0, splits = 0;
-  for (let seed = 1; seed < 30; seed++) {
-    const s = E.newRun(seed, 1);
-    const into = {}, out = {};
-    s.map.edges.forEach((e) => { into[(e.r + 1) + ':' + e.to] = (into[(e.r + 1) + ':' + e.to] || 0) + 1; out[e.r + ':' + e.from] = (out[e.r + ':' + e.from] || 0) + 1; });
-    merges += Object.values(into).filter((n) => n > 1).length; splits += Object.values(out).filter((n) => n > 1).length;
-  }
-  assert.strictEqual(merges, 0); assert.strictEqual(splits, 0);
 });
 
 test('E：全部 苦手。相談カードと アイテムが 強く、相談カードは にがてでも 失敗しない', () => {
@@ -550,13 +548,11 @@ test('友だちの まね：カードが 1まい 上位に しんかする', () 
   for (const [eid, row] of Object.entries(D.FIT)) if (row.endure) assert.ok(row.no_worry && row.later_down && row.switch_on, eid);
 });
 
-test('ひと休みは 連続しない', () => {
-  for (let seed = 1; seed < 200; seed++) {
+test('ひと休みは 連続しない（ゴロゴロも ふくめ、となりの 段に 続けて 出ない）', () => {
+  const rl = (row) => row && row.some((n) => n.kind === 'rest' || n.kind === 'slack');
+  for (let seed = 1; seed < 300; seed++) {
     const s = E.newRun(seed, 1, 'hanoko');
-    for (let c = 0; c < 3; c++) for (let r = 0; r < s.map.rows.length - 1; r++) {
-      const rl = (n) => n && (n.kind === 'rest' || n.kind === 'slack');
-      assert.ok(!(rl(s.map.rows[r][c]) && rl(s.map.rows[r + 1][c])), seed + ':' + r);
-    }
+    for (let r = 0; r < D.MAP.rows - 1; r++) assert.ok(!(rl(s.map.rows[r]) && rl(s.map.rows[r + 1])), seed + ':' + r);
   }
 });
 

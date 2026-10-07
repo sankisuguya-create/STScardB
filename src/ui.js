@@ -293,11 +293,16 @@
       l.setAttribute('x1', a[0]); l.setAttribute('y1', a[1]); l.setAttribute('x2', b[0]); l.setAttribute('y2', b[1]);
       l.setAttribute('class', cls); svg.appendChild(l);
     }
-    m.edges.forEach(function (e) {
+    if (m.free) {
+      // 自由に えらぶ マップ：通ってきた 道と、いまから 行ける 線だけ 引く
+      var path = S.path || [];
+      for (var pi = 1; pi < path.length; pi++) line(nodeXY(pi - 1, path[pi - 1]), nodeXY(pi, path[pi]), 'ml past');
+      if (S.row > 0 && S.row < bossR && S.pos != null) m.rows[S.row].forEach(function (n) { line(nodeXY(S.row - 1, S.pos), nodeXY(S.row, n.col), 'ml next'); });
+    } else m.edges.forEach(function (e) {
       var cls = 'ml' + (e.r === S.row - 1 && e.from === S.pos ? ' next' : e.r < S.row - 1 ? ' past' : '');
       line(nodeXY(e.r, e.from), nodeXY(e.r + 1, e.to), cls);
     });
-    m.rows[bossR - 1].forEach(function (n) { line(nodeXY(bossR - 1, n.col), nodeXY(bossR, 1.5), 'ml' + (S.row === bossR && S.pos === n.col ? ' next' : '')); });
+    m.rows[bossR - 1].forEach(function (n) { line(nodeXY(bossR - 1, n.col), nodeXY(bossR, 1), 'ml' + (S.row === bossR && S.pos === n.col ? ' next' : '')); });
     var nodes = [];
     m.rows.forEach(function (row, r) {
       row.forEach(function (n, i) {

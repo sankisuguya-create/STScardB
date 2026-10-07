@@ -80,9 +80,15 @@ function runOne(seed, polName, mode, hero) {
     else if (s.phase === 'actclear') E.nextAct(s);
     else if (s.phase === 'map') {
       const ok = E.reachable(s);
+      // ROUTE：hard＝いつも 向き合う／easy＝ゴロゴロが あれば そちら／normal＝交互／smart＝ストレス過多なら ゴロゴロ
       let rt = process.env.ROUTE;
       if (rt === 'smart') rt = (s.maxYoyu - s.yoyu) / s.maxYoyu > D.PLAYER.overStress ? 'easy' : 'hard';
-      const want = s.row === 0 && rt ? ok.find((i) => s.map.rows[0][i].route === rt) : undefined;
+      if (rt === 'normal') rt = s.row % 2 ? 'easy' : 'hard';
+      const row = s.map.rows[s.row];
+      const pref = rt === 'hard' ? ['battle', 'rest'] : rt === 'easy' ? ['slack', 'rest'] : ['rest'];
+      let want;
+      for (const k of pref) { const f = ok.find((i) => row[i].kind === k); if (f !== undefined) { want = f; break; } }
+      if (want === undefined && rt === 'easy') want = ok.find((i) => row[i].kind !== 'battle');
       E.chooseNode(s, want !== undefined ? want : ok[(seed + s.row) % ok.length]);
     } else if (s.phase === 'battle') playTurn(s, pol);
     else if (s.phase === 'reward') {
