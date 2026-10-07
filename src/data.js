@@ -116,6 +116,9 @@
     force_own: { name: '自分の 意見を おしつける', line: '「ぜったい こっちが いい！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
     consult_family: { name: 'お家の人に そうだんする', line: '「今日 こんなことが あってね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 8, ctx: ['study', 'conflict', 'join', 'tease', 'stage'], help: true, term: 'long' },
     sukkiri: { name: '気もちを 話して すっきり', line: 'もやもやを 言葉にして だれかに 話す。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 3, clearMoya: true, exhaust: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'], term: 'long' },
+    notice_fault: { sure: true, name: '自分が 悪かった 所に 気づく', line: '「あの時、自分も 言いすぎた…」 使うと「認める」に かわる。手札に のこる。', type: 'basic', judge: 'good', style: 'assertive', cost: 3, solve: 6, retain: true },
+    admit_fault: { sure: true, name: '自分が 悪かった 所を 認める', line: '「ぼくも 悪かった」と 自分の 中で 認める。使うと「あやまる」が 手札に。手札に のこる。', type: 'basic', judge: 'good', style: 'assertive', cost: 3, solve: 10, retain: true },
+    make_up: { sure: true, name: '仲直り', line: '「また いっしょに 遊ぼう」 けんかが おわる。', type: 'basic', judge: 'good', style: 'assertive', cost: 3, solve: 999 },
     pride: { name: 'プライド', line: '「あやまったら 負けだ」と 思ってしまう。使えず、手札に のこる。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true, jam: true, retain: true },
     shame: { name: '恥ずかしさ', line: '顔が あつくて 言葉が 出ない。使えず、手札に のこる。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true, jam: true, retain: true },
     irritation: { name: 'イライラ', line: 'むしゃくしゃが おさまらない。使えず、手札に のこる。ターンの おわりに ストレス +4。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true, jam: true, retain: true, drainEnd: 4 },
@@ -296,7 +299,7 @@
   ENEMIES.friend_fight = {
       intro: 'きのう、なかよしの 友だちと 言い合いに なった。今日は 朝から 一度も 目を 合わせてくれない。',
     forms: ['ギザギザ ハートの 竜', '目を 合わせない 友だち', 'なかなおり したい 友だち'],
-    ctx: 'conflict', scene: '友だちと 大げんか', kind: 'boss', hp: 55,
+    chain: { start: 'notice_fault', steps: { notice_fault: 'admit_fault', admit_fault: 'apologize' }, finale: 'apologize', win: 'make_up', reward: { cards: ['listen_deep', 'mediate'], stat: 'relate', trust: 2 } }, ctx: 'conflict', scene: '友だちと 大げんか', kind: 'boss', hp: 55,
     moves: [{ t: 'inject', card: 'tataku', say: '手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 9, say: '口を きいて くれない' }, { t: 'grow', n: 3, say: 'ほかの子も まきこまれる' }, { t: 'stress', n: 10, say: 'さびしくて むかむかする' }, { t: 'worry', say: '「もう 友だちじゃ ないのかな」' }],
     weak: [], resist: ['relate'], backfire: ['impulse'], situ: ['tell_feeling', 'keep_distance', 'ignore_back'],
     view: { truth: 'benign', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.8 },

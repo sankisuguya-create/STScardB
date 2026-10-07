@@ -40,9 +40,9 @@
         h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + pct + '%' })]),
         h('b', { text: stress + '/' + S.maxYoyu })
       ]),
-      h('button', { class: 'chip trust', title: STAT_HELP.trust, onclick: function () { statHelp = 'trust'; render(); } }, [h('span', { class: 'lbl', text: '信頼' }), h('b', { text: String(S.trust) })]),
+      h('button', { class: 'chip trust', title: STAT_HELP.trust, onclick: function () { statHelp = 'trust'; render(); } }, [h('span', { class: 'ico', 'aria-label': '信頼', text: '🤝' }), h('b', { text: String(S.trust) })]),
       h('div', { class: 'stats' }, Object.keys(D.STATS).map(function (k) {
-        return h('button', { class: 'chip st-' + k, title: STAT_HELP[k], onclick: function () { statHelp = k; render(); } }, [h('span', { class: 'lbl', text: D.STATS[k].name }), h('b', { text: String(S.stats[k]) })]);
+        return h('button', { class: 'chip st-' + k, title: STAT_HELP[k], onclick: function () { statHelp = k; render(); } }, [h('span', { class: 'ico', 'aria-label': D.STATS[k].name, text: STAT_ICON[k] }), h('b', { text: String(S.stats[k]) })]);
       })),
       h('div', { class: 'nigates' }, Object.keys(S.nigate || {}).map(function (k) {
         return h('div', { class: 'chip nigate', title: '苦手意識' }, [h('span', { class: 'lbl', text: '苦手：' + D.CTX_LABEL[k] }), h('b', { text: String(S.nigate[k]) })]);
@@ -52,6 +52,7 @@
   }
 
   var selSup = null;
+  var STAT_ICON = { think: '💡', act: '👟', relate: '🧑‍🤝‍🧑' };
   var STAT_HELP = {
     trust: '信頼（0〜10）：まわりの 人からの 信頼。よい関わりで 上がり（1回の 戦いで +2まで）、衝動的な 行動や ふうんな できごとで 下がる。7以上：戦いの はじめに 友だちが そばに いて 心の準備 +6。8以上：報酬の カードが 1まい ふえる。3以下：やり直しの チャンスが 来る。',
     think: 'かしこさ：「考える」カードの 効き目に たされる。手札の 上限は 5＋かしこさ。2以上で 戦いの はじめに 問題の 正体が 1だん 見える。マイナスだと 考えるカードが 失敗しやすい（−1ごとに 20%）。',
@@ -218,6 +219,7 @@
     });
     return h('section', { class: 'review' }, [
       h('h2', { text: '何が 良かったか 振り返ろう…' }),
+      r.chain ? h('p', { class: 'praise', text: '自分の 悪かった 所に 気づいて、仲直り できた。なかま力 +1、信頼 +2。人の 話を 聞く・間に 入る やり方も 見えてきた。' }) : null,
       h('p', { class: 'hint', text: '1つ えらぶ' }),
       h('div', { class: 'choices' }, cards),
       h('div', { class: 'two' }, [
@@ -284,9 +286,6 @@
       bossBanner(),
       notice ? h('p', { class: 'praise', text: notice }) : null,
       h('div', { class: 'maprow2' }, [itemSlots(false), h('p', { class: 'hint', text: '光っている マスから 次に 行くところを えらぼう' })]),
-      h('div', { class: 'routes' }, D.ROUTES.map(function (R) {
-        return h('div', { class: 'route r-' + R.id + (S.route === R.id ? ' on' : '') }, [h('b', { text: R.name }), h('small', { text: R.note })]);
-      })),
       h('div', { class: 'mapbox', style: 'aspect-ratio:' + MW + ' / ' + MH }, [svg].concat(nodes)),
       (S.slack ? h('p', { class: 'slacknote', text: 'ゴロゴロ ' + S.slack + '回：ボスが ' + Math.round(D.MAP.slackBoss * S.slack * 100) + '% 大きく なっている' }) : null)
     ]);

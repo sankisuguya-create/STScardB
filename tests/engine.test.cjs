@@ -595,3 +595,30 @@ test('お邪魔カード：使えず 手札に のこり、整えるカードで
   assert.ok(!s.battle.hand.some((h) => h.id === 'pride'));
   assert.ok(D.RULES.rewardChoices === 2);
 });
+
+test('大げんか：気づく→認める→あやまる→仲直り で 勝つと 特別な 報酬', () => {
+  const s = E.newRun(9, 3, 'tario'); s.act = 1;
+  E._battle(s, 'friend_fight');
+  const b = s.battle;
+  b.enemy.form = 1; b.hand = [{ id: 'sort_out', temp: true }]; b.energy = 3; b.enemy.hp = 999;
+  E.playCard(s, 0);
+  const step = (id) => { b.energy = 3; const i = b.hand.findIndex((h) => h.id === id); assert.ok(i >= 0, id + ' が 手札に ない'); E.playCard(s, i); };
+  step('notice_fault'); step('admit_fault'); step('apologize');
+  const r0 = s.stats.relate, t0 = s.trust;
+  step('make_up');
+  assert.strictEqual(s.phase, 'actclear');
+  assert.strictEqual(s.stats.relate, r0 + 1);
+  assert.ok(s.trust > t0);
+  assert.ok(s.actReview.chain && s.actReview.cards.includes('listen_deep'));
+});
+
+test('報酬：しんか カードは 出ない。その課題の 対応表に ある カードだけ', () => {
+  for (let seed = 1; seed < 80; seed++) {
+    for (const eid of ['dunno', 'bumped', 'left_out', 'rumor']) {
+      const s = E._battle(E.newRun(seed, 1, 'hanoko'), eid);
+      s.battle.enemy.hp = 1; s.battle.hand = [{ id: 'endure', temp: true }];
+      s.battle.enemy.hp = 0; s.battle.energy = 3; E.playCard(s, 0);
+      for (const id of s.reward.choices) { assert.ok(!D.CARDS[id].from, id); assert.ok(D.FIT[eid][id], eid + ' ' + id); }
+    }
+  }
+});

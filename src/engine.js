@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 15;
+  var ENGINE_VER = 16;
 
   // --- 乱数 ---
   function rand(s) {
@@ -336,6 +336,11 @@
       }
       log(s, { k: 'reveal', enemy: en.id, from: E.forms[0], to: en.name, truth: E.view ? E.view.truth : 'plain' });
     }
+    if (en.form === 2 && E.chain && !b.chainStarted) {
+      b.chainStarted = true;
+      addToHand(s, { id: E.chain.start, temp: true });
+      msg(s, '整理して いくうちに、何かに 気づきそう…（「' + card(E.chain.start).name + '」が 手札に）', 'next');
+    }
     msg(s, fromStat ? 'かしこさが 高いので、はじめから「' + en.name + '」に 見えている。' : '状きょうが 整理できた：「' + from + '」→「' + en.name + '」（いきおいが 弱まった）', 'reveal');
     log(s, { k: 'form', enemy: en.id, form: en.form, stat: !!fromStat });
   }
@@ -379,7 +384,7 @@
     var okP = c.chance ? D.CHANCE[c.chance].p : 1;
     var Hh = D.HEROES[s.hero];
     if (st && s.stats[st] < 0 && !(c.help && Hh && Hh.helpSafe)) okP -= D.PLAYER.weakFail * -s.stats[st];
-    if (overStressed(s) && !c.escape) okP -= D.PLAYER.overFail;
+    if (overStressed(s) && !c.escape && !c.sure) okP -= D.PLAYER.overFail;
     var ok = okP >= 1 ? true : rand(s) < okP;
     var entry = { k: 'play', card: h.id, enemy: en.id, ok: ok, judge: c.judge, style: c.style, temp: !!h.temp, revealedBefore: en.revealed };
 
@@ -439,6 +444,12 @@
     if (ok && c.judge === 'good') { s.actGood = s.actGood || {}; s.actGood[h.id] = (s.actGood[h.id] || 0) + 1; }
     if (st) { s.actUsage = s.actUsage || {}; s.actUsage[st] = (s.actUsage[st] || 0) + 1; }
     log(s, entry);
+    var ch = D.ENEMIES[en.id].chain;
+    if (ch && ok) {
+      if (ch.steps[h.id]) { addToHand(s, { id: ch.steps[h.id], temp: true }); msg(s, '「' + c.name + '」→「' + card(ch.steps[h.id]).name + '」', 'next'); }
+      if (h.id === ch.finale && !b.finaleDone) { b.finaleDone = true; addToHand(s, { id: ch.win, temp: true }); msg(s, '「' + card(ch.win).name + '」が できそう！', 'next'); }
+      if (h.id === ch.win) b.chainWin = true;
+    }
     var out = outcomeText(s, c, ok, entry, h.id);
     (s.popups || (s.popups = [])).push({ k: 'play', card: h.id, name: c.name, ok: ok, tone: out.tone, text: out.text,
       notes: b.msgs.slice(m0).filter(function (m) { return m.tag !== 'curse'; }).map(function (m) { return m.text; }),
@@ -622,6 +633,13 @@
       var BE = D.ENEMIES[D.ACTS[s.act].boss];
       (s.popups || (s.popups = [])).push({ k: 'heart', boss: D.ACTS[s.act].boss, name: BE.scene, from: sz0, to: bossSize(s), left: s.hearts, max: D.MAP.hearts });
     }
+    if (b.chainWin && E.chain) {
+      var cr = E.chain.reward;
+      if (s.stats[cr.stat] < D.PLAYER.statMax) { s.stats[cr.stat]++; log(s, { k: 'grow', stat: cr.stat, to: s.stats[cr.stat], uses: 0, why: 'chain' }); }
+      addTrust(s, cr.trust, 'chain:' + en.id, false);
+      s.chainReward = cr.cards.slice();
+      log(s, { k: 'chainWin', enemy: en.id });
+    }
     if (en.kind === 'boss') { bossDown(s); return; }
     s.phase = 'reward';
     if (passed) {
@@ -640,10 +658,23 @@
     var want = s.trust >= D.RULES.highTrust ? D.RULES.rewardChoicesHighTrust : D.RULES.rewardChoices;
     var situ = shuffle(s, Object.keys(b.playedOk)).slice(0, 2);
     if (b.teacherCard && situ.indexOf(b.teacherCard) < 0) situ = [b.teacherCard].concat(situ).slice(0, 2);
-    var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0 && fitsEnemy(id, b.enemy.id); }));
+    // その課題の 対応表に のっている カードから（しんか カード・レア・はじめの 基本カードは のぞく）。課題に 効く 種類を 先に
+    var F = (D.FIT && D.FIT[b.enemy.id]) || {};
+    var base = ['try_it', 'endure', 'breathe'];
+    var cand = Object.keys(F).concat(D.REWARD_POOL.filter(function (id) { return F[id]; })).filter(function (id, i, a) {
+      var c = card(id);
+      return a.indexOf(id) === i && c && !c.from && !c.unplayable && c.type !== 'curse' && D.ADVANCED.indexOf(id) < 0 && base.indexOf(id) < 0 &&
+        (c.judge === 'good' || D.REWARD_POOL.indexOf(id) >= 0) && situ.indexOf(id) < 0 && fitsEnemy(id, b.enemy.id);
+    });
+    var weak = b.enemy.weak || [];
+    var pool = shuffle(s, cand).sort(function (x, y) {
+      var sx = (weak.indexOf(card(x).type) >= 0 ? 0 : 1) + (s.deck.indexOf(x) >= 0 ? 2 : 0);
+      var sy = (weak.indexOf(card(y).type) >= 0 ? 0 : 1) + (s.deck.indexOf(y) >= 0 ? 2 : 0);
+      return sx - sy;
+    });
     var out = situ.concat(pool).slice(0, want);
     var chance = (b.enemy.kind === 'elite' ? D.RULES.rareChanceElite : D.RULES.rareChance)[s.act] || 0;
-    var adv = shuffle(s, D.ADVANCED.filter(function (id) { var c = card(id); return !c.signature && meetsReq(s, c) && s.deck.indexOf(id) < 0 && fitsEnemy(id, b.enemy.id); }));
+    var adv = shuffle(s, D.ADVANCED.filter(function (id) { var c = card(id); return !c.signature && !c.from && meetsReq(s, c) && s.deck.indexOf(id) < 0 && fitsEnemy(id, b.enemy.id); }));
     if (adv.length && rand(s) < chance) { if (out.length >= want) out[out.length - 1] = adv[0]; else out.push(adv[0]); }
     return out;
   }
@@ -856,6 +887,10 @@
   // 層クリア：何が 良かったか 振り返る（カード2まいから1まい／成長／アイテム の どれか1つ）
   function makeReview(s) {
     var good = s.actGood || {}, use = s.actUsage || {};
+    if (s.chainReward) { var crc = s.chainReward; s.chainReward = null; var r0 = makeReviewBase(s, good, use); r0.cards = crc; r0.counts = [0, 0]; r0.chain = true; return r0; }
+    return makeReviewBase(s, good, use);
+  }
+  function makeReviewBase(s, good, use) {
     var cards = Object.keys(good).filter(function (id) { var c = card(id); return c && !c.unplayable && D.REWARD_POOL.concat(D.ADVANCED, D.STARTER).indexOf(id) >= 0 || (c && c.from); })
       .sort(function (a, b) { return good[b] - good[a]; }).slice(0, 2);
     var fill = shuffle(s, D.REWARD_POOL.filter(function (id) { return card(id).judge === 'good' && cards.indexOf(id) < 0; }));

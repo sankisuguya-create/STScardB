@@ -467,6 +467,7 @@ button.chip { font: inherit; cursor: pointer; color: var(--ink); }
 .troublebadge.unlucky { background: #e7e3f8; }
 .title.actclear { justify-content: flex-start; padding: 24px 16px 40px; overflow-y: auto; }
 button.chip { align-items: baseline; line-height: 1.2; }
+.chip .ico { font-size: 1.05rem; margin-right: 4px; line-height: 1; font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
 
 </style>
 </head>
@@ -591,6 +592,9 @@ button.chip { align-items: baseline; line-height: 1.2; }
     force_own: { name: '自分の 意見を おしつける', line: '「ぜったい こっちが いい！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
     consult_family: { name: 'お家の人に そうだんする', line: '「今日 こんなことが あってね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 8, ctx: ['study', 'conflict', 'join', 'tease', 'stage'], help: true, term: 'long' },
     sukkiri: { name: '気もちを 話して すっきり', line: 'もやもやを 言葉にして だれかに 話す。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 3, clearMoya: true, exhaust: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'], term: 'long' },
+    notice_fault: { sure: true, name: '自分が 悪かった 所に 気づく', line: '「あの時、自分も 言いすぎた…」 使うと「認める」に かわる。手札に のこる。', type: 'basic', judge: 'good', style: 'assertive', cost: 3, solve: 6, retain: true },
+    admit_fault: { sure: true, name: '自分が 悪かった 所を 認める', line: '「ぼくも 悪かった」と 自分の 中で 認める。使うと「あやまる」が 手札に。手札に のこる。', type: 'basic', judge: 'good', style: 'assertive', cost: 3, solve: 10, retain: true },
+    make_up: { sure: true, name: '仲直り', line: '「また いっしょに 遊ぼう」 けんかが おわる。', type: 'basic', judge: 'good', style: 'assertive', cost: 3, solve: 999 },
     pride: { name: 'プライド', line: '「あやまったら 負けだ」と 思ってしまう。使えず、手札に のこる。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true, jam: true, retain: true },
     shame: { name: '恥ずかしさ', line: '顔が あつくて 言葉が 出ない。使えず、手札に のこる。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true, jam: true, retain: true },
     irritation: { name: 'イライラ', line: 'むしゃくしゃが おさまらない。使えず、手札に のこる。ターンの おわりに ストレス +4。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true, jam: true, retain: true, drainEnd: 4 },
@@ -771,7 +775,7 @@ button.chip { align-items: baseline; line-height: 1.2; }
   ENEMIES.friend_fight = {
       intro: 'きのう、なかよしの 友だちと 言い合いに なった。今日は 朝から 一度も 目を 合わせてくれない。',
     forms: ['ギザギザ ハートの 竜', '目を 合わせない 友だち', 'なかなおり したい 友だち'],
-    ctx: 'conflict', scene: '友だちと 大げんか', kind: 'boss', hp: 55,
+    chain: { start: 'notice_fault', steps: { notice_fault: 'admit_fault', admit_fault: 'apologize' }, finale: 'apologize', win: 'make_up', reward: { cards: ['listen_deep', 'mediate'], stat: 'relate', trust: 2 } }, ctx: 'conflict', scene: '友だちと 大げんか', kind: 'boss', hp: 55,
     moves: [{ t: 'inject', card: 'tataku', say: '手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 9, say: '口を きいて くれない' }, { t: 'grow', n: 3, say: 'ほかの子も まきこまれる' }, { t: 'stress', n: 10, say: 'さびしくて むかむかする' }, { t: 'worry', say: '「もう 友だちじゃ ないのかな」' }],
     weak: [], resist: ['relate'], backfire: ['impulse'], situ: ['tell_feeling', 'keep_distance', 'ignore_back'],
     view: { truth: 'benign', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.8 },
@@ -1908,6 +1912,9 @@ button.chip { align-items: baseline; line-height: 1.2; }
   ]
  },
     "friend_fight": {
+    "notice_fault": ["あの時の ことを 思い返したら、自分も 言いすぎて いた ことに 気づいた。", "思い返そうと したけど、まだ 友だちの せいに したい 気もちが 強い。"],
+    "admit_fault": ["「ぼくも 悪かった」と 心の 中で 認めたら、むねの つかえが とれた。", "認めようと したけど、まだ くやしさが じゃまを する。"],
+    "make_up": ["「ごめんね。また いっしょに 遊ぼう」「うん！」 二人で わらいあえた。", "声を かけたけど、まだ 友だちは 少し むっと している。"],
     "tell_feeling": [
     "「きのうは 悲しかったんだ」と つたえたら、友だちが 目を 合わせて くれた。",
     "気もちを つたえたけど、友だちは まだ だまった ままだった。"
@@ -3721,7 +3728,7 @@ button.chip { align-items: baseline; line-height: 1.2; }
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 15;
+  var ENGINE_VER = 16;
 
   // --- 乱数 ---
   function rand(s) {
@@ -4053,6 +4060,11 @@ button.chip { align-items: baseline; line-height: 1.2; }
       }
       log(s, { k: 'reveal', enemy: en.id, from: E.forms[0], to: en.name, truth: E.view ? E.view.truth : 'plain' });
     }
+    if (en.form === 2 && E.chain && !b.chainStarted) {
+      b.chainStarted = true;
+      addToHand(s, { id: E.chain.start, temp: true });
+      msg(s, '整理して いくうちに、何かに 気づきそう…（「' + card(E.chain.start).name + '」が 手札に）', 'next');
+    }
     msg(s, fromStat ? 'かしこさが 高いので、はじめから「' + en.name + '」に 見えている。' : '状きょうが 整理できた：「' + from + '」→「' + en.name + '」（いきおいが 弱まった）', 'reveal');
     log(s, { k: 'form', enemy: en.id, form: en.form, stat: !!fromStat });
   }
@@ -4096,7 +4108,7 @@ button.chip { align-items: baseline; line-height: 1.2; }
     var okP = c.chance ? D.CHANCE[c.chance].p : 1;
     var Hh = D.HEROES[s.hero];
     if (st && s.stats[st] < 0 && !(c.help && Hh && Hh.helpSafe)) okP -= D.PLAYER.weakFail * -s.stats[st];
-    if (overStressed(s) && !c.escape) okP -= D.PLAYER.overFail;
+    if (overStressed(s) && !c.escape && !c.sure) okP -= D.PLAYER.overFail;
     var ok = okP >= 1 ? true : rand(s) < okP;
     var entry = { k: 'play', card: h.id, enemy: en.id, ok: ok, judge: c.judge, style: c.style, temp: !!h.temp, revealedBefore: en.revealed };
 
@@ -4156,6 +4168,12 @@ button.chip { align-items: baseline; line-height: 1.2; }
     if (ok && c.judge === 'good') { s.actGood = s.actGood || {}; s.actGood[h.id] = (s.actGood[h.id] || 0) + 1; }
     if (st) { s.actUsage = s.actUsage || {}; s.actUsage[st] = (s.actUsage[st] || 0) + 1; }
     log(s, entry);
+    var ch = D.ENEMIES[en.id].chain;
+    if (ch && ok) {
+      if (ch.steps[h.id]) { addToHand(s, { id: ch.steps[h.id], temp: true }); msg(s, '「' + c.name + '」→「' + card(ch.steps[h.id]).name + '」', 'next'); }
+      if (h.id === ch.finale && !b.finaleDone) { b.finaleDone = true; addToHand(s, { id: ch.win, temp: true }); msg(s, '「' + card(ch.win).name + '」が できそう！', 'next'); }
+      if (h.id === ch.win) b.chainWin = true;
+    }
     var out = outcomeText(s, c, ok, entry, h.id);
     (s.popups || (s.popups = [])).push({ k: 'play', card: h.id, name: c.name, ok: ok, tone: out.tone, text: out.text,
       notes: b.msgs.slice(m0).filter(function (m) { return m.tag !== 'curse'; }).map(function (m) { return m.text; }),
@@ -4339,6 +4357,13 @@ button.chip { align-items: baseline; line-height: 1.2; }
       var BE = D.ENEMIES[D.ACTS[s.act].boss];
       (s.popups || (s.popups = [])).push({ k: 'heart', boss: D.ACTS[s.act].boss, name: BE.scene, from: sz0, to: bossSize(s), left: s.hearts, max: D.MAP.hearts });
     }
+    if (b.chainWin && E.chain) {
+      var cr = E.chain.reward;
+      if (s.stats[cr.stat] < D.PLAYER.statMax) { s.stats[cr.stat]++; log(s, { k: 'grow', stat: cr.stat, to: s.stats[cr.stat], uses: 0, why: 'chain' }); }
+      addTrust(s, cr.trust, 'chain:' + en.id, false);
+      s.chainReward = cr.cards.slice();
+      log(s, { k: 'chainWin', enemy: en.id });
+    }
     if (en.kind === 'boss') { bossDown(s); return; }
     s.phase = 'reward';
     if (passed) {
@@ -4357,10 +4382,23 @@ button.chip { align-items: baseline; line-height: 1.2; }
     var want = s.trust >= D.RULES.highTrust ? D.RULES.rewardChoicesHighTrust : D.RULES.rewardChoices;
     var situ = shuffle(s, Object.keys(b.playedOk)).slice(0, 2);
     if (b.teacherCard && situ.indexOf(b.teacherCard) < 0) situ = [b.teacherCard].concat(situ).slice(0, 2);
-    var pool = shuffle(s, D.REWARD_POOL.filter(function (id) { return situ.indexOf(id) < 0 && fitsEnemy(id, b.enemy.id); }));
+    // その課題の 対応表に のっている カードから（しんか カード・レア・はじめの 基本カードは のぞく）。課題に 効く 種類を 先に
+    var F = (D.FIT && D.FIT[b.enemy.id]) || {};
+    var base = ['try_it', 'endure', 'breathe'];
+    var cand = Object.keys(F).concat(D.REWARD_POOL.filter(function (id) { return F[id]; })).filter(function (id, i, a) {
+      var c = card(id);
+      return a.indexOf(id) === i && c && !c.from && !c.unplayable && c.type !== 'curse' && D.ADVANCED.indexOf(id) < 0 && base.indexOf(id) < 0 &&
+        (c.judge === 'good' || D.REWARD_POOL.indexOf(id) >= 0) && situ.indexOf(id) < 0 && fitsEnemy(id, b.enemy.id);
+    });
+    var weak = b.enemy.weak || [];
+    var pool = shuffle(s, cand).sort(function (x, y) {
+      var sx = (weak.indexOf(card(x).type) >= 0 ? 0 : 1) + (s.deck.indexOf(x) >= 0 ? 2 : 0);
+      var sy = (weak.indexOf(card(y).type) >= 0 ? 0 : 1) + (s.deck.indexOf(y) >= 0 ? 2 : 0);
+      return sx - sy;
+    });
     var out = situ.concat(pool).slice(0, want);
     var chance = (b.enemy.kind === 'elite' ? D.RULES.rareChanceElite : D.RULES.rareChance)[s.act] || 0;
-    var adv = shuffle(s, D.ADVANCED.filter(function (id) { var c = card(id); return !c.signature && meetsReq(s, c) && s.deck.indexOf(id) < 0 && fitsEnemy(id, b.enemy.id); }));
+    var adv = shuffle(s, D.ADVANCED.filter(function (id) { var c = card(id); return !c.signature && !c.from && meetsReq(s, c) && s.deck.indexOf(id) < 0 && fitsEnemy(id, b.enemy.id); }));
     if (adv.length && rand(s) < chance) { if (out.length >= want) out[out.length - 1] = adv[0]; else out.push(adv[0]); }
     return out;
   }
@@ -4573,6 +4611,10 @@ button.chip { align-items: baseline; line-height: 1.2; }
   // 層クリア：何が 良かったか 振り返る（カード2まいから1まい／成長／アイテム の どれか1つ）
   function makeReview(s) {
     var good = s.actGood || {}, use = s.actUsage || {};
+    if (s.chainReward) { var crc = s.chainReward; s.chainReward = null; var r0 = makeReviewBase(s, good, use); r0.cards = crc; r0.counts = [0, 0]; r0.chain = true; return r0; }
+    return makeReviewBase(s, good, use);
+  }
+  function makeReviewBase(s, good, use) {
     var cards = Object.keys(good).filter(function (id) { var c = card(id); return c && !c.unplayable && D.REWARD_POOL.concat(D.ADVANCED, D.STARTER).indexOf(id) >= 0 || (c && c.from); })
       .sort(function (a, b) { return good[b] - good[a]; }).slice(0, 2);
     var fill = shuffle(s, D.REWARD_POOL.filter(function (id) { return card(id).judge === 'good' && cards.indexOf(id) < 0; }));
@@ -4908,9 +4950,9 @@ button.chip { align-items: baseline; line-height: 1.2; }
         h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + pct + '%' })]),
         h('b', { text: stress + '/' + S.maxYoyu })
       ]),
-      h('button', { class: 'chip trust', title: STAT_HELP.trust, onclick: function () { statHelp = 'trust'; render(); } }, [h('span', { class: 'lbl', text: '信頼' }), h('b', { text: String(S.trust) })]),
+      h('button', { class: 'chip trust', title: STAT_HELP.trust, onclick: function () { statHelp = 'trust'; render(); } }, [h('span', { class: 'ico', 'aria-label': '信頼', text: '🤝' }), h('b', { text: String(S.trust) })]),
       h('div', { class: 'stats' }, Object.keys(D.STATS).map(function (k) {
-        return h('button', { class: 'chip st-' + k, title: STAT_HELP[k], onclick: function () { statHelp = k; render(); } }, [h('span', { class: 'lbl', text: D.STATS[k].name }), h('b', { text: String(S.stats[k]) })]);
+        return h('button', { class: 'chip st-' + k, title: STAT_HELP[k], onclick: function () { statHelp = k; render(); } }, [h('span', { class: 'ico', 'aria-label': D.STATS[k].name, text: STAT_ICON[k] }), h('b', { text: String(S.stats[k]) })]);
       })),
       h('div', { class: 'nigates' }, Object.keys(S.nigate || {}).map(function (k) {
         return h('div', { class: 'chip nigate', title: '苦手意識' }, [h('span', { class: 'lbl', text: '苦手：' + D.CTX_LABEL[k] }), h('b', { text: String(S.nigate[k]) })]);
@@ -4920,6 +4962,7 @@ button.chip { align-items: baseline; line-height: 1.2; }
   }
 
   var selSup = null;
+  var STAT_ICON = { think: '💡', act: '👟', relate: '🧑‍🤝‍🧑' };
   var STAT_HELP = {
     trust: '信頼（0〜10）：まわりの 人からの 信頼。よい関わりで 上がり（1回の 戦いで +2まで）、衝動的な 行動や ふうんな できごとで 下がる。7以上：戦いの はじめに 友だちが そばに いて 心の準備 +6。8以上：報酬の カードが 1まい ふえる。3以下：やり直しの チャンスが 来る。',
     think: 'かしこさ：「考える」カードの 効き目に たされる。手札の 上限は 5＋かしこさ。2以上で 戦いの はじめに 問題の 正体が 1だん 見える。マイナスだと 考えるカードが 失敗しやすい（−1ごとに 20%）。',
@@ -5086,6 +5129,7 @@ button.chip { align-items: baseline; line-height: 1.2; }
     });
     return h('section', { class: 'review' }, [
       h('h2', { text: '何が 良かったか 振り返ろう…' }),
+      r.chain ? h('p', { class: 'praise', text: '自分の 悪かった 所に 気づいて、仲直り できた。なかま力 +1、信頼 +2。人の 話を 聞く・間に 入る やり方も 見えてきた。' }) : null,
       h('p', { class: 'hint', text: '1つ えらぶ' }),
       h('div', { class: 'choices' }, cards),
       h('div', { class: 'two' }, [
@@ -5152,9 +5196,6 @@ button.chip { align-items: baseline; line-height: 1.2; }
       bossBanner(),
       notice ? h('p', { class: 'praise', text: notice }) : null,
       h('div', { class: 'maprow2' }, [itemSlots(false), h('p', { class: 'hint', text: '光っている マスから 次に 行くところを えらぼう' })]),
-      h('div', { class: 'routes' }, D.ROUTES.map(function (R) {
-        return h('div', { class: 'route r-' + R.id + (S.route === R.id ? ' on' : '') }, [h('b', { text: R.name }), h('small', { text: R.note })]);
-      })),
       h('div', { class: 'mapbox', style: 'aspect-ratio:' + MW + ' / ' + MH }, [svg].concat(nodes)),
       (S.slack ? h('p', { class: 'slacknote', text: 'ゴロゴロ ' + S.slack + '回：ボスが ' + Math.round(D.MAP.slackBoss * S.slack * 100) + '% 大きく なっている' }) : null)
     ]);
