@@ -195,19 +195,21 @@
   // 主人公：はじめの成長・maxYoyu（ストレスの上限は これ＋10）・とくいカード
   // ctxMod：その場面の 課題の 問題の大きさ・ストレスに かける（1より小さいと 楽、大きいと きびしい）
   var HEROES = {
-    hanoko: { name: 'ハノコ', note: 'かしこいが 運動は にがて', stats: { think: 2, act: -1, relate: 1 }, maxYoyu: 50, cards: ['analyse', 'write_plan'], look: 'hanoko',
+    hanoko: { name: 'A', note: 'かしこいが 運動は にがて', stats: { think: 2, act: -1, relate: 1 }, maxYoyu: 50, cards: ['analyse', 'write_plan'], look: 'hanoko',
       ctxMod: { study: 0.8, conflict: 1.1, join: 1.3, tease: 1.1, stage: 1.9, danger: 1.4 }, good: 'べんきょう', bad: '発表・練習' },
-    tario: { name: 'タリオ', note: '社交的だが 勉強は にがて', stats: { think: -1, act: 1, relate: 2 }, maxYoyu: 50, cards: ['make_friends', 'together'], look: 'tario',
+    tario: { name: 'B', note: '社交的だが 勉強は にがて', stats: { think: -1, act: 1, relate: 2 }, maxYoyu: 50, cards: ['make_friends', 'together'], look: 'tario',
       ctxMod: { study: 1.4, conflict: 0.7, join: 0.6, tease: 0.75, stage: 1.0, danger: 1.0 }, good: '友だち・遊び', bad: 'べんきょう' },
-    musuhi: { name: 'ムスヒ', note: '運動は とくいだが 人づきあいは にがて', stats: { think: 1, act: 2, relate: -1 }, maxYoyu: 50, cards: ['dash', 'start_now'], look: 'musuhi',
+    musuhi: { name: 'C', note: '運動は とくいだが 人づきあいは にがて', stats: { think: 1, act: 2, relate: -1 }, maxYoyu: 50, cards: ['dash', 'start_now'], look: 'musuhi',
       ctxMod: { study: 1.0, conflict: 1.6, join: 1.6, tease: 1.5, stage: 0.6, danger: 0.65 }, good: '発表・練習・あぶない場面', bad: '友だち・からかい' },
-    hayatsu: { name: 'ハヤツ', note: '何でも できるが、一度 つまずくと なかなか 立ち直れない', stats: { think: 2, act: 2, relate: 2 }, maxYoyu: 50, cards: ['sort_out'], look: 'hayatsu',
+    hayatsu: { name: 'D', note: '何でも できるが、一度 つまずくと なかなか 立ち直れない', stats: { think: 2, act: 2, relate: 2 }, maxYoyu: 50, cards: ['sort_out'], look: 'hayatsu',
       ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.0, stage: 1.0, danger: 1.0 }, good: 'どれも とくい', bad: 'ピンチに 弱い（マイナスカードに 弱い）',
       fragile: { pinch: 0.4, healMul: 0.5, frozenRecover: 0.05, nigateMul: 2, moyaMul: 2, panicDrain: 3, stressThreshold: 0.45, slumpBattles: 3, slumpPanic: 2 } },
-    kitori: { name: 'キトリ', note: '何を やっても うまく いかない。でも、まわりを たよる ことは できる', stats: { think: -1, act: -1, relate: -1 }, maxYoyu: 40, cards: ['consult', 'consult_family', 'ask_teacher', 'say_dunno'], look: 'kitori',
+    kitori: { name: 'E', note: '何を やっても うまく いかない。でも、まわりを たよる ことは できる', stats: { think: -1, act: -1, relate: -1 }, maxYoyu: 40, cards: ['consult', 'consult_family', 'ask_teacher', 'say_dunno'], look: 'kitori',
       ctxMod: { study: 1.5, conflict: 1.5, join: 1.5, tease: 1.5, stage: 1.5, danger: 1.5 }, good: 'まわりを たよる こと（相談カード・アイテムが 強い）', bad: 'ぜんぶの 場面',
       items: ['teacher', 'friend', 'family'], helpBoost: 1.35, helpSafe: true,
-      message: 'こういう 人も いる。たよる ことは 弱さじゃない。' }
+      message: 'こういう 人も いる。たよる ことは 弱さじゃない。' },
+    zeta: { name: 'Z', note: 'すべて ふつう', stats: { think: 0, act: 0, relate: 0 }, maxYoyu: 50, cards: [], look: 'hayatsu',
+      ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.0, stage: 1.0, danger: 1.0 }, good: 'とくに なし', bad: 'とくに なし' }
   };
 
 

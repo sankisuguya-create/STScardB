@@ -474,3 +474,8 @@ button.chip b { line-height: 1; }
 .chip .ico-trust .t1 { font-size: 14px; left: 7px; bottom: 0; top: auto; }
 .chip .ico-trust .t2 { font-size: 10px; left: 0; top: 1px; }
 .chip .ico-trust .t3 { font-size: 9px; right: 1px; left: auto; top: 2px; }
+/* 人物は シルエットで 表す（だれでも 自分を 重ねられるように） */
+canvas.silhouette { filter: brightness(0) drop-shadow(0 0 1.5px rgba(200, 215, 255, .9)); }
+.item canvas.silhouette, .supoffer canvas.silhouette { filter: brightness(0) opacity(.75); }
+canvas.silhouette.mood2 { filter: brightness(0) drop-shadow(0 0 2px rgba(140, 170, 255, .9)); }
+canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-shadow(0 0 3px rgba(120, 140, 220, .9)) opacity(.85); }

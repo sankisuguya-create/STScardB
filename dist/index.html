@@ -483,6 +483,11 @@ button.chip b { line-height: 1; }
 .chip .ico-trust .t1 { font-size: 14px; left: 7px; bottom: 0; top: auto; }
 .chip .ico-trust .t2 { font-size: 10px; left: 0; top: 1px; }
 .chip .ico-trust .t3 { font-size: 9px; right: 1px; left: auto; top: 2px; }
+/* 人物は シルエットで 表す（だれでも 自分を 重ねられるように） */
+canvas.silhouette { filter: brightness(0) drop-shadow(0 0 1.5px rgba(200, 215, 255, .9)); }
+.item canvas.silhouette, .supoffer canvas.silhouette { filter: brightness(0) opacity(.75); }
+canvas.silhouette.mood2 { filter: brightness(0) drop-shadow(0 0 2px rgba(140, 170, 255, .9)); }
+canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-shadow(0 0 3px rgba(120, 140, 220, .9)) opacity(.85); }
 
 </style>
 </head>
@@ -686,19 +691,21 @@ button.chip b { line-height: 1; }
   // 主人公：はじめの成長・maxYoyu（ストレスの上限は これ＋10）・とくいカード
   // ctxMod：その場面の 課題の 問題の大きさ・ストレスに かける（1より小さいと 楽、大きいと きびしい）
   var HEROES = {
-    hanoko: { name: 'ハノコ', note: 'かしこいが 運動は にがて', stats: { think: 2, act: -1, relate: 1 }, maxYoyu: 50, cards: ['analyse', 'write_plan'], look: 'hanoko',
+    hanoko: { name: 'A', note: 'かしこいが 運動は にがて', stats: { think: 2, act: -1, relate: 1 }, maxYoyu: 50, cards: ['analyse', 'write_plan'], look: 'hanoko',
       ctxMod: { study: 0.8, conflict: 1.1, join: 1.3, tease: 1.1, stage: 1.9, danger: 1.4 }, good: 'べんきょう', bad: '発表・練習' },
-    tario: { name: 'タリオ', note: '社交的だが 勉強は にがて', stats: { think: -1, act: 1, relate: 2 }, maxYoyu: 50, cards: ['make_friends', 'together'], look: 'tario',
+    tario: { name: 'B', note: '社交的だが 勉強は にがて', stats: { think: -1, act: 1, relate: 2 }, maxYoyu: 50, cards: ['make_friends', 'together'], look: 'tario',
       ctxMod: { study: 1.4, conflict: 0.7, join: 0.6, tease: 0.75, stage: 1.0, danger: 1.0 }, good: '友だち・遊び', bad: 'べんきょう' },
-    musuhi: { name: 'ムスヒ', note: '運動は とくいだが 人づきあいは にがて', stats: { think: 1, act: 2, relate: -1 }, maxYoyu: 50, cards: ['dash', 'start_now'], look: 'musuhi',
+    musuhi: { name: 'C', note: '運動は とくいだが 人づきあいは にがて', stats: { think: 1, act: 2, relate: -1 }, maxYoyu: 50, cards: ['dash', 'start_now'], look: 'musuhi',
       ctxMod: { study: 1.0, conflict: 1.6, join: 1.6, tease: 1.5, stage: 0.6, danger: 0.65 }, good: '発表・練習・あぶない場面', bad: '友だち・からかい' },
-    hayatsu: { name: 'ハヤツ', note: '何でも できるが、一度 つまずくと なかなか 立ち直れない', stats: { think: 2, act: 2, relate: 2 }, maxYoyu: 50, cards: ['sort_out'], look: 'hayatsu',
+    hayatsu: { name: 'D', note: '何でも できるが、一度 つまずくと なかなか 立ち直れない', stats: { think: 2, act: 2, relate: 2 }, maxYoyu: 50, cards: ['sort_out'], look: 'hayatsu',
       ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.0, stage: 1.0, danger: 1.0 }, good: 'どれも とくい', bad: 'ピンチに 弱い（マイナスカードに 弱い）',
       fragile: { pinch: 0.4, healMul: 0.5, frozenRecover: 0.05, nigateMul: 2, moyaMul: 2, panicDrain: 3, stressThreshold: 0.45, slumpBattles: 3, slumpPanic: 2 } },
-    kitori: { name: 'キトリ', note: '何を やっても うまく いかない。でも、まわりを たよる ことは できる', stats: { think: -1, act: -1, relate: -1 }, maxYoyu: 40, cards: ['consult', 'consult_family', 'ask_teacher', 'say_dunno'], look: 'kitori',
+    kitori: { name: 'E', note: '何を やっても うまく いかない。でも、まわりを たよる ことは できる', stats: { think: -1, act: -1, relate: -1 }, maxYoyu: 40, cards: ['consult', 'consult_family', 'ask_teacher', 'say_dunno'], look: 'kitori',
       ctxMod: { study: 1.5, conflict: 1.5, join: 1.5, tease: 1.5, stage: 1.5, danger: 1.5 }, good: 'まわりを たよる こと（相談カード・アイテムが 強い）', bad: 'ぜんぶの 場面',
       items: ['teacher', 'friend', 'family'], helpBoost: 1.35, helpSafe: true,
-      message: 'こういう 人も いる。たよる ことは 弱さじゃない。' }
+      message: 'こういう 人も いる。たよる ことは 弱さじゃない。' },
+    zeta: { name: 'Z', note: 'すべて ふつう', stats: { think: 0, act: 0, relate: 0 }, maxYoyu: 50, cards: [], look: 'hayatsu',
+      ctxMod: { study: 1.0, conflict: 1.0, join: 1.0, tease: 1.0, stage: 1.0, danger: 1.0 }, good: 'とくに なし', bad: 'とくに なし' }
   };
 
 
@@ -3929,7 +3936,7 @@ button.chip b { line-height: 1; }
     if (f && s.yoyu < s.maxYoyu * f.pinch) n = Math.ceil(n * f.healMul);
     s.yoyu = Math.min(s.maxYoyu, s.yoyu + n);
   }
-  // 助けを もとめる カード・アイテムが 強くなる 主人公（キトリ）
+  // 助けを もとめる カード・アイテムが 強くなる 主人公（E）
   function helpBoost(s, c) { var H = D.HEROES[s.hero]; return (H && H.helpBoost && c && c.help) ? H.helpBoost : 1; }
   function heroMod(s, E) { var H = D.HEROES[s.hero]; return (H && H.ctxMod && H.ctxMod[E.ctx]) || 1; }
   function bossHp(s, E) {
@@ -5009,7 +5016,7 @@ button.chip b { line-height: 1; }
   }
   function sprite(key, form, cls, mood) {
     var cv = document.createElement('canvas');
-    cv.className = 'px ' + (cls || '');
+    cv.className = 'px ' + (cls || '') + (/^hero_/.test(key) || key === 'teacher' || key === 'friend' || key === 'family' ? ' silhouette' : '');
     if (root.SST_SPRITES && SST_SPRITES.has(key)) SST_SPRITES.draw(cv, key, form || 0, mood || 0);
     return cv;
   }

@@ -190,7 +190,7 @@
     if (f && s.yoyu < s.maxYoyu * f.pinch) n = Math.ceil(n * f.healMul);
     s.yoyu = Math.min(s.maxYoyu, s.yoyu + n);
   }
-  // 助けを もとめる カード・アイテムが 強くなる 主人公（キトリ）
+  // 助けを もとめる カード・アイテムが 強くなる 主人公（E）
   function helpBoost(s, c) { var H = D.HEROES[s.hero]; return (H && H.helpBoost && c && c.help) ? H.helpBoost : 1; }
   function heroMod(s, E) { var H = D.HEROES[s.hero]; return (H && H.ctxMod && H.ctxMod[E.ctx]) || 1; }
   function bossHp(s, E) {

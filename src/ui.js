@@ -84,7 +84,7 @@
   }
   function sprite(key, form, cls, mood) {
     var cv = document.createElement('canvas');
-    cv.className = 'px ' + (cls || '');
+    cv.className = 'px ' + (cls || '') + (/^hero_/.test(key) || key === 'teacher' || key === 'friend' || key === 'family' ? ' silhouette' : '');
     if (root.SST_SPRITES && SST_SPRITES.has(key)) SST_SPRITES.draw(cv, key, form || 0, mood || 0);
     return cv;
   }

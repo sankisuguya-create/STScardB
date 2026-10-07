@@ -19,7 +19,7 @@ const fs = require('node:fs');
   async function snap(name) { if (!shot[name]) { shot[name] = 1; await page.screenshot({ path: path.join(out, name + '.png') }); } }
   await snap('00-title');
   await page.tap('button.primary');
-  await snap('00b-hero'); await page.tap('.herocard >> nth=' + Math.floor(Math.random() * 5));
+  await snap('00b-hero'); await page.tap('.herocard >> nth=' + Math.floor(Math.random() * 6));
   // せつめい 3まい → れんしゅう バトル（ガイドに したがって 勝つ）→ 本番
   for (let k = 0; k < 3; k++) { await snap('00c-rules' + k); await page.tap('main.rules button.primary'); }
   for (let k = 0; k < 40; k++) {
