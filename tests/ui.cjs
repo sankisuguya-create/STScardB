@@ -58,9 +58,7 @@ const fs = require('node:fs');
       if (opt) await opt.tap(); else await page.tap('.event button.primary');
     }
     else if (phase === 'end') {
-      await snap('07-debrief1'); await page.tap('.nav button.primary');
-      await snap('08-debrief2'); await page.tap('.nav button.primary');
-      await snap('09-debrief3');
+      await snap('07-debrief'); await page.screenshot({ path: path.join(out, '07-debrief-full.png'), fullPage: true });
       break;
     }
   }

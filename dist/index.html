@@ -495,6 +495,36 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
 .mnode.big { position: static; transform: none; translate: none; width: 210px; min-height: 96px; font-size: 1.2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
 .mnode.big small { font-size: .85rem; }
 @media (max-width: 760px) { .mnode.big { width: calc(50% - 10px); min-height: 84px; } .nextrow.n1 .mnode.big { width: 70%; } }
+/* さいごの 振り返り（1ページ） */
+.end2 { max-width: 820px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.everdict { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border: 3px solid var(--line); border-radius: 14px; background: var(--paper); box-shadow: var(--shadow); }
+.everdict .bigface { font-size: 3rem; line-height: 1; }
+.everdict b { display: block; font-family: var(--display); font-size: 1.6rem; }
+.everdict.v-great { background: #e6f6ea; } .everdict.v-good { background: #eef4ff; } .everdict.v-try { background: #fff6dd; }
+.etiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.etile { display: flex; flex-direction: column; align-items: center; padding: 10px 6px; border: 3px solid var(--line); border-radius: 12px; background: var(--panel); }
+.etile .eico { font-size: 1.8rem; } .etile b { font-family: var(--display); font-size: 1.8rem; line-height: 1.1; } .etile small { font-weight: 700; color: var(--sub); }
+.etile.ok { background: #e6f6ea; } .etile.bad { background: #fde8e8; } .etile.warn { background: #fff6dd; }
+.estats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.estat { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; border: 2px solid var(--line); border-radius: 999px; background: var(--panel); }
+.estat .ico { display: inline-grid; place-items: center; width: 24px; height: 24px; }
+.estat .ico-tomo { font-family: "Dela Gothic One", var(--display); color: #2b8a3e; }
+.dl { font-weight: 800; font-size: .85rem; } .dl.up { color: var(--good); } .dl.down { color: var(--bad); } .dl.flat { color: var(--sub); }
+.emeter { display: flex; height: 30px; border: 3px solid var(--line); border-radius: 999px; overflow: hidden; background: #eee; }
+.emeter > div { display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .85rem; white-space: nowrap; overflow: hidden; }
+.em-good { background: #8ce99a; } .em-imp { background: #ffa8a8; }
+.egrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ecell { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; padding: 8px 10px; border: 2px solid var(--line); border-radius: 10px; }
+.ecell .eico { font-size: 1.5rem; } .ecell b { font-size: .85rem; line-height: 1.3; } .ecell .num { font-family: var(--display); font-size: 1.3rem; }
+.ecell.ok { background: #e6f6ea; } .ecell.try { background: #eef4ff; } .ecell.warn { background: #fff6dd; } .ecell.bad { background: #fde8e8; }
+.etwo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ebox { padding: 10px 14px; border: 3px solid var(--line); border-radius: 12px; background: var(--panel); }
+.ebox h3 { margin: 0 0 6px; font-size: 1.05rem; } .ebox ul { margin: 0; padding-left: 1.1em; line-height: 1.6; }
+.ebox.good { background: #f1fbf3; } .ebox.good h3 { color: var(--good); }
+.ebox.next { background: #fffaeb; } .ebox.next h3 { color: var(--warn); }
+.ebox summary { font-weight: 800; cursor: pointer; }
+@media (max-width: 760px) { .estats { grid-template-columns: 1fr 1fr; } .egrid, .etwo { grid-template-columns: 1fr; } .etile b { font-size: 1.4rem; } }
+.end2 > * { flex-shrink: 0; } .end2 { overflow-y: auto; }
 
 </style>
 </head>
@@ -5842,22 +5872,67 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
     ];
   }
 
+  // さいごの 振り返り：1ページに まとめ、よい・あと少しを 色と 顔で 見せる
   function endScreen() {
-    var sm = E.summary(S);
-    var pages = [debriefGrow, debriefView, debriefGrid];
-    var body = pages[debriefPage](sm);
-    var nav = h('div', { class: 'nav' }, [
-      debriefPage > 0 ? h('button', { class: 'secondary', onclick: function () { debriefPage--; render(); }, text: 'もどる' }) : h('span'),
-      h('span', { class: 'dots', text: (debriefPage + 1) + ' / ' + pages.length }),
-      debriefPage < pages.length - 1
-        ? h('button', { class: 'primary', onclick: function () { debriefPage++; render(); }, text: '次へ' })
-        : h('button', { class: 'primary', onclick: function () { P.clear(); start(); }, text: 'もう一回' })
+    var sm = E.summary(S), H = D.HEROES[S.hero] || {}, g = sm.grid;
+    var good = g.goodOk.length + g.goodNg.length, imp = g.impOk.length + g.impNg.length, total = Math.max(1, good + imp);
+    var goodRate = good / total;
+    var face = goodRate >= 0.8 && sm.stuck <= 1 && sm.bossBeaten === sm.acts ? ['😄', 'とても よかった！', 'v-great'] : goodRate >= 0.6 && sm.stuck <= 3 ? ['🙂', 'よかった', 'v-good'] : ['🤔', 'つぎは もっと よくなる', 'v-try'];
+    function tile(icon, num, label, cls) { return h('div', { class: 'etile ' + (cls || '') }, [h('span', { class: 'eico', text: icon }), h('b', { text: String(num) }), h('small', { text: label })]); }
+    function delta(a, b) { var d = b - a; return h('span', { class: 'dl ' + (d > 0 ? 'up' : d < 0 ? 'down' : 'flat'), text: d > 0 ? '▲' + d : d < 0 ? '▼' + (-d) : '±0' }); }
+    var statsRow = h('div', { class: 'estats' }, [
+      h('div', { class: 'estat' }, [statIcon('trust'), h('b', { text: sm.trustStart + '→' + sm.trust }), delta(sm.trustStart, sm.trust)])
+    ].concat(['think', 'act', 'relate'].map(function (k) {
+      var a = H.stats ? H.stats[k] : 0, b = sm.stats[k];
+      return h('div', { class: 'estat' }, [statIcon(k), h('b', { text: a + '→' + b }), delta(a, b)]);
+    })));
+    // 選び方メーター（よい選び方 と しょうどう の わりあい）
+    var meter = h('div', { class: 'emeter' }, [
+      h('div', { class: 'em-good', style: 'width:' + Math.round(goodRate * 100) + '%' }, [h('span', { text: '😊 よい選び方 ' + good })]),
+      h('div', { class: 'em-imp', style: 'width:' + Math.round((1 - goodRate) * 100) + '%' }, [imp ? h('span', { text: '😠 ' + imp }) : null])
     ]);
-    return h('main', { class: 'end' }, [
-      h('p', { class: 'verdict won', text: D.TEXT.win }),
-      h('p', { class: 'sub', text: '乗りこえた 課題 ' + sm.overcame + '／動けなかった ' + sm.stuck + '／ボス ' + sm.bossBeaten + ' / ' + sm.acts })
-    ].concat(body, [nav]));
+    function cell(icon, title, n, cls) { return h('div', { class: 'ecell ' + cls }, [h('span', { class: 'eico', text: icon }), h('b', { text: title }), h('div', { class: 'num', text: n + '回' })]); }
+    var grid = h('div', { class: 'egrid' }, [
+      cell('🎉', 'よい選び方 → うまくいった', g.goodOk.length, 'ok'),
+      cell('💪', 'よい選び方 → うまくいかなかった（ナイストライ）', g.goodNg.length, 'try'),
+      cell('😬', 'しょうどう → その場は おさまった（でも モヤモヤ）', g.impOk.length, 'warn'),
+      cell('💥', 'しょうどう → うまくいかなかった', g.impNg.length, 'bad')
+    ]);
+    // よかったこと・つぎに ためしたいこと（短く、多くても 4つ・3つ）
+    var goods = [];
+    sm.grows.slice(0, 2).forEach(function (gr) { goods.push(D.STATS[gr.stat].name + 'が ' + gr.to + ' に のびた'); });
+    if (sm.recovered.length) goods.push('下がった 信頼を 自分で 取りもどした');
+    if (sm.supportUses.length) goods.push('こまった時に たよれた');
+    sm.escapes.filter(function (e) { return e.ok; }).slice(0, 1).forEach(function (e) { goods.push('「' + D.ENEMIES[e.enemy].scene + '」から はなれて 安全を 守れた'); });
+    if (S.log.some(function (e) { return e.k === 'chainWin'; })) goods.push('自分の 悪かった 所に 気づいて 仲直り できた');
+    if (sm.reveals.length) goods.push('見方を 変えて ' + sm.reveals.length + '回 ほんとうの すがたが 見えた');
+    if (!goods.length) goods.push('さいごまで あきらめずに 進んだ');
+    var nexts = [];
+    if (imp >= 3) nexts.push('カッと した 時は、深こきゅうや きょりを おくを 先に');
+    sm.nigate.slice(0, 1).forEach(function (e) { nexts.push('「' + D.CTX_LABEL[e.ctx] + '」が 苦手に なった。ストレスが たまる 前に 休もう'); });
+    if (!sm.supportUses.length) nexts.push('こまったら、先生や 友だちに そうだん してみよう');
+    if (!sm.reveals.length) nexts.push('「状きょうを 整理する」で 見方を 変えてみよう');
+    var reveals = sm.reveals.slice(0, 3).map(function (r) { return h('li', {}, [h('s', { text: r.from }), ' → ', h('b', { text: r.to })]); });
+    return h('main', { class: 'end end2' }, [
+      h('div', { class: 'everdict ' + face[2] }, [h('span', { class: 'bigface', text: face[0] }), h('div', {}, [h('b', { text: face[1] }), h('small', { text: 'さいごまで たどりついた！' })])]),
+      h('div', { class: 'etiles' }, [
+        tile('⭐', sm.overcame, '乗りこえた 課題', 'ok'),
+        tile('🧊', sm.stuck, '動けなかった', sm.stuck ? 'bad' : 'ok'),
+        tile('👑', sm.bossBeaten + '/' + sm.acts, 'ボス', sm.bossBeaten === sm.acts ? 'ok' : 'warn')
+      ]),
+      statsRow,
+      h('h3', { text: '選び方' }), meter, grid,
+      h('div', { class: 'etwo' }, [
+        h('div', { class: 'ebox good' }, [h('h3', { text: '✔ よかったこと' }), h('ul', {}, goods.slice(0, 4).map(function (s) { return h('li', { text: s }); }))]),
+        h('div', { class: 'ebox next' }, [h('h3', { text: '➜ つぎに ためしたいこと' }), h('ul', {}, nexts.slice(0, 3).map(function (s) { return h('li', { text: s }); }))])
+      ]),
+      reveals.length ? h('div', { class: 'ebox view' }, [h('h3', { text: '👀 見方が 変わった' }), h('ul', { class: 'reveals' }, reveals)]) : null,
+      sm.others.length ? h('details', { class: 'ebox' }, [h('summary', { text: '💬 相手から 見ると（' + sm.others.length + '）' }), h('ul', { class: 'others' }, sm.others.map(function (o) { return h('li', { text: o.other }); }))]) : null,
+      h('p', { class: 'hint', text: '結果だけで、選び方の よしあしは きまらない。' }),
+      h('div', { class: 'nav' }, [h('button', { class: 'primary', onclick: function () { P.clear(); start(); }, text: 'もう一回' })])
+    ]);
   }
+
 
   // --- ポップアップ（カードの 結果・ボスが 小さくなる） ---
   var popTimer = null, popTimerKey = null;

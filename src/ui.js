@@ -757,22 +757,67 @@
     ];
   }
 
+  // さいごの 振り返り：1ページに まとめ、よい・あと少しを 色と 顔で 見せる
   function endScreen() {
-    var sm = E.summary(S);
-    var pages = [debriefGrow, debriefView, debriefGrid];
-    var body = pages[debriefPage](sm);
-    var nav = h('div', { class: 'nav' }, [
-      debriefPage > 0 ? h('button', { class: 'secondary', onclick: function () { debriefPage--; render(); }, text: 'もどる' }) : h('span'),
-      h('span', { class: 'dots', text: (debriefPage + 1) + ' / ' + pages.length }),
-      debriefPage < pages.length - 1
-        ? h('button', { class: 'primary', onclick: function () { debriefPage++; render(); }, text: '次へ' })
-        : h('button', { class: 'primary', onclick: function () { P.clear(); start(); }, text: 'もう一回' })
+    var sm = E.summary(S), H = D.HEROES[S.hero] || {}, g = sm.grid;
+    var good = g.goodOk.length + g.goodNg.length, imp = g.impOk.length + g.impNg.length, total = Math.max(1, good + imp);
+    var goodRate = good / total;
+    var face = goodRate >= 0.8 && sm.stuck <= 1 && sm.bossBeaten === sm.acts ? ['😄', 'とても よかった！', 'v-great'] : goodRate >= 0.6 && sm.stuck <= 3 ? ['🙂', 'よかった', 'v-good'] : ['🤔', 'つぎは もっと よくなる', 'v-try'];
+    function tile(icon, num, label, cls) { return h('div', { class: 'etile ' + (cls || '') }, [h('span', { class: 'eico', text: icon }), h('b', { text: String(num) }), h('small', { text: label })]); }
+    function delta(a, b) { var d = b - a; return h('span', { class: 'dl ' + (d > 0 ? 'up' : d < 0 ? 'down' : 'flat'), text: d > 0 ? '▲' + d : d < 0 ? '▼' + (-d) : '±0' }); }
+    var statsRow = h('div', { class: 'estats' }, [
+      h('div', { class: 'estat' }, [statIcon('trust'), h('b', { text: sm.trustStart + '→' + sm.trust }), delta(sm.trustStart, sm.trust)])
+    ].concat(['think', 'act', 'relate'].map(function (k) {
+      var a = H.stats ? H.stats[k] : 0, b = sm.stats[k];
+      return h('div', { class: 'estat' }, [statIcon(k), h('b', { text: a + '→' + b }), delta(a, b)]);
+    })));
+    // 選び方メーター（よい選び方 と しょうどう の わりあい）
+    var meter = h('div', { class: 'emeter' }, [
+      h('div', { class: 'em-good', style: 'width:' + Math.round(goodRate * 100) + '%' }, [h('span', { text: '😊 よい選び方 ' + good })]),
+      h('div', { class: 'em-imp', style: 'width:' + Math.round((1 - goodRate) * 100) + '%' }, [imp ? h('span', { text: '😠 ' + imp }) : null])
     ]);
-    return h('main', { class: 'end' }, [
-      h('p', { class: 'verdict won', text: D.TEXT.win }),
-      h('p', { class: 'sub', text: '乗りこえた 課題 ' + sm.overcame + '／動けなかった ' + sm.stuck + '／ボス ' + sm.bossBeaten + ' / ' + sm.acts })
-    ].concat(body, [nav]));
+    function cell(icon, title, n, cls) { return h('div', { class: 'ecell ' + cls }, [h('span', { class: 'eico', text: icon }), h('b', { text: title }), h('div', { class: 'num', text: n + '回' })]); }
+    var grid = h('div', { class: 'egrid' }, [
+      cell('🎉', 'よい選び方 → うまくいった', g.goodOk.length, 'ok'),
+      cell('💪', 'よい選び方 → うまくいかなかった（ナイストライ）', g.goodNg.length, 'try'),
+      cell('😬', 'しょうどう → その場は おさまった（でも モヤモヤ）', g.impOk.length, 'warn'),
+      cell('💥', 'しょうどう → うまくいかなかった', g.impNg.length, 'bad')
+    ]);
+    // よかったこと・つぎに ためしたいこと（短く、多くても 4つ・3つ）
+    var goods = [];
+    sm.grows.slice(0, 2).forEach(function (gr) { goods.push(D.STATS[gr.stat].name + 'が ' + gr.to + ' に のびた'); });
+    if (sm.recovered.length) goods.push('下がった 信頼を 自分で 取りもどした');
+    if (sm.supportUses.length) goods.push('こまった時に たよれた');
+    sm.escapes.filter(function (e) { return e.ok; }).slice(0, 1).forEach(function (e) { goods.push('「' + D.ENEMIES[e.enemy].scene + '」から はなれて 安全を 守れた'); });
+    if (S.log.some(function (e) { return e.k === 'chainWin'; })) goods.push('自分の 悪かった 所に 気づいて 仲直り できた');
+    if (sm.reveals.length) goods.push('見方を 変えて ' + sm.reveals.length + '回 ほんとうの すがたが 見えた');
+    if (!goods.length) goods.push('さいごまで あきらめずに 進んだ');
+    var nexts = [];
+    if (imp >= 3) nexts.push('カッと した 時は、深こきゅうや きょりを おくを 先に');
+    sm.nigate.slice(0, 1).forEach(function (e) { nexts.push('「' + D.CTX_LABEL[e.ctx] + '」が 苦手に なった。ストレスが たまる 前に 休もう'); });
+    if (!sm.supportUses.length) nexts.push('こまったら、先生や 友だちに そうだん してみよう');
+    if (!sm.reveals.length) nexts.push('「状きょうを 整理する」で 見方を 変えてみよう');
+    var reveals = sm.reveals.slice(0, 3).map(function (r) { return h('li', {}, [h('s', { text: r.from }), ' → ', h('b', { text: r.to })]); });
+    return h('main', { class: 'end end2' }, [
+      h('div', { class: 'everdict ' + face[2] }, [h('span', { class: 'bigface', text: face[0] }), h('div', {}, [h('b', { text: face[1] }), h('small', { text: 'さいごまで たどりついた！' })])]),
+      h('div', { class: 'etiles' }, [
+        tile('⭐', sm.overcame, '乗りこえた 課題', 'ok'),
+        tile('🧊', sm.stuck, '動けなかった', sm.stuck ? 'bad' : 'ok'),
+        tile('👑', sm.bossBeaten + '/' + sm.acts, 'ボス', sm.bossBeaten === sm.acts ? 'ok' : 'warn')
+      ]),
+      statsRow,
+      h('h3', { text: '選び方' }), meter, grid,
+      h('div', { class: 'etwo' }, [
+        h('div', { class: 'ebox good' }, [h('h3', { text: '✔ よかったこと' }), h('ul', {}, goods.slice(0, 4).map(function (s) { return h('li', { text: s }); }))]),
+        h('div', { class: 'ebox next' }, [h('h3', { text: '➜ つぎに ためしたいこと' }), h('ul', {}, nexts.slice(0, 3).map(function (s) { return h('li', { text: s }); }))])
+      ]),
+      reveals.length ? h('div', { class: 'ebox view' }, [h('h3', { text: '👀 見方が 変わった' }), h('ul', { class: 'reveals' }, reveals)]) : null,
+      sm.others.length ? h('details', { class: 'ebox' }, [h('summary', { text: '💬 相手から 見ると（' + sm.others.length + '）' }), h('ul', { class: 'others' }, sm.others.map(function (o) { return h('li', { text: o.other }); }))]) : null,
+      h('p', { class: 'hint', text: '結果だけで、選び方の よしあしは きまらない。' }),
+      h('div', { class: 'nav' }, [h('button', { class: 'primary', onclick: function () { P.clear(); start(); }, text: 'もう一回' })])
+    ]);
   }
+
 
   // --- ポップアップ（カードの 結果・ボスが 小さくなる） ---
   var popTimer = null, popTimerKey = null;
