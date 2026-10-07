@@ -417,7 +417,7 @@ test('レアは 1層では ほとんど 出ず、2層から 出はじめる', ()
 test('苦手（成長が マイナス）の 種類の カードは 失敗することが ある', () => {
   let fails = 0;
   for (let seed = 1; seed < 200; seed++) {
-    const s = E.newRun(seed, 1, 'hanoko'); E.chooseNode(s, E.reachable(s)[0]);
+    const s = E.newRun(seed, 1, 'hanoko'); toBattle(s);
     if (s.phase !== 'battle') continue;
     s.battle.hand.push({ id: 'move_body', temp: true }); s.battle.energy = 3;
     E.playCard(s, s.battle.hand.length - 1);
