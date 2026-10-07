@@ -516,3 +516,9 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
 .ebox summary { font-weight: 800; cursor: pointer; }
 @media (max-width: 760px) { .estats { grid-template-columns: 1fr 1fr; } .egrid, .etwo { grid-template-columns: 1fr; } .etile b { font-size: 1.4rem; } }
 .end2 > * { flex-shrink: 0; } .end2 { overflow-y: auto; }
+/* 上書き（感情で ぬりつぶされた カード） */
+.card.smeared { position: relative; }
+.card .splat { position: absolute; inset: 5%; z-index: 3; display: grid; place-items: center; pointer-events: none; animation: splat .35s cubic-bezier(.2, 1.6, .4, 1) both; }
+.card .splat svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 3px 0 rgba(0,0,0,.35)); }
+.card .splat b { position: relative; color: #fff; font-family: var(--display); font-size: 1.25rem; text-align: center; line-height: 1.2; text-shadow: 0 2px 0 #12172a, 0 0 6px #12172a; transform: rotate(-8deg); padding: 0 6px; }
+@keyframes splat { 0% { transform: scale(.2) rotate(-20deg); opacity: 0; } 100% { transform: none; opacity: 1; } }

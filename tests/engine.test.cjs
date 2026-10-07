@@ -632,3 +632,18 @@ test('層が 進むと 課題が 大きく、ゴロゴロの 回数で ストレ
   const c = E.newRun(3, 3, 'hanoko'); c.slackTotal = 5; E._battle(c, 'dunno');
   assert.ok(E.intent(c).n > E.intent(a).n);
 });
+
+test('上書き：感情が 手札を ぬりつぶす。整理する カードで もどる', () => {
+  const s = E._battle(E.newRun(4, 1, 'hanoko'), 'bumped');
+  const b = s.battle;
+  b.smearNext = { n: 2, card: 'kattonaru' }; b.guard = 999;
+  E.endTurn(s);
+  if (s.phase !== 'battle') return;
+  const sm = b.hand.filter((h) => h.over);
+  assert.ok(sm.length >= 1 && sm.every((h) => h.id === 'kattonaru' && h.orig));
+  assert.ok(!b.hand.some((h) => h.over && D.CARDS[h.orig].organize));
+  b.hand.push({ id: 'sort_out', temp: true }); b.energy = 3;
+  E.playCard(s, b.hand.length - 1);
+  assert.ok(!b.hand.concat(b.draw, b.discard).some((h) => h.over));
+  assert.deepStrictEqual(E.checkInvariants(s), []);
+});

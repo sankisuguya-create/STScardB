@@ -237,7 +237,7 @@
       forms: ['ドンッと ぶつかる かいぶつ', 'わざと ぶつかってきた？ あの子', 'よそ見して ぶつかっただけ'],
       ctx: 'conflict', scene: 'ろうかで ぶつかられた', name: 'わざと ぶつかられた？', kind: 'normal', hp: 20,
       pass: { turns: 3, say: '時間がたって、気にならなくなった。' },
-      moves: [{ t: 'inject', card: 'tataku', say: '手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 7, say: 'むかむかしてくる' }, { t: 'stress', n: 8, say: '「わざとだ」と思えてくる' }],
+      moves: [{ t: 'smear', n: 2, card: 'kattonaru', say: 'むかっとして、頭に 血が のぼる（カードが「カッとなる」に ぬりつぶされる）' }, { t: 'inject', card: 'tataku', say: '手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 7, say: 'むかむかしてくる' }, { t: 'stress', n: 8, say: '「わざとだ」と思えてくる' }],
       weak: [], resist: ['relate'], backfire: [], situ: ['ask_ok', 'tell_hurt', 'watch_them', 'hit_back'],
       view: { truth: 'benign', name: 'よそ見して ぶつかっただけ', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.5 },
       other: 'ぶつかった子：「あっ、ごめん！ 前を見てなかった」'
@@ -255,7 +255,7 @@
       intro: 'このごろ、同じ 子たちに 何回も 同じことを 言われて わらわれる。今日も また 始まった。',
       forms: ['チクチクことばの むれ', 'わらっている 子たち', 'くり返し からかわれている'],
       ctx: 'tease', scene: 'からかわれた', name: 'からかわれた', kind: 'elite', hp: 36,
-      moves: [{ t: 'inject', card: 'warukuchi', say: '言い返したく なる（悪口が まざる）' }, { t: 'stress', n: 7, say: '同じことを また言われる' }, { t: 'grow', n: 3, say: 'まわりも わらいはじめる' }, { t: 'stress', n: 9, say: '学校に 行きたくなくなる' }],
+      moves: [{ t: 'smear', n: 2, card: 'wameku', say: 'くやしくて、気もちが あふれそう（カードが「わめく」に ぬりつぶされる）' }, { t: 'inject', card: 'warukuchi', say: '言い返したく なる（悪口が まざる）' }, { t: 'stress', n: 7, say: '同じことを また言われる' }, { t: 'grow', n: 3, say: 'まわりも わらいはじめる' }, { t: 'stress', n: 9, say: '学校に 行きたくなくなる' }],
       weak: [], resist: [], backfire: ['impulse'], situ: ['say_stop', 'tell_teacher', 'wameku'],
       view: { truth: 'hostile', name: 'くり返し からかわれている', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 1 },
       other: 'あとで 先生：「話してくれて よかった。一人で かかえなくて いいんだよ」'
@@ -302,7 +302,7 @@
       intro: 'きのう、なかよしの 友だちと 言い合いに なった。今日は 朝から 一度も 目を 合わせてくれない。',
     forms: ['ギザギザ ハートの 竜', '目を 合わせない 友だち', 'なかなおり したい 友だち'],
     chain: { start: 'notice_fault', steps: { notice_fault: 'admit_fault', admit_fault: 'apologize' }, finale: 'apologize', win: 'make_up', reward: { cards: ['listen_deep', 'mediate'], stat: 'relate', trust: 2 } }, ctx: 'conflict', scene: '友だちと 大げんか', kind: 'boss', hp: 55,
-    moves: [{ t: 'inject', card: 'tataku', say: '手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 9, say: '口を きいて くれない' }, { t: 'grow', n: 3, say: 'ほかの子も まきこまれる' }, { t: 'stress', n: 10, say: 'さびしくて むかむかする' }, { t: 'worry', say: '「もう 友だちじゃ ないのかな」' }],
+    moves: [{ t: 'smear', n: 2, card: 'kattonaru', say: 'むかっとして、頭に 血が のぼる（カードが「カッとなる」に ぬりつぶされる）' }, { t: 'inject', card: 'tataku', say: '手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 9, say: '口を きいて くれない' }, { t: 'grow', n: 3, say: 'ほかの子も まきこまれる' }, { t: 'stress', n: 10, say: 'さびしくて むかむかする' }, { t: 'worry', say: '「もう 友だちじゃ ないのかな」' }],
     weak: [], resist: ['relate'], backfire: ['impulse'], situ: ['tell_feeling', 'keep_distance', 'ignore_back'],
     view: { truth: 'benign', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.8 },
     other: '友だち：「じつは こっちも あやまりたかった」'
@@ -349,7 +349,7 @@
     intro: 'この前 カッと なって やり返した 子が、今日は こっちを にらんでいる。「この前の、おぼえてるからな」',
     forms: ['しかえし 火の玉', 'にらんでくる あの子', 'まだ おこっている 子'],
     ctx: 'conflict', scene: 'しかえし', kind: 'normal', hp: 30,
-    moves: [{ t: 'inject', card: 'tataku', say: 'また 手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 8, say: 'にらまれる' }, { t: 'grow', n: 2, say: '話が 大きく なっていく' }],
+    moves: [{ t: 'smear', n: 2, card: 'kattonaru', say: 'むかっとして、頭に 血が のぼる（カードが「カッとなる」に ぬりつぶされる）' }, { t: 'inject', card: 'tataku', say: 'また 手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 8, say: 'にらまれる' }, { t: 'grow', n: 2, say: '話が 大きく なっていく' }],
     weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['apologize', 'tell_feeling', 'hit_back'],
     other: 'あの子：「…あやまってくれたなら、もう いいよ」'
   };

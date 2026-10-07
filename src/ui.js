@@ -382,6 +382,16 @@
     return h('div', { class: 'ctx', text: names.length ? '使える場面：' + names.join('・') : '使える場面：なし' });
   }
 
+  // 上書き：絵の具を ベチャッと つけられた よう（カードの 9わりを おおう）
+  var SPLAT_D = 'M50 4C62 3 66 14 76 10C88 6 96 18 92 30C89 40 99 46 97 58C95 70 84 72 86 84C88 96 72 99 62 94C54 90 46 99 36 96C24 93 26 82 15 80C3 78 1 64 8 56C14 49 2 42 6 31C10 19 22 22 26 12C30 3 40 5 50 4ZM96 12a4 4 0 1 1 0 .1ZM4 90a3 3 0 1 1 0 .1ZM90 96a3 3 0 1 1 0 .1Z';
+  function splat(label) {
+    var d = h('div', { class: 'splat' });
+    d.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="' + SPLAT_D + '" fill="#d6336c" stroke="#12172a" stroke-width="1.5"/>' +
+      '<path d="M30 20q6-6 14-2" fill="none" stroke="#ff8fb1" stroke-width="3" stroke-linecap="round"/></svg>';
+    d.appendChild(h('b', { text: label }));
+    return d;
+  }
+
   function lockText(c) {
     var short = E.reqShort(S, c);
     if (!short) return null;
@@ -390,7 +400,7 @@
 
   function battleScreen() {
     var b = S.battle, en = b.enemy, it = E.intent(S), EN = D.ENEMIES[en.id];
-    var itText = it.t === 'stress' ? 'ストレス +' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
+    var itText = it.t === 'stress' ? 'ストレス +' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : it.t === 'smear' ? 'カードが ' + it.n + 'まい「' + E.card(it.card).name + '」に' : 'モヤモヤが まざる';
     var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
     var bubble = h('section', { class: 'bubble k-' + en.kind }, [
       h('div', { class: 'ekind', text: (EN.selfFail ? '自分の しっぱい' : EN.trouble ? 'トラブル' : en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
@@ -447,7 +457,8 @@
     var n = b.hand.length, mid = (n - 1) / 2;
     var hand = h('section', { class: 'hand' }, b.hand.map(function (hc, i) {
       var c = E.card(hc.id), ok = E.canPlay(S, i);
-      var el = cardView(c, { preview: c.unplayable ? {} : E.preview(S, i), selected: sel === i, disabled: !ok, temp: hc.temp, lock: lockText(c) });
+      var el = hc.over ? cardView(E.card(hc.orig), { selected: sel === i }) : cardView(c, { preview: c.unplayable ? {} : E.preview(S, i), selected: sel === i, disabled: !ok, temp: hc.temp, lock: lockText(c) });
+      if (hc.over) { el.classList.add('smeared'); el.appendChild(splat(c.name)); var cb = el.querySelector('.cost'); if (cb) cb.textContent = String(c.cost); }
       var d = i - mid;
       el.style.setProperty('--rot', (d * 2.2) + 'deg');
       el.style.setProperty('--lift', (Math.abs(d) * Math.abs(d) * 1.4) + 'px');

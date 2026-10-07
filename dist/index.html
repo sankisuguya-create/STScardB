@@ -525,6 +525,12 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
 .ebox summary { font-weight: 800; cursor: pointer; }
 @media (max-width: 760px) { .estats { grid-template-columns: 1fr 1fr; } .egrid, .etwo { grid-template-columns: 1fr; } .etile b { font-size: 1.4rem; } }
 .end2 > * { flex-shrink: 0; } .end2 { overflow-y: auto; }
+/* 上書き（感情で ぬりつぶされた カード） */
+.card.smeared { position: relative; }
+.card .splat { position: absolute; inset: 5%; z-index: 3; display: grid; place-items: center; pointer-events: none; animation: splat .35s cubic-bezier(.2, 1.6, .4, 1) both; }
+.card .splat svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 3px 0 rgba(0,0,0,.35)); }
+.card .splat b { position: relative; color: #fff; font-family: var(--display); font-size: 1.25rem; text-align: center; line-height: 1.2; text-shadow: 0 2px 0 #12172a, 0 0 6px #12172a; transform: rotate(-8deg); padding: 0 6px; }
+@keyframes splat { 0% { transform: scale(.2) rotate(-20deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
 
 </style>
 </head>
@@ -770,7 +776,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
       forms: ['ドンッと ぶつかる かいぶつ', 'わざと ぶつかってきた？ あの子', 'よそ見して ぶつかっただけ'],
       ctx: 'conflict', scene: 'ろうかで ぶつかられた', name: 'わざと ぶつかられた？', kind: 'normal', hp: 20,
       pass: { turns: 3, say: '時間がたって、気にならなくなった。' },
-      moves: [{ t: 'inject', card: 'tataku', say: '手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 7, say: 'むかむかしてくる' }, { t: 'stress', n: 8, say: '「わざとだ」と思えてくる' }],
+      moves: [{ t: 'smear', n: 2, card: 'kattonaru', say: 'むかっとして、頭に 血が のぼる（カードが「カッとなる」に ぬりつぶされる）' }, { t: 'inject', card: 'tataku', say: '手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 7, say: 'むかむかしてくる' }, { t: 'stress', n: 8, say: '「わざとだ」と思えてくる' }],
       weak: [], resist: ['relate'], backfire: [], situ: ['ask_ok', 'tell_hurt', 'watch_them', 'hit_back'],
       view: { truth: 'benign', name: 'よそ見して ぶつかっただけ', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.5 },
       other: 'ぶつかった子：「あっ、ごめん！ 前を見てなかった」'
@@ -788,7 +794,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
       intro: 'このごろ、同じ 子たちに 何回も 同じことを 言われて わらわれる。今日も また 始まった。',
       forms: ['チクチクことばの むれ', 'わらっている 子たち', 'くり返し からかわれている'],
       ctx: 'tease', scene: 'からかわれた', name: 'からかわれた', kind: 'elite', hp: 36,
-      moves: [{ t: 'inject', card: 'warukuchi', say: '言い返したく なる（悪口が まざる）' }, { t: 'stress', n: 7, say: '同じことを また言われる' }, { t: 'grow', n: 3, say: 'まわりも わらいはじめる' }, { t: 'stress', n: 9, say: '学校に 行きたくなくなる' }],
+      moves: [{ t: 'smear', n: 2, card: 'wameku', say: 'くやしくて、気もちが あふれそう（カードが「わめく」に ぬりつぶされる）' }, { t: 'inject', card: 'warukuchi', say: '言い返したく なる（悪口が まざる）' }, { t: 'stress', n: 7, say: '同じことを また言われる' }, { t: 'grow', n: 3, say: 'まわりも わらいはじめる' }, { t: 'stress', n: 9, say: '学校に 行きたくなくなる' }],
       weak: [], resist: [], backfire: ['impulse'], situ: ['say_stop', 'tell_teacher', 'wameku'],
       view: { truth: 'hostile', name: 'くり返し からかわれている', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 1 },
       other: 'あとで 先生：「話してくれて よかった。一人で かかえなくて いいんだよ」'
@@ -835,7 +841,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
       intro: 'きのう、なかよしの 友だちと 言い合いに なった。今日は 朝から 一度も 目を 合わせてくれない。',
     forms: ['ギザギザ ハートの 竜', '目を 合わせない 友だち', 'なかなおり したい 友だち'],
     chain: { start: 'notice_fault', steps: { notice_fault: 'admit_fault', admit_fault: 'apologize' }, finale: 'apologize', win: 'make_up', reward: { cards: ['listen_deep', 'mediate'], stat: 'relate', trust: 2 } }, ctx: 'conflict', scene: '友だちと 大げんか', kind: 'boss', hp: 55,
-    moves: [{ t: 'inject', card: 'tataku', say: '手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 9, say: '口を きいて くれない' }, { t: 'grow', n: 3, say: 'ほかの子も まきこまれる' }, { t: 'stress', n: 10, say: 'さびしくて むかむかする' }, { t: 'worry', say: '「もう 友だちじゃ ないのかな」' }],
+    moves: [{ t: 'smear', n: 2, card: 'kattonaru', say: 'むかっとして、頭に 血が のぼる（カードが「カッとなる」に ぬりつぶされる）' }, { t: 'inject', card: 'tataku', say: '手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 9, say: '口を きいて くれない' }, { t: 'grow', n: 3, say: 'ほかの子も まきこまれる' }, { t: 'stress', n: 10, say: 'さびしくて むかむかする' }, { t: 'worry', say: '「もう 友だちじゃ ないのかな」' }],
     weak: [], resist: ['relate'], backfire: ['impulse'], situ: ['tell_feeling', 'keep_distance', 'ignore_back'],
     view: { truth: 'benign', weak: ['relate'], resist: [], backfire: ['impulse'], stressMul: 0.8 },
     other: '友だち：「じつは こっちも あやまりたかった」'
@@ -882,7 +888,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
     intro: 'この前 カッと なって やり返した 子が、今日は こっちを にらんでいる。「この前の、おぼえてるからな」',
     forms: ['しかえし 火の玉', 'にらんでくる あの子', 'まだ おこっている 子'],
     ctx: 'conflict', scene: 'しかえし', kind: 'normal', hp: 30,
-    moves: [{ t: 'inject', card: 'tataku', say: 'また 手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 8, say: 'にらまれる' }, { t: 'grow', n: 2, say: '話が 大きく なっていく' }],
+    moves: [{ t: 'smear', n: 2, card: 'kattonaru', say: 'むかっとして、頭に 血が のぼる（カードが「カッとなる」に ぬりつぶされる）' }, { t: 'inject', card: 'tataku', say: 'また 手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 8, say: 'にらまれる' }, { t: 'grow', n: 2, say: '話が 大きく なっていく' }],
     weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['apologize', 'tell_feeling', 'hit_back'],
     other: 'あの子：「…あやまってくれたなら、もう いいよ」'
   };
@@ -3787,7 +3793,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 17;
+  var ENGINE_VER = 18;
 
   // --- 乱数 ---
   function rand(s) {
@@ -4069,6 +4075,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
     b.hand.forEach(function (x) { delete x.fresh; });
     if (pn) addToHand(s, { id: 'panic', temp: true });
     drawCards(s, Math.max(0, handLimit(s) - b.hand.length));
+    if (b.smearNext) { smear(s, b.smearNext); b.smearNext = null; }
     if (s.yoyu < s.maxYoyu * (fragile(s) ? fragile(s).stressThreshold : D.RULES.stressThreshold)) {
       addToHand(s, { id: 'kattonaru', temp: true });
       msg(s, D.TEXT.stressIntrude, 'stress');
@@ -4251,7 +4258,9 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
       solve: Math.max(0, hp0 - en.hp), guard: b.guard - g0, heal: s.yoyu - y0, hpFrom: Math.max(0, hp0), hpTo: Math.max(0, en.hp), hpMax: en.maxHp });
     for (var mk = m0; mk < b.msgs.length; mk++) b.msgs[mk].play = true;
 
-    if (h.temp || c.exhaust) b.exhaust.push(h); else b.discard.push(h);
+    if (isOrganizer(c)) unsmear(s);
+    if (h.over) { restoreCard(h); b.discard.push(h); }
+    else if (h.temp || c.exhaust) b.exhaust.push(h); else b.discard.push(h);
     if (ok && c.escape) { escapeBattle(s); return s; }
     if (en.hp <= 0) winBattle(s);
     return s;
@@ -4316,6 +4325,9 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
     } else if (mv.t === 'grow') {
       en.str += mv.n;
       msg(s, mv.say + '（問題の いきおい +' + mv.n + '）', 'grow');
+    } else if (mv.t === 'smear') {
+      b.smearNext = { n: mv.n, card: mv.card };
+      msg(s, mv.say, 'inject');
     } else if (mv.t === 'inject') {
       addToHand(s, { id: mv.card, temp: true, fresh: true });
       msg(s, mv.say, 'inject');
@@ -4327,12 +4339,28 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
   }
 
   // 次に起きそうなこと（意図の表示）
+  // 上書き：感情が 手札を ぬりつぶす。整理する カード（organize）は ぬられない。整理すると もとに もどる
+  function isOrganizer(c) { return !!(c.organize || c.organize2 || c.formTo2); }
+  function smear(s, sm) {
+    var b = s.battle;
+    var cand = b.hand.filter(function (h) { var c = card(h.id); return !h.over && !h.temp && !isOrganizer(c) && c.type !== 'curse'; });
+    shuffle(s, cand).slice(0, sm.n).forEach(function (h) { h.orig = h.id; h.id = sm.card; h.over = true; });
+    msg(s, '感情が あふれて、カードが「' + card(sm.card).name + '」に ぬりつぶされた！（整理する カードで もどる）', 'inject');
+  }
+  function unsmear(s) {
+    var b = s.battle, n = 0;
+    [b.hand, b.draw, b.discard].forEach(function (pile) { pile.forEach(function (h) { if (h.over) { h.id = h.orig; delete h.orig; delete h.over; n++; } }); });
+    if (n) msg(s, '整理して 落ちついた。ぬりつぶされた カード ' + n + 'まいが もとに もどった。', 'clear');
+  }
+  function restoreCard(h) { if (h.over) { h.id = h.orig; delete h.orig; delete h.over; } }
+
   function intent(s) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
     var mv = E.moves[en.mi % E.moves.length];
     var o = { t: mv.t, say: mv.say };
     if (mv.t === 'stress') o.n = stressOf(s, mv);
     if (mv.t === 'grow') o.n = mv.n;
+    if (mv.t === 'smear') { o.n = mv.n; o.card = mv.card; }
     if (E.pass) o.passIn = E.pass.turns - b.turn + 1;
     return o;
   }
@@ -4347,6 +4375,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
       if (h.id === 'panic' && fragile(s)) panics++;
       if (card(h.id).drainEnd) drainEnd += card(h.id).drainEnd;
       if (card(h.id).retain) { keep.push(h); return; }
+      if (h.over) { b.discard.push(h); return; }
       if (h.id === 'kattonaru') b.exhaust.push(h); else b.discard.push(h);
     });
     b.hand = keep;
@@ -5499,6 +5528,16 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
     return h('div', { class: 'ctx', text: names.length ? '使える場面：' + names.join('・') : '使える場面：なし' });
   }
 
+  // 上書き：絵の具を ベチャッと つけられた よう（カードの 9わりを おおう）
+  var SPLAT_D = 'M50 4C62 3 66 14 76 10C88 6 96 18 92 30C89 40 99 46 97 58C95 70 84 72 86 84C88 96 72 99 62 94C54 90 46 99 36 96C24 93 26 82 15 80C3 78 1 64 8 56C14 49 2 42 6 31C10 19 22 22 26 12C30 3 40 5 50 4ZM96 12a4 4 0 1 1 0 .1ZM4 90a3 3 0 1 1 0 .1ZM90 96a3 3 0 1 1 0 .1Z';
+  function splat(label) {
+    var d = h('div', { class: 'splat' });
+    d.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="' + SPLAT_D + '" fill="#d6336c" stroke="#12172a" stroke-width="1.5"/>' +
+      '<path d="M30 20q6-6 14-2" fill="none" stroke="#ff8fb1" stroke-width="3" stroke-linecap="round"/></svg>';
+    d.appendChild(h('b', { text: label }));
+    return d;
+  }
+
   function lockText(c) {
     var short = E.reqShort(S, c);
     if (!short) return null;
@@ -5507,7 +5546,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
 
   function battleScreen() {
     var b = S.battle, en = b.enemy, it = E.intent(S), EN = D.ENEMIES[en.id];
-    var itText = it.t === 'stress' ? 'ストレス +' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
+    var itText = it.t === 'stress' ? 'ストレス +' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : it.t === 'smear' ? 'カードが ' + it.n + 'まい「' + E.card(it.card).name + '」に' : 'モヤモヤが まざる';
     var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
     var bubble = h('section', { class: 'bubble k-' + en.kind }, [
       h('div', { class: 'ekind', text: (EN.selfFail ? '自分の しっぱい' : EN.trouble ? 'トラブル' : en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
@@ -5564,7 +5603,8 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
     var n = b.hand.length, mid = (n - 1) / 2;
     var hand = h('section', { class: 'hand' }, b.hand.map(function (hc, i) {
       var c = E.card(hc.id), ok = E.canPlay(S, i);
-      var el = cardView(c, { preview: c.unplayable ? {} : E.preview(S, i), selected: sel === i, disabled: !ok, temp: hc.temp, lock: lockText(c) });
+      var el = hc.over ? cardView(E.card(hc.orig), { selected: sel === i }) : cardView(c, { preview: c.unplayable ? {} : E.preview(S, i), selected: sel === i, disabled: !ok, temp: hc.temp, lock: lockText(c) });
+      if (hc.over) { el.classList.add('smeared'); el.appendChild(splat(c.name)); var cb = el.querySelector('.cost'); if (cb) cb.textContent = String(c.cost); }
       var d = i - mid;
       el.style.setProperty('--rot', (d * 2.2) + 'deg');
       el.style.setProperty('--lift', (Math.abs(d) * Math.abs(d) * 1.4) + 'px');

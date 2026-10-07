@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 17;
+  var ENGINE_VER = 18;
 
   // --- 乱数 ---
   function rand(s) {
@@ -286,6 +286,7 @@
     b.hand.forEach(function (x) { delete x.fresh; });
     if (pn) addToHand(s, { id: 'panic', temp: true });
     drawCards(s, Math.max(0, handLimit(s) - b.hand.length));
+    if (b.smearNext) { smear(s, b.smearNext); b.smearNext = null; }
     if (s.yoyu < s.maxYoyu * (fragile(s) ? fragile(s).stressThreshold : D.RULES.stressThreshold)) {
       addToHand(s, { id: 'kattonaru', temp: true });
       msg(s, D.TEXT.stressIntrude, 'stress');
@@ -468,7 +469,9 @@
       solve: Math.max(0, hp0 - en.hp), guard: b.guard - g0, heal: s.yoyu - y0, hpFrom: Math.max(0, hp0), hpTo: Math.max(0, en.hp), hpMax: en.maxHp });
     for (var mk = m0; mk < b.msgs.length; mk++) b.msgs[mk].play = true;
 
-    if (h.temp || c.exhaust) b.exhaust.push(h); else b.discard.push(h);
+    if (isOrganizer(c)) unsmear(s);
+    if (h.over) { restoreCard(h); b.discard.push(h); }
+    else if (h.temp || c.exhaust) b.exhaust.push(h); else b.discard.push(h);
     if (ok && c.escape) { escapeBattle(s); return s; }
     if (en.hp <= 0) winBattle(s);
     return s;
@@ -533,6 +536,9 @@
     } else if (mv.t === 'grow') {
       en.str += mv.n;
       msg(s, mv.say + '（問題の いきおい +' + mv.n + '）', 'grow');
+    } else if (mv.t === 'smear') {
+      b.smearNext = { n: mv.n, card: mv.card };
+      msg(s, mv.say, 'inject');
     } else if (mv.t === 'inject') {
       addToHand(s, { id: mv.card, temp: true, fresh: true });
       msg(s, mv.say, 'inject');
@@ -544,12 +550,28 @@
   }
 
   // 次に起きそうなこと（意図の表示）
+  // 上書き：感情が 手札を ぬりつぶす。整理する カード（organize）は ぬられない。整理すると もとに もどる
+  function isOrganizer(c) { return !!(c.organize || c.organize2 || c.formTo2); }
+  function smear(s, sm) {
+    var b = s.battle;
+    var cand = b.hand.filter(function (h) { var c = card(h.id); return !h.over && !h.temp && !isOrganizer(c) && c.type !== 'curse'; });
+    shuffle(s, cand).slice(0, sm.n).forEach(function (h) { h.orig = h.id; h.id = sm.card; h.over = true; });
+    msg(s, '感情が あふれて、カードが「' + card(sm.card).name + '」に ぬりつぶされた！（整理する カードで もどる）', 'inject');
+  }
+  function unsmear(s) {
+    var b = s.battle, n = 0;
+    [b.hand, b.draw, b.discard].forEach(function (pile) { pile.forEach(function (h) { if (h.over) { h.id = h.orig; delete h.orig; delete h.over; n++; } }); });
+    if (n) msg(s, '整理して 落ちついた。ぬりつぶされた カード ' + n + 'まいが もとに もどった。', 'clear');
+  }
+  function restoreCard(h) { if (h.over) { h.id = h.orig; delete h.orig; delete h.over; } }
+
   function intent(s) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
     var mv = E.moves[en.mi % E.moves.length];
     var o = { t: mv.t, say: mv.say };
     if (mv.t === 'stress') o.n = stressOf(s, mv);
     if (mv.t === 'grow') o.n = mv.n;
+    if (mv.t === 'smear') { o.n = mv.n; o.card = mv.card; }
     if (E.pass) o.passIn = E.pass.turns - b.turn + 1;
     return o;
   }
@@ -564,6 +586,7 @@
       if (h.id === 'panic' && fragile(s)) panics++;
       if (card(h.id).drainEnd) drainEnd += card(h.id).drainEnd;
       if (card(h.id).retain) { keep.push(h); return; }
+      if (h.over) { b.discard.push(h); return; }
       if (h.id === 'kattonaru') b.exhaust.push(h); else b.discard.push(h);
     });
     b.hand = keep;
