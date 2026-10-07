@@ -26,7 +26,7 @@ const fs = require('node:fs');
     if (await page.$('.coach') === null) break;
     await snap('00d-tutorial');
     const c = await page.$$('.hand .card:not(.off)');
-    if (c.length) { await c[0].tap(); await snap('00e-tutorial-sel'); await page.tap('.hand .card.selected'); } else await page.tap('.endturn');
+    if (c.length) { await c[0].tap(); await snap('00e-tutorial-sel'); await page.tap('.hand .card.selected'); } else { await page.tap('.endturn'); await page.waitForTimeout(900); }
   }
   await snap('00f-tutorialdone'); await page.tap('main button.primary');
   let overflow = [];
@@ -46,7 +46,7 @@ const fs = require('node:fs');
       if (await page.$('.playpop')) await page.tap('.playpop');
       const playable = await page.$$('.hand .card:not(.off)');
       if (playable.length) { await playable[0].tap(); await snap('03-selected'); await page.tap('.hand .card.selected'); await page.waitForTimeout(250); await snap('03b-playpop'); }
-      else await page.tap('.endturn');
+      else { await page.tap('.endturn'); await page.waitForTimeout(900); }
     }
     else if (phase === 'reward') { await snap('04-reward'); const c = await page.$('.choices .card'); if (c) await c.tap(); else await page.tap('.reward > button.secondary'); }
     else if (phase === 'intro') { await snap('01b-intro'); await page.tap('main button.primary'); }

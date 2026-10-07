@@ -442,6 +442,22 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
 .fx.evo { background: #ffe8a3; border-color: #b8860b; font-weight: 800; }
 .recall { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .recall .recallsrc { color: var(--sub); font-weight: 700; }
+/* 戦いの 文字を へらす：タグと「くわしく」 */
+.etags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.etag { font-size: .8rem; font-weight: 700; padding: 2px 8px; border: 2px solid var(--line); border-radius: 999px; background: #eef1f8; }
+.etag.pass { background: #e6f6ea; }
+.einfo { margin-left: auto; font: inherit; font-size: .85rem; font-weight: 800; padding: 4px 10px; border: 2px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer; min-height: 32px; }
+.infopop { text-align: left; }
+.infopop .hpttl { text-align: center; }
+.infolist { margin: 8px 0 14px; padding-left: 1.2em; line-height: 1.6; }
+.infopop button { display: block; margin: 0 auto; }
+/* すて札の 演出 */
+.hand .card.discard { animation: discardfly .42s ease-in both; pointer-events: none; }
+@keyframes discardfly { 0% { transform: translateY(var(--lift, 0)) rotate(var(--rot, 0deg)); opacity: 1; } 40% { transform: translate(calc(var(--dx) * .3), calc(var(--dy) * .3 - 30px)) rotate(10deg) scale(.8); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) rotate(25deg) scale(.25); opacity: .2; } }
+.pile.gulp { animation: gulp .3s .35s ease-out 1; }
+@keyframes gulp { 50% { transform: scale(1.15); } }
+.discfly { position: fixed; left: 50%; bottom: 140px; z-index: 40; padding: 4px 10px; background: var(--paper); border: 2px solid var(--line); border-radius: 8px; font-weight: 800; pointer-events: none; animation: discfly .8s ease-in both; }
+@keyframes discfly { 0% { transform: translate(-50%, 0) scale(.6); opacity: 0; } 25% { transform: translate(-50%, -20px) scale(1); opacity: 1; } 100% { left: calc(100% - 60px); bottom: 40px; transform: translate(-50%, 0) scale(.3) rotate(30deg); opacity: 0; } }
 
 </style>
 </head>
@@ -1099,7 +1115,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   var ROUTES = [
     { id: 'hard', name: 'しんどいが 力が つく道', note: '課題に 向き合う マスが 多い（4つ）。ボスが 弱くなり、成長しやすい', nodes: ['battle', 'mystery', 'battle', 'event', 'battle', 'mystery', 'battle', 'event', 'event'] },
     { id: 'normal', name: 'ふつうの道', note: '課題に 向き合う マスは 2つ。休みも ある', nodes: ['battle', 'event', 'mystery', 'rest', 'event', 'battle', 'mystery', 'event', 'event'] },
-    { id: 'easy', name: '楽そうな道', note: '課題は 1つ だけで 休める。でも 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'slack', 'rest', 'battle', 'slack', 'event', 'slack'] }
+    { id: 'easy', name: '楽そうな道', note: '課題は 1つ だけで 休める。でも 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'slack', 'rest', 'battle', 'slack', 'event', 'event'] }
   ];
 
   var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.15, mysteryElite: 0.05, troublePer: 0.06, selfFail: 0.05, selfFailPer: 0.03, selfFailMax: 0.3, troubleMax: 0.6, slackBoss: 0.05, actHealAmount: 0, relatedShare: 0.5, hearts: 3, heartHp: 0.18, heartStress: 0.2, bossBase: 1.15, actHeal: 1 };
@@ -3725,18 +3741,20 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   // マスの課題は はじめに 決めておく（マップで 名前が 見える）。課題の半分以上は ボスに 関連する課題
   // マップ：3本の 一本道（しんどいが 力が つく道／ふつうの道／楽そうな道）。
   // ボスに 関連する 課題は「課題に 向き合う」として 名前を 見せる。関連しない 課題（トラブル・アクシデント・失敗）は「？」マスに かくれ、できごとの ことも ある
+  // 休む マス（ひと休み・ゴロゴロ）は となり合わせに しない
+  function isRestLike(k) { return k === 'rest' || k === 'slack'; }
   function buildMap(s) {
     var M = D.MAP, act = D.ACTS[s.act], rows = [], edges = [];
     for (var r = 0; r < M.rows; r++) rows.push([]);
     D.ROUTES.forEach(function (R, c) {
       // ひと休みが 続かないように 並べる（さいごの 段は いつも ひと休み）
       var kinds, mid = R.nodes.slice(1, R.nodes.length - 1);
-      for (var tries = 0; tries < 50; tries++) {
+      for (var tries = 0; tries < 500; tries++) {
         shuffle(s, mid);
         kinds = [R.nodes[0]].concat(mid, [R.nodes[R.nodes.length - 1]]);
         while (kinds.length < M.rows) kinds.push('event');
         kinds[M.rows - 1] = 'rest';
-        if (!kinds.some(function (k, i) { return k === 'rest' && kinds[i + 1] === 'rest'; })) break;
+        if (!kinds.some(function (k, i) { return isRestLike(k) && isRestLike(kinds[i + 1]); })) break;
       }
       for (var r2 = 0; r2 < M.rows; r2++) {
         var kind = r2 === M.rows - 1 ? 'rest' : (kinds[r2] || 'event');
@@ -4833,7 +4851,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   }
 
   var selSup = null;
-  var recalling = false, lastDealKey = '', lastMoyaKey = '', lastClearKey = '', lastPlay = null, shownPlay = null, lastHitKey = '';
+  var lastOverKey = '', infoOpen = false, discarding = false, recalling = false, lastDealKey = '', lastMoyaKey = '', lastClearKey = '', lastPlay = null, shownPlay = null, lastHitKey = '';
   // ストレスの 割合で 主人公の 見た目を かえる
   function heroMood() {
     if (!S) return 0;
@@ -5079,7 +5097,6 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
       (c.chance || (D.STATS[c.type] && S && S.stats[c.type] < 0)) ? h('div', { class: 'chance c-' + (c.chance || 'weak'), text: (D.STATS[c.type] && S && S.stats[c.type] < 0) ? '失敗するかも（にがて）' : D.CHANCE[c.chance].label }) : null,
       tags.length ? h('div', { class: 'tags' }, tags) : null,
       lock ? h('div', { class: 'lock', text: lock }) : null,
-      opts.showCtx ? scenesOf(c) : null
     ]);
   }
 
@@ -5109,11 +5126,14 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
         h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + hpPct + '%' })]),
         h('b', { text: Math.max(0, en.hp) + '/' + en.maxHp })
       ]),
-      h('div', { class: 'intent' }, [h('span', { class: 'lbl', text: 'つぎに 起きそうなこと' }), h('b', { text: it.say + '（' + itText + '）' })]),
-      EN.solo ? h('div', { class: 'termnote', text: '個人課題：自分の 力で とりくむ。相談・協力の カードと アイテムは 使えない' }) : null,
-      EN.term === 'short' ? h('div', { class: 'termnote', text: 'すぐに 来る 課題：「時間を かけて」の カード・相談アイテムは 使えない' }) : null,
-      it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (EN.pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
-      EN.anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
+      h('div', { class: 'intent' }, [h('span', { class: 'lbl', text: 'つぎ' }), h('b', { text: itText })]),
+      h('div', { class: 'etags' }, [
+        EN.solo ? h('span', { class: 'etag', text: '個人課題' }) : null,
+        EN.term === 'short' ? h('span', { class: 'etag', text: 'すぐ来る' }) : null,
+        it.passIn ? h('span', { class: 'etag pass', text: 'あと' + it.passIn + 'ターンで 過ぎ去る' }) : null,
+        EN.anxiety ? h('span', { class: 'etag', text: b.calm ? 'どきどき（整った）' : 'どきどき' }) : null,
+        h('button', { class: 'einfo', 'aria-label': 'くわしく', onclick: function () { infoOpen = true; render(); }, text: '？ くわしく' })
+      ])
     ]);
     var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(EN.art || en.id, en.form), en.form, 'mon')]);
     if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(EN.art || en.id)) { monster.innerHTML = SST_ILLUST.svg(EN.art || en.id); }
@@ -5125,7 +5145,6 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     var fx = [];
     if (lastPlay && lastPlay !== shownPlay) {
       shownPlay = lastPlay;
-      fx.push(h('div', { class: 'playfx t-' + lastPlay.type, text: lastPlay.name }));
       var pp = (S.popups || []).filter(function (p) { return p.k === 'play'; }).pop();
       var dealt = pp ? pp.solve : 0;
       if (dealt) {
@@ -5147,7 +5166,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
       if (b.lastHit.blocked) fx.push(h('div', { class: 'numpop block', text: '心の準備で ' + b.lastHit.blocked + ' 受けとめた' }));
     }
     var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, bubble, monster].concat(fx));
-    var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.filter(function (m) { return !m.play; }).slice(-3).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
+    var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.filter(function (m) { return !m.play && m.tag !== 'bench'; }).slice(-1).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
     var energy = h('div', { class: 'orb', title: '元気' }, [h('b', { text: b.energy + '/' + D.PLAYER.energy }), h('small', { text: '元気' })]);
     var dealKey = S.floor + ':' + b.turn;
     var deal = dealKey !== lastDealKey; lastDealKey = dealKey;
@@ -5168,7 +5187,23 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
       return el;
     }));
     var help = h('p', { class: 'hint', text: sel >= 0 && E.canPlay(S, sel) ? 'もう一度 タップで 使う' : sel >= 0 ? (E.card(b.hand[sel].id).unplayable ? 'モヤモヤは 使えない' : '元気が たりない／条件が たりない') : 'カードを タップして えらぶ' });
-    var end = h('button', { class: 'primary endturn', onclick: function () { act(function () { E.endTurn(S); }); }, text: 'ターンを おわる' });
+    var end = h('button', { class: 'primary endturn', onclick: function () {
+      if (discarding) return;
+      // 手札が すて札へ 飛んでいく
+      var pile = document.querySelector('.pile.disc'), cards = document.querySelectorAll('.hand .card');
+      if (!pile || !cards.length || matchMedia('(prefers-reduced-motion: reduce)').matches) { act(function () { E.endTurn(S); }); return; }
+      var pr = pile.getBoundingClientRect();
+      discarding = true;
+      cards.forEach(function (el, i) {
+        var r = el.getBoundingClientRect();
+        el.style.setProperty('--dx', (pr.left + pr.width / 2 - (r.left + r.width / 2)) + 'px');
+        el.style.setProperty('--dy', (pr.top + pr.height / 2 - (r.top + r.height / 2)) + 'px');
+        el.style.animationDelay = (i * 40) + 'ms';
+        el.classList.remove('deal'); el.classList.add('discard');
+      });
+      pile.classList.add('gulp');
+      setTimeout(function () { discarding = false; act(function () { E.endTurn(S); }); }, 420 + cards.length * 40);
+    }, text: 'ターンを おわる' });
     var piles = h('div', { class: 'pile draw', text: '山札 ' + b.draw.length });
     var disc = h('div', { class: 'pile disc', text: 'すて札 ' + b.discard.length + (b.bench.length ? '／控え ' + b.bench.length : '') });
     var flyMsgs = b.msgs.filter(function (m) { return m.tag === 'curse' || m.tag === 'worry' || m.tag === 'inject'; });
@@ -5179,6 +5214,11 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
       for (var mi = 0; mi < moyaN; mi++) flies.push(h('div', { class: 'moyafly' + (flyMsgs[mi].tag === 'inject' ? ' inject' : ''), style: 'animation-delay:' + (mi * 180) + 'ms', text: flyMsgs[mi].card || 'モヤモヤ' }));
     }
     lastMoyaKey = moyaKey;
+    var overs = b.msgs.filter(function (m) { return m.tag === 'bench' && m.text.indexOf('手札が いっぱい') === 0; });
+    if (overs.length && moyaKey !== lastOverKey) {
+      overs.forEach(function (m, oi) { flies.push(h('div', { class: 'discfly', style: 'animation-delay:' + (oi * 150) + 'ms', text: m.text.replace(/^手札が いっぱいで「(.*)」は すて札へ。$/, '$1') })); });
+    }
+    lastOverKey = moyaKey;
     var clears = b.msgs.some(function (m) { return m.tag === 'clear'; }) && moyaKey !== lastClearKey ? [h('div', { class: 'moyaclear', text: 'すっきり！' })] : [];
     if (clears.length) lastClearKey = moyaKey;
     return h('main', { class: 'battle' }, flies.concat(clears, [stage, h('div', { class: 'row' }, [energy, msgs, help, end]), h('div', { class: 'handrow' }, [piles, hand, disc])]));
@@ -5477,6 +5517,21 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   function popupLayer() {
     var ps = S.popups || [];
     if (!ps.length) return null;
+    if (infoOpen && S.phase === 'battle') {
+      var b2 = S.battle, en2 = b2.enemy, EN2 = D.ENEMIES[en2.id], it2 = E.intent(S);
+      var lines = [it2.say + '（' + (it2.t === 'stress' ? 'ストレス +' + it2.n : it2.t === 'grow' ? '問題の いきおい +' + it2.n : 'モヤモヤが まざる') + '）'];
+      if (EN2.solo) lines.push('個人課題：自分の 力で とりくむ。相談・協力の カードと アイテムは 使えない。');
+      if (EN2.term === 'short') lines.push('すぐに 来る 課題：「時間を かけて」の カード・相談アイテムは 使えない。');
+      lines.push(it2.passIn ? 'あと ' + it2.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (EN2.pass.leave ? '（ストレスが 多いと モヤモヤが のこる）。' : '。') : 'これは 時間が たっても 過ぎ去らない。');
+      if (EN2.anxiety) lines.push('どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。');
+      if (b2.bench.length) lines.push('この場面に 合わない カード ' + b2.bench.length + 'まいは 控えに 入っている。');
+      return h('div', { class: 'popwrap modal', onclick: function (e) { if (e.target === e.currentTarget) { infoOpen = false; render(); } } }, [h('div', { class: 'heartpop infopop' }, [
+        h('div', { class: 'hpttl', text: EN2.scene }),
+        h('p', { class: 'story', text: EN2.intro }),
+        h('ul', { class: 'infolist' }, lines.map(function (l) { return h('li', { text: l }); })),
+        h('button', { class: 'primary', onclick: function () { infoOpen = false; render(); }, text: 'とじる' })
+      ])]);
+    }
     var warn = ps.filter(function (p) { return p.k === 'warn'; })[0];
     if (warn) {
       return h('div', { class: 'popwrap modal' }, [h('div', { class: 'heartpop warnpop' }, [

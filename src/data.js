@@ -649,7 +649,7 @@
   var ROUTES = [
     { id: 'hard', name: 'しんどいが 力が つく道', note: '課題に 向き合う マスが 多い（4つ）。ボスが 弱くなり、成長しやすい', nodes: ['battle', 'mystery', 'battle', 'event', 'battle', 'mystery', 'battle', 'event', 'event'] },
     { id: 'normal', name: 'ふつうの道', note: '課題に 向き合う マスは 2つ。休みも ある', nodes: ['battle', 'event', 'mystery', 'rest', 'event', 'battle', 'mystery', 'event', 'event'] },
-    { id: 'easy', name: '楽そうな道', note: '課題は 1つ だけで 休める。でも 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'slack', 'rest', 'battle', 'slack', 'event', 'slack'] }
+    { id: 'easy', name: '楽そうな道', note: '課題は 1つ だけで 休める。でも 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'slack', 'rest', 'battle', 'slack', 'event', 'event'] }
   ];
 
   var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.15, mysteryElite: 0.05, troublePer: 0.06, selfFail: 0.05, selfFailPer: 0.03, selfFailMax: 0.3, troubleMax: 0.6, slackBoss: 0.05, actHealAmount: 0, relatedShare: 0.5, hearts: 3, heartHp: 0.18, heartStress: 0.2, bossBase: 1.15, actHeal: 1 };

@@ -433,3 +433,19 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
 .fx.evo { background: #ffe8a3; border-color: #b8860b; font-weight: 800; }
 .recall { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .recall .recallsrc { color: var(--sub); font-weight: 700; }
+/* 戦いの 文字を へらす：タグと「くわしく」 */
+.etags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.etag { font-size: .8rem; font-weight: 700; padding: 2px 8px; border: 2px solid var(--line); border-radius: 999px; background: #eef1f8; }
+.etag.pass { background: #e6f6ea; }
+.einfo { margin-left: auto; font: inherit; font-size: .85rem; font-weight: 800; padding: 4px 10px; border: 2px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer; min-height: 32px; }
+.infopop { text-align: left; }
+.infopop .hpttl { text-align: center; }
+.infolist { margin: 8px 0 14px; padding-left: 1.2em; line-height: 1.6; }
+.infopop button { display: block; margin: 0 auto; }
+/* すて札の 演出 */
+.hand .card.discard { animation: discardfly .42s ease-in both; pointer-events: none; }
+@keyframes discardfly { 0% { transform: translateY(var(--lift, 0)) rotate(var(--rot, 0deg)); opacity: 1; } 40% { transform: translate(calc(var(--dx) * .3), calc(var(--dy) * .3 - 30px)) rotate(10deg) scale(.8); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) rotate(25deg) scale(.25); opacity: .2; } }
+.pile.gulp { animation: gulp .3s .35s ease-out 1; }
+@keyframes gulp { 50% { transform: scale(1.15); } }
+.discfly { position: fixed; left: 50%; bottom: 140px; z-index: 40; padding: 4px 10px; background: var(--paper); border: 2px solid var(--line); border-radius: 8px; font-weight: 800; pointer-events: none; animation: discfly .8s ease-in both; }
+@keyframes discfly { 0% { transform: translate(-50%, 0) scale(.6); opacity: 0; } 25% { transform: translate(-50%, -20px) scale(1); opacity: 1; } 100% { left: calc(100% - 60px); bottom: 40px; transform: translate(-50%, 0) scale(.3) rotate(30deg); opacity: 0; } }

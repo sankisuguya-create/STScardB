@@ -52,7 +52,7 @@
   }
 
   var selSup = null;
-  var recalling = false, lastDealKey = '', lastMoyaKey = '', lastClearKey = '', lastPlay = null, shownPlay = null, lastHitKey = '';
+  var lastOverKey = '', infoOpen = false, discarding = false, recalling = false, lastDealKey = '', lastMoyaKey = '', lastClearKey = '', lastPlay = null, shownPlay = null, lastHitKey = '';
   // ストレスの 割合で 主人公の 見た目を かえる
   function heroMood() {
     if (!S) return 0;
@@ -298,7 +298,6 @@
       (c.chance || (D.STATS[c.type] && S && S.stats[c.type] < 0)) ? h('div', { class: 'chance c-' + (c.chance || 'weak'), text: (D.STATS[c.type] && S && S.stats[c.type] < 0) ? '失敗するかも（にがて）' : D.CHANCE[c.chance].label }) : null,
       tags.length ? h('div', { class: 'tags' }, tags) : null,
       lock ? h('div', { class: 'lock', text: lock }) : null,
-      opts.showCtx ? scenesOf(c) : null
     ]);
   }
 
@@ -328,11 +327,14 @@
         h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + hpPct + '%' })]),
         h('b', { text: Math.max(0, en.hp) + '/' + en.maxHp })
       ]),
-      h('div', { class: 'intent' }, [h('span', { class: 'lbl', text: 'つぎに 起きそうなこと' }), h('b', { text: it.say + '（' + itText + '）' })]),
-      EN.solo ? h('div', { class: 'termnote', text: '個人課題：自分の 力で とりくむ。相談・協力の カードと アイテムは 使えない' }) : null,
-      EN.term === 'short' ? h('div', { class: 'termnote', text: 'すぐに 来る 課題：「時間を かけて」の カード・相談アイテムは 使えない' }) : null,
-      it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (EN.pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
-      EN.anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
+      h('div', { class: 'intent' }, [h('span', { class: 'lbl', text: 'つぎ' }), h('b', { text: itText })]),
+      h('div', { class: 'etags' }, [
+        EN.solo ? h('span', { class: 'etag', text: '個人課題' }) : null,
+        EN.term === 'short' ? h('span', { class: 'etag', text: 'すぐ来る' }) : null,
+        it.passIn ? h('span', { class: 'etag pass', text: 'あと' + it.passIn + 'ターンで 過ぎ去る' }) : null,
+        EN.anxiety ? h('span', { class: 'etag', text: b.calm ? 'どきどき（整った）' : 'どきどき' }) : null,
+        h('button', { class: 'einfo', 'aria-label': 'くわしく', onclick: function () { infoOpen = true; render(); }, text: '？ くわしく' })
+      ])
     ]);
     var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(EN.art || en.id, en.form), en.form, 'mon')]);
     if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(EN.art || en.id)) { monster.innerHTML = SST_ILLUST.svg(EN.art || en.id); }
@@ -344,7 +346,6 @@
     var fx = [];
     if (lastPlay && lastPlay !== shownPlay) {
       shownPlay = lastPlay;
-      fx.push(h('div', { class: 'playfx t-' + lastPlay.type, text: lastPlay.name }));
       var pp = (S.popups || []).filter(function (p) { return p.k === 'play'; }).pop();
       var dealt = pp ? pp.solve : 0;
       if (dealt) {
@@ -366,7 +367,7 @@
       if (b.lastHit.blocked) fx.push(h('div', { class: 'numpop block', text: '心の準備で ' + b.lastHit.blocked + ' 受けとめた' }));
     }
     var stage = h('section', { class: 'stage' }, [itemSlots(true), hero, bubble, monster].concat(fx));
-    var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.filter(function (m) { return !m.play; }).slice(-3).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
+    var msgs = h('section', { class: 'msgs', 'aria-live': 'polite' }, b.msgs.filter(function (m) { return !m.play && m.tag !== 'bench'; }).slice(-1).map(function (m) { return h('p', { class: 'm-' + m.tag, text: m.text }); }));
     var energy = h('div', { class: 'orb', title: '元気' }, [h('b', { text: b.energy + '/' + D.PLAYER.energy }), h('small', { text: '元気' })]);
     var dealKey = S.floor + ':' + b.turn;
     var deal = dealKey !== lastDealKey; lastDealKey = dealKey;
@@ -387,7 +388,23 @@
       return el;
     }));
     var help = h('p', { class: 'hint', text: sel >= 0 && E.canPlay(S, sel) ? 'もう一度 タップで 使う' : sel >= 0 ? (E.card(b.hand[sel].id).unplayable ? 'モヤモヤは 使えない' : '元気が たりない／条件が たりない') : 'カードを タップして えらぶ' });
-    var end = h('button', { class: 'primary endturn', onclick: function () { act(function () { E.endTurn(S); }); }, text: 'ターンを おわる' });
+    var end = h('button', { class: 'primary endturn', onclick: function () {
+      if (discarding) return;
+      // 手札が すて札へ 飛んでいく
+      var pile = document.querySelector('.pile.disc'), cards = document.querySelectorAll('.hand .card');
+      if (!pile || !cards.length || matchMedia('(prefers-reduced-motion: reduce)').matches) { act(function () { E.endTurn(S); }); return; }
+      var pr = pile.getBoundingClientRect();
+      discarding = true;
+      cards.forEach(function (el, i) {
+        var r = el.getBoundingClientRect();
+        el.style.setProperty('--dx', (pr.left + pr.width / 2 - (r.left + r.width / 2)) + 'px');
+        el.style.setProperty('--dy', (pr.top + pr.height / 2 - (r.top + r.height / 2)) + 'px');
+        el.style.animationDelay = (i * 40) + 'ms';
+        el.classList.remove('deal'); el.classList.add('discard');
+      });
+      pile.classList.add('gulp');
+      setTimeout(function () { discarding = false; act(function () { E.endTurn(S); }); }, 420 + cards.length * 40);
+    }, text: 'ターンを おわる' });
     var piles = h('div', { class: 'pile draw', text: '山札 ' + b.draw.length });
     var disc = h('div', { class: 'pile disc', text: 'すて札 ' + b.discard.length + (b.bench.length ? '／控え ' + b.bench.length : '') });
     var flyMsgs = b.msgs.filter(function (m) { return m.tag === 'curse' || m.tag === 'worry' || m.tag === 'inject'; });
@@ -398,6 +415,11 @@
       for (var mi = 0; mi < moyaN; mi++) flies.push(h('div', { class: 'moyafly' + (flyMsgs[mi].tag === 'inject' ? ' inject' : ''), style: 'animation-delay:' + (mi * 180) + 'ms', text: flyMsgs[mi].card || 'モヤモヤ' }));
     }
     lastMoyaKey = moyaKey;
+    var overs = b.msgs.filter(function (m) { return m.tag === 'bench' && m.text.indexOf('手札が いっぱい') === 0; });
+    if (overs.length && moyaKey !== lastOverKey) {
+      overs.forEach(function (m, oi) { flies.push(h('div', { class: 'discfly', style: 'animation-delay:' + (oi * 150) + 'ms', text: m.text.replace(/^手札が いっぱいで「(.*)」は すて札へ。$/, '$1') })); });
+    }
+    lastOverKey = moyaKey;
     var clears = b.msgs.some(function (m) { return m.tag === 'clear'; }) && moyaKey !== lastClearKey ? [h('div', { class: 'moyaclear', text: 'すっきり！' })] : [];
     if (clears.length) lastClearKey = moyaKey;
     return h('main', { class: 'battle' }, flies.concat(clears, [stage, h('div', { class: 'row' }, [energy, msgs, help, end]), h('div', { class: 'handrow' }, [piles, hand, disc])]));
@@ -696,6 +718,21 @@
   function popupLayer() {
     var ps = S.popups || [];
     if (!ps.length) return null;
+    if (infoOpen && S.phase === 'battle') {
+      var b2 = S.battle, en2 = b2.enemy, EN2 = D.ENEMIES[en2.id], it2 = E.intent(S);
+      var lines = [it2.say + '（' + (it2.t === 'stress' ? 'ストレス +' + it2.n : it2.t === 'grow' ? '問題の いきおい +' + it2.n : 'モヤモヤが まざる') + '）'];
+      if (EN2.solo) lines.push('個人課題：自分の 力で とりくむ。相談・協力の カードと アイテムは 使えない。');
+      if (EN2.term === 'short') lines.push('すぐに 来る 課題：「時間を かけて」の カード・相談アイテムは 使えない。');
+      lines.push(it2.passIn ? 'あと ' + it2.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (EN2.pass.leave ? '（ストレスが 多いと モヤモヤが のこる）。' : '。') : 'これは 時間が たっても 過ぎ去らない。');
+      if (EN2.anxiety) lines.push('どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。');
+      if (b2.bench.length) lines.push('この場面に 合わない カード ' + b2.bench.length + 'まいは 控えに 入っている。');
+      return h('div', { class: 'popwrap modal', onclick: function (e) { if (e.target === e.currentTarget) { infoOpen = false; render(); } } }, [h('div', { class: 'heartpop infopop' }, [
+        h('div', { class: 'hpttl', text: EN2.scene }),
+        h('p', { class: 'story', text: EN2.intro }),
+        h('ul', { class: 'infolist' }, lines.map(function (l) { return h('li', { text: l }); })),
+        h('button', { class: 'primary', onclick: function () { infoOpen = false; render(); }, text: 'とじる' })
+      ])]);
+    }
     var warn = ps.filter(function (p) { return p.k === 'warn'; })[0];
     if (warn) {
       return h('div', { class: 'popwrap modal' }, [h('div', { class: 'heartpop warnpop' }, [

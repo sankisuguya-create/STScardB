@@ -553,8 +553,9 @@ test('友だちの まね：カードが 1まい 上位に しんかする', () 
 test('ひと休みは 連続しない', () => {
   for (let seed = 1; seed < 200; seed++) {
     const s = E.newRun(seed, 1, 'hanoko');
-    for (let c = 0; c < 3; c++) for (let r = 0; r < s.map.rows.length - 2; r++) {
-      assert.ok(!(s.map.rows[r][c].kind === 'rest' && s.map.rows[r + 1][c] && s.map.rows[r + 1][c].kind === 'rest'), seed + ':' + r);
+    for (let c = 0; c < 3; c++) for (let r = 0; r < s.map.rows.length - 1; r++) {
+      const rl = (n) => n && (n.kind === 'rest' || n.kind === 'slack');
+      assert.ok(!(rl(s.map.rows[r][c]) && rl(s.map.rows[r + 1][c])), seed + ':' + r);
     }
   }
 });

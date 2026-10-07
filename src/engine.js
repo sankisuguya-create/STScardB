@@ -65,18 +65,20 @@
   // マスの課題は はじめに 決めておく（マップで 名前が 見える）。課題の半分以上は ボスに 関連する課題
   // マップ：3本の 一本道（しんどいが 力が つく道／ふつうの道／楽そうな道）。
   // ボスに 関連する 課題は「課題に 向き合う」として 名前を 見せる。関連しない 課題（トラブル・アクシデント・失敗）は「？」マスに かくれ、できごとの ことも ある
+  // 休む マス（ひと休み・ゴロゴロ）は となり合わせに しない
+  function isRestLike(k) { return k === 'rest' || k === 'slack'; }
   function buildMap(s) {
     var M = D.MAP, act = D.ACTS[s.act], rows = [], edges = [];
     for (var r = 0; r < M.rows; r++) rows.push([]);
     D.ROUTES.forEach(function (R, c) {
       // ひと休みが 続かないように 並べる（さいごの 段は いつも ひと休み）
       var kinds, mid = R.nodes.slice(1, R.nodes.length - 1);
-      for (var tries = 0; tries < 50; tries++) {
+      for (var tries = 0; tries < 500; tries++) {
         shuffle(s, mid);
         kinds = [R.nodes[0]].concat(mid, [R.nodes[R.nodes.length - 1]]);
         while (kinds.length < M.rows) kinds.push('event');
         kinds[M.rows - 1] = 'rest';
-        if (!kinds.some(function (k, i) { return k === 'rest' && kinds[i + 1] === 'rest'; })) break;
+        if (!kinds.some(function (k, i) { return isRestLike(k) && isRestLike(kinds[i + 1]); })) break;
       }
       for (var r2 = 0; r2 < M.rows; r2++) {
         var kind = r2 === M.rows - 1 ? 'rest' : (kinds[r2] || 'event');
