@@ -528,7 +528,7 @@ test('対応表：表に ない カードは 控えへ。場面カード・混�
   for (const [eid, row] of Object.entries(D.FIT)) {
     const E0 = D.ENEMIES[eid];
     for (const id of E0.situ) assert.ok(row[id], eid + ' ' + id);
-    for (const m of E0.moves) if (m.t === 'inject') assert.ok(row[m.card], eid + ' ' + m.card);
+    for (const m of E0.moves) if (m.t === 'inject' && D.CARDS[m.card].type !== 'curse') assert.ok(row[m.card], eid + ' ' + m.card);
     for (const id of Object.keys(row)) assert.ok(D.CARDS[id], eid + ' ' + id);
   }
   const s = E.newRun(1, 1, 'hanoko'); s.deck.push('teamwork', 'together');
@@ -570,4 +570,28 @@ test('一日を 思い出す：出会った 課題の よい行動から カー�
   E.rest(s, 'recall', rc[0]);
   assert.strictEqual(s.deck.length, n + 1);
   assert.ok(s.deck.includes(rc[0]));
+});
+
+test('層クリアの 振り返り：カード2まい・成長・アイテムから 1つ', () => {
+  const s = E.newRun(7, 3, 'hanoko');
+  E._battle(s, D.ACTS[0].boss); s.battle.enemy.hp = 1; s.battle.energy = 3;
+  s.actGood = { try_it: 3, talk: 1 }; s.actUsage = { act: 4, relate: 1 };
+  s.battle.hand = [{ id: 'try_it', temp: true }];
+  E.playCard(s, 0);
+  assert.strictEqual(s.phase, 'actclear');
+  assert.strictEqual(s.actReview.cards.length, 2);
+  assert.strictEqual(s.actReview.stat, 'act');
+  const a0 = s.stats.act;
+  E.takeReview(s, 'stat');
+  assert.strictEqual(s.stats.act, a0 + 1);
+  assert.throws(() => E.takeReview(s, 'card', s.actReview.cards[0]));
+});
+
+test('お邪魔カード：使えず 手札に のこり、整えるカードで 消える', () => {
+  const s = E._battle(E.newRun(2, 1, 'hanoko'), 'said_too_much');
+  s.battle.hand = [{ id: 'pride', temp: true }, { id: 'breathe', temp: true }]; s.battle.energy = 3;
+  assert.ok(!E.canPlay(s, 0));
+  E.playCard(s, 1);
+  assert.ok(!s.battle.hand.some((h) => h.id === 'pride'));
+  assert.ok(D.RULES.rewardChoices === 2);
 });

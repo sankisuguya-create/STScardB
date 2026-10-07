@@ -40,9 +40,9 @@
         h('div', { class: 'bar' }, [h('div', { class: 'fill', style: 'width:' + pct + '%' })]),
         h('b', { text: stress + '/' + S.maxYoyu })
       ]),
-      h('div', { class: 'chip trust', title: '信頼' }, [h('span', { class: 'lbl', text: '信頼' }), h('b', { text: String(S.trust) })]),
+      h('button', { class: 'chip trust', title: STAT_HELP.trust, onclick: function () { statHelp = 'trust'; render(); } }, [h('span', { class: 'lbl', text: '信頼' }), h('b', { text: String(S.trust) })]),
       h('div', { class: 'stats' }, Object.keys(D.STATS).map(function (k) {
-        return h('div', { class: 'chip st-' + k }, [h('span', { class: 'lbl', text: D.STATS[k].name }), h('b', { text: String(S.stats[k]) })]);
+        return h('button', { class: 'chip st-' + k, title: STAT_HELP[k], onclick: function () { statHelp = k; render(); } }, [h('span', { class: 'lbl', text: D.STATS[k].name }), h('b', { text: String(S.stats[k]) })]);
       })),
       h('div', { class: 'nigates' }, Object.keys(S.nigate || {}).map(function (k) {
         return h('div', { class: 'chip nigate', title: '苦手意識' }, [h('span', { class: 'lbl', text: '苦手：' + D.CTX_LABEL[k] }), h('b', { text: String(S.nigate[k]) })]);
@@ -52,7 +52,14 @@
   }
 
   var selSup = null;
-  var lastOverKey = '', infoOpen = false, discarding = false, recalling = false, lastDealKey = '', lastMoyaKey = '', lastClearKey = '', lastPlay = null, shownPlay = null, lastHitKey = '';
+  var STAT_HELP = {
+    trust: '信頼（0〜10）：まわりの 人からの 信頼。よい関わりで 上がり（1回の 戦いで +2まで）、衝動的な 行動や ふうんな できごとで 下がる。7以上：戦いの はじめに 友だちが そばに いて 心の準備 +6。8以上：報酬の カードが 1まい ふえる。3以下：やり直しの チャンスが 来る。',
+    think: 'かしこさ：「考える」カードの 効き目に たされる。手札の 上限は 5＋かしこさ。2以上で 戦いの はじめに 問題の 正体が 1だん 見える。マイナスだと 考えるカードが 失敗しやすい（−1ごとに 20%）。',
+    act: '行動：「動く」カードの 効き目に たされる。マイナスだと 動くカードが 失敗しやすい（−1ごとに 20%）。',
+    relate: 'なかま力：「関わる」カードの 効き目に たされる。マイナスだと 関わるカードが 失敗しやすい（−1ごとに 20%）。',
+    grow: 'のび方：1回の 戦いで 同じ 系統の カードを 3回（成長の 道では 2回）使うと +1。大きなかべを こえると、いちばん 使った 系統が +1。下がる ことは ない。'
+  };
+  var statHelp = null, lastOverKey = '', infoOpen = false, discarding = false, recalling = false, lastDealKey = '', lastMoyaKey = '', lastClearKey = '', lastPlay = null, shownPlay = null, lastHitKey = '';
   // ストレスの 割合で 主人公の 見た目を かえる
   function heroMood() {
     if (!S) return 0;
@@ -199,14 +206,36 @@
   }
 
   // 段が 変わるとき（3層モード）
+  // 層クリア：何が 良かったか 振り返る
+  function reviewPanel() {
+    var r = S.actReview;
+    if (!r) return null;
+    if (r.taken) return h('p', { class: 'praise', text: r.taken === 'card' ? 'うまく いった やり方を、自分の ものに した。' : r.taken === 'stat' ? D.STATS[r.stat].name + 'が のびた。' : 'アイテム「' + D.SUPPORTS[r.item].name + '」を 手に入れた。' });
+    var cards = r.cards.map(function (id, i) {
+      var el = cardView(E.card(id), {});
+      el.addEventListener('click', function () { act(function () { E.takeReview(S, 'card', id); }); });
+      return h('div', { class: 'recall' }, [h('small', { class: 'recallsrc', text: r.counts[i] ? 'この そうで ' + r.counts[i] + '回 うまく いった' : 'こんな やり方も ある' }), el]);
+    });
+    return h('section', { class: 'review' }, [
+      h('h2', { text: '何が 良かったか 振り返ろう…' }),
+      h('p', { class: 'hint', text: '1つ えらぶ' }),
+      h('div', { class: 'choices' }, cards),
+      h('div', { class: 'two' }, [
+        r.stat ? h('button', { class: 'secondary big', onclick: function () { act(function () { E.takeReview(S, 'stat'); }); } }, [D.STATS[r.stat].name + ' +1', h('small', { text: 'この そうで いちばん 使った 力（' + r.statUses + '回）を のばす' })]) : null,
+        r.item ? h('button', { class: 'secondary big', onclick: function () { act(function () { E.takeReview(S, 'item'); }); } }, ['「' + D.SUPPORTS[r.item].name + '」', h('small', { text: 'たよれる ものを 1つ 手に入れる。' + D.SUPPORTS[r.item].note })]) : null
+      ])
+    ]);
+  }
+
   function actClearScreen() {
     var A = D.ACTS[S.act];
-    return h('main', { class: 'title' }, [
+    return h('main', { class: 'title actclear' }, [
       h('h1', { text: S.actLost ? (S.act) + 'そう目 おわり' : (S.act) + 'そう目 クリア！' }),
       S.actLost ? h('p', { class: 'story', text: 'ボスは 乗りこえられなかった。でも 毎日は 続く。' }) : null,
       h('p', { class: 'sub', text: 'ストレスは そのまま 次の そうへ。ストレスが 多い ときは、楽な 道で 休むのも 一つの 手。次は「' + A.name + '」' }),
+      reviewPanel(),
       bossBanner(),
-      h('button', { class: 'primary big', onclick: function () { act(function () { E.nextAct(S); }); }, text: '次の そうへ' })
+      h('button', { class: 'primary big', disabled: !!(S.actReview && !S.actReview.taken), onclick: function () { act(function () { E.nextAct(S); }); }, text: S.actReview && !S.actReview.taken ? '上から 1つ えらぼう' : '次の そうへ' })
     ]);
   }
 
@@ -529,6 +558,7 @@
     var ev = D.EVENTS[S.event.id], done = S.event.done;
     return h('main', { class: 'event' }, [
       ev.trouble ? h('div', { class: 'troublebadge', text: 'トラブル（さっきの 行動の あとで 起きた）' }) : null,
+      ev.unlucky ? h('div', { class: 'troublebadge unlucky', text: 'ふうん：自分の せいでは ないのに、信頼が 下がって しまう できごと' }) : null,
       h('h2', { text: ev.title }),
       h('p', { class: 'story', text: ev.text }),
       done == null
@@ -551,6 +581,8 @@
   function whyText(why) {
     if (why === 'start') return 'スタート';
     if (why === 'escape') return 'あぶない場面から はなれた';
+    if (why === 'review') return 'そうの おわりに 振り返った';
+    if (why === 'recall') return '一日を 思い出した';
     if (!E.card(why)) return why;
     if (why.indexOf('event:') === 0) return 'できごと「' + D.EVENTS[why.slice(6)].title + '」で えらんだこと';
     return cardName(why) + 'を 使った';
@@ -717,7 +749,15 @@
   }
   function popupLayer() {
     var ps = S.popups || [];
-    if (!ps.length) return null;
+    if (statHelp) {
+      var key2 = statHelp;
+      return h('div', { class: 'popwrap modal', onclick: function (e) { if (e.target === e.currentTarget) { statHelp = null; render(); } } }, [h('div', { class: 'heartpop infopop' }, [
+        h('div', { class: 'hpttl', text: key2 === 'trust' ? '信頼 ' + S.trust : D.STATS[key2].name + ' ' + S.stats[key2] }),
+        h('p', { class: 'story', text: STAT_HELP[key2] }),
+        key2 !== 'trust' ? h('p', { class: 'story', text: STAT_HELP.grow }) : null,
+        h('button', { class: 'primary', onclick: function () { statHelp = null; render(); }, text: 'とじる' })
+      ])]);
+    }
     if (infoOpen && S.phase === 'battle') {
       var b2 = S.battle, en2 = b2.enemy, EN2 = D.ENEMIES[en2.id], it2 = E.intent(S);
       var lines = [it2.say + '（' + (it2.t === 'stress' ? 'ストレス +' + it2.n : it2.t === 'grow' ? '問題の いきおい +' + it2.n : 'モヤモヤが まざる') + '）'];
@@ -733,6 +773,7 @@
         h('button', { class: 'primary', onclick: function () { infoOpen = false; render(); }, text: 'とじる' })
       ])]);
     }
+    if (!ps.length) return null;
     var warn = ps.filter(function (p) { return p.k === 'warn'; })[0];
     if (warn) {
       return h('div', { class: 'popwrap modal' }, [h('div', { class: 'heartpop warnpop' }, [

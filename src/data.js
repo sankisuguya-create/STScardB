@@ -33,7 +33,7 @@
     trustGainCapPerBattle: 2,  // カードによる信頼の上昇は1戦で2まで
     weak: 2.0, resist: 0.35, anxiety: 0.6,
     restHeal: 0.3, rareChance: [0.04, 0.35, 0.45], rareChanceElite: [0.12, 0.8, 0.9], dangerChance: 0.25, distanceMul: 0.9, frozenTurns: 2, frozenRecover: 0.1, nigatePer: 8, nigateStress: 2, backfireGrow: 4, backfireRegrow: 0.7, backfireSolve: 0.5, moyaDrain: 30, panicDrain: 1, allyTrust: 7, allyGuard: 6, hpScale: 1.6, stressScale: 2.6,
-    rewardChoices: 3, rewardChoicesHighTrust: 4, highTrust: 8, lowTrust: 3
+    rewardChoices: 2, rewardChoicesHighTrust: 3, highTrust: 8, lowTrust: 3
   };
 
   // ctx: そのカードが合う場面。書いていないカードはどの場面でも使える。合わない場面では、その戦いの間 山札から外す
@@ -116,6 +116,10 @@
     force_own: { name: '自分の 意見を おしつける', line: '「ぜったい こっちが いい！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 1, solve: 10, chance: 'high', trust: -2, curse: true },
     consult_family: { name: 'お家の人に そうだんする', line: '「今日 こんなことが あってね」', type: 'relate', judge: 'good', style: 'assertive', cost: 1, guard: 8, ctx: ['study', 'conflict', 'join', 'tease', 'stage'], help: true, term: 'long' },
     sukkiri: { name: '気もちを 話して すっきり', line: 'もやもやを 言葉にして だれかに 話す。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 3, clearMoya: true, exhaust: true, ctx: ['study', 'conflict', 'join', 'tease', 'stage'], term: 'long' },
+    pride: { name: 'プライド', line: '「あやまったら 負けだ」と 思ってしまう。使えず、手札に のこる。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true, jam: true, retain: true },
+    shame: { name: '恥ずかしさ', line: '顔が あつくて 言葉が 出ない。使えず、手札に のこる。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true, jam: true, retain: true },
+    irritation: { name: 'イライラ', line: 'むしゃくしゃが おさまらない。使えず、手札に のこる。ターンの おわりに ストレス +4。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true, jam: true, retain: true, drainEnd: 4 },
+    not_my_fault: { name: '自分は 悪くない！', line: '「むこうが 悪い」「みんなも やってた」と 自分を 守る。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, guard: 8, trust: -1, curse: true },
     panic: { name: 'パニック', line: '頭が ぐるぐるして 何も 考えられない。使えず、手札を ふさぐ。整えるカードで 1まい 消える。', type: 'curse', judge: 'curse', cost: 0, unplayable: true },
     tataku: { name: 'たたく', line: 'カッとして 手が 出る。', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 10, chance: 'high', trust: -3, curse: true },
     warukuchi: { name: '悪口を 言い返す', line: '「そっちだって ○○じゃん！」', type: 'impulse', judge: 'impulse', style: 'aggressive', cost: 0, solve: 9, chance: 'high', trust: -2, curse: true },
@@ -370,7 +374,7 @@
     intro: '休み時間、おにごっこで テンションが 上がって、友だちを 強く たたいて しまった。友だちが うでを おさえて 下を 向いている。',
     forms: ['あばれる 火の 手', 'うでを おさえる 友だち', 'びっくりして いたい 友だち'],
     ctx: 'conflict', scene: 'もり上がって たたいた', kind: 'normal', hp: 26,
-    moves: [{ t: 'stress', n: 7, say: '友だちが だまって しまった' }, { t: 'inject', card: 'kattonaru', say: '「わざとじゃ ない！」と 言いたくなる（カッとなる が まざる）' }, { t: 'stress', n: 8, say: 'まわりの 子が 見ている' }],
+    moves: [{ t: 'inject', card: 'irritation', say: 'イライラが おさまらない（イライラが まざる）' }, { t: 'stress', n: 7, say: '友だちが だまって しまった' }, { t: 'inject', card: 'kattonaru', say: '「わざとじゃ ない！」と 言いたくなる（カッとなる が まざる）' }, { t: 'stress', n: 8, say: 'まわりの 子が 見ている' }],
     weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['apologize', 'ask_ok', 'hide_it'],
     other: '友だち：「いたかったけど、すぐ あやまって くれたから いいよ」'
   };
@@ -379,7 +383,7 @@
     intro: 'みんなで わらっているうちに、調子に のって 友だちの ことを「へんなの」と 言いすぎた。友だちが 笑わなく なった。',
     forms: ['とげとげ ことばの つる', 'だまりこんだ 友だち', '本当は 気にしていた 友だち'],
     ctx: 'tease', scene: '言いすぎた', kind: 'normal', hp: 26,
-    moves: [{ t: 'stress', n: 7, say: '友だちが 目を 合わせない' }, { t: 'inject', card: 'warukuchi', say: 'ごまかして もっと 言いたくなる（悪口が まざる）' }, { t: 'stress', n: 7, say: '気まずい 空気が 続く' }],
+    moves: [{ t: 'inject', card: 'pride', say: 'あやまるのが くやしい（プライドが まざる）' }, { t: 'stress', n: 7, say: '友だちが 目を 合わせない' }, { t: 'inject', card: 'warukuchi', say: 'ごまかして もっと 言いたくなる（悪口が まざる）' }, { t: 'stress', n: 7, say: '気まずい 空気が 続く' }],
     weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['apologize', 'tell_feeling', 'spread'],
     other: '友だち：「言われて いやだった。でも、あやまって くれて うれしかった」'
   };
@@ -388,7 +392,7 @@
     intro: 'クラスの 何人かが ある子を からかっていた。気づいたら 自分も いっしょに わらって、まねを していた。その子が 一人で 帰っていく。',
     forms: ['わらい声の むれ', 'からかわれた あの子', '一人で がまんしていた あの子'],
     ctx: 'tease', scene: 'からかいに 加わった', kind: 'normal', hp: 30,
-    moves: [{ t: 'stress', n: 7, say: 'あの子の 顔が うかぶ' }, { t: 'grow', n: 2, say: 'からかいが 毎日の ことに なりそう' }, { t: 'stress', n: 8, say: '「みんなも やってたし」と 思いたくなる' }],
+    moves: [{ t: 'inject', card: 'not_my_fault', say: '「みんなも やってた」と 思いたくなる（自分は 悪くない！が まざる）' }, { t: 'stress', n: 7, say: 'あの子の 顔が うかぶ' }, { t: 'grow', n: 2, say: 'からかいが 毎日の ことに なりそう' }, { t: 'stress', n: 8, say: '「みんなも やってたし」と 思いたくなる' }],
     weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['not_join', 'tell_teacher', 'apologize'],
     other: 'あの子：「次の 日、声を かけて くれて ほっとした」'
   };
@@ -397,7 +401,7 @@
     intro: 'きのう ゲームに むちゅうに なって、宿題を やらずに ねて しまった。朝の 会で「宿題を 出してください」の 声。',
     forms: ['サボりの おばけ', '出せない 宿題', 'やれば おわる 量の 宿題'],
     ctx: 'study', scene: '宿題を サボった', kind: 'normal', hp: 24,
-    moves: [{ t: 'stress', n: 7, say: '先生が こっちを 見る' }, { t: 'inject', card: 'put_off', say: '「あとで やればいい」と 思いたくなる' }, { t: 'stress', n: 7, say: 'ほかの 子は もう 出している' }],
+    moves: [{ t: 'inject', card: 'shame', say: '出せないのが 恥ずかしい（恥ずかしさが まざる）' }, { t: 'stress', n: 7, say: '先生が こっちを 見る' }, { t: 'inject', card: 'put_off', say: '「あとで やればいい」と 思いたくなる' }, { t: 'stress', n: 7, say: 'ほかの 子は もう 出している' }],
     weak: ['think', 'act'], resist: [], backfire: ['impulse'], situ: ['say_honest', 'plan_time', 'hide_it'],
     other: '先生：「正直に 言って くれたね。休み時間に いっしょに やろう」'
   };
@@ -415,7 +419,7 @@
     intro: 'じゅぎょう中、となりの 子と 話していたら 楽しくて 声が 大きく なった。先生に「今は 何の 時間？」と 言われた。',
     forms: ['おしゃべり ことり', 'こっちを 見る 先生', 'じゅぎょうに もどってほしい 先生'],
     ctx: 'study', scene: 'じゅぎょう中の おしゃべり', kind: 'normal', hp: 20,
-    moves: [{ t: 'stress', n: 6, say: 'みんなが ふり向く' }, { t: 'stress', n: 6, say: '何の 話を しているか わからなく なった' }],
+    moves: [{ t: 'inject', card: 'shame', say: 'みんなに 見られて 恥ずかしい（恥ずかしさが まざる）' }, { t: 'stress', n: 6, say: 'みんなが ふり向く' }, { t: 'stress', n: 6, say: '何の 話を しているか わからなく なった' }],
     weak: ['think', 'relate'], resist: [], backfire: ['impulse'], situ: ['say_honest', 'review_notes', 'hide_it'],
     other: '先生：「すぐ 切りかえられたね」'
   };
@@ -561,6 +565,33 @@
         { label: '急いで 通りすぎる', effects: {}, result: '家に ついた。' }
       ]
     },
+    wrongly_blamed: {
+      title: 'ぬれぎぬ', unlucky: true,
+      text: '休み時間の あと、教室の 花びんが われていた。近くに いた 自分が うたがわれている。',
+      options: [
+        { label: '「ちがうよ。見ていたのは こう」と 落ちついて 話す', effects: { trust: -1 }, result: '全員は なっとく しなかった。でも 先生は 話を 最後まで 聞いて くれた。' },
+        { label: '「ぼくじゃない！」と 大声で 言い返す', effects: { trust: -2, yoyu: -4 }, result: 'さわぎが 大きくなって、ますます あやしまれた。' },
+        { label: '何も 言えずに だまる', effects: { trust: -2, curse: 1 }, result: '「やっぱり…」と ひそひそ 言われた。' }
+      ]
+    },
+    telephone: {
+      title: 'でんごんゲーム', unlucky: true,
+      text: '友だちに 言った「今日は 遊べない」が、まわりまわって「〇〇とは 遊びたくない」と つたわっていた。',
+      options: [
+        { label: '本人に 直接「そう 言ってないよ」と 話しに 行く', effects: { trust: -1, yoyu: -2 }, result: '少し ぎこちないけど、本人には つたわった。' },
+        { label: 'つたえた子に「話が ちがう！」と おこる', effects: { trust: -2 }, result: '言い合いに なって、話が もっと こじれた。' },
+        { label: 'そのうち わかって くれると 思って ほうっておく', effects: { trust: -2 }, result: 'しばらく その子と 気まずかった。' }
+      ]
+    },
+    group_late: {
+      title: 'おくれた じゅんび', unlucky: true,
+      text: 'グループの 発表の じゅんびが 間に合わなかった。休んだ 子の 分なのに「〇〇が やらなかった」と 言われた。',
+      options: [
+        { label: '「休みの 子の 分だったよ。今から いっしょに やろう」と 言う', effects: { trust: -1, addCard: 'listen_all' }, result: '全員は 気に しなかったけど、何人かは 手つだって くれた。' },
+        { label: '「知らない！」と その場を はなれる', effects: { trust: -2 }, result: 'グループの 空気が 悪く なった。' },
+        { label: '自分が やったことに して だまって 作る', effects: { trust: -1, yoyu: -6 }, result: '作りおわったけど、つかれて しまった。' }
+      ]
+    },
     recess: {
       repeat: true,
       title: '休み時間',
@@ -642,9 +673,9 @@
   // お試し版：4段＋ボス。各段は2マスから1つ選ぶ
   // 1層＝7段＋ボス。課題の半分以上は ボスに 関連する課題（related）。関連する課題を 乗りこえるたびに ボスの ハートが へる
   var ACTS = [
-    { name: '教室', boss: 'test', related: ['dunno', 'homework'], others: ['forgot_item', 'bumped', 'left_out'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'forgot', 'friend_trouble', 'library', 'family_talk', 'friend_retry', 'friend_shrug', 'lost_wallet', 'rainy_day', 'recess'] },
-    { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'friend_trouble', 'library', 'family_talk', 'friend_heavy', 'friend_later', 'new_kid', 'friend_switch', 'recess'] },
-    { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'library', 'family_talk', 'friend_trouble', 'friend_fun', 'friend_switch', 'neighbor', 'friend_later', 'recess'] }
+    { name: '教室', boss: 'test', related: ['dunno', 'homework'], others: ['forgot_item', 'bumped', 'left_out'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'forgot', 'friend_trouble', 'library', 'family_talk', 'friend_retry', 'friend_shrug', 'lost_wallet', 'rainy_day', 'wrongly_blamed', 'recess'] },
+    { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'friend_trouble', 'library', 'family_talk', 'friend_heavy', 'friend_later', 'new_kid', 'friend_switch', 'telephone', 'recess'] },
+    { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'library', 'family_talk', 'friend_trouble', 'friend_fun', 'friend_switch', 'neighbor', 'friend_later', 'group_late', 'recess'] }
   ];
   var ROUTES = [
     { id: 'hard', name: 'しんどいが 力が つく道', note: '課題に 向き合う マスが 多い（4つ）。ボスが 弱くなり、成長しやすい', nodes: ['battle', 'mystery', 'battle', 'event', 'battle', 'mystery', 'battle', 'event', 'event'] },

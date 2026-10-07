@@ -449,3 +449,12 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
 @keyframes gulp { 50% { transform: scale(1.15); } }
 .discfly { position: fixed; left: 50%; bottom: 140px; z-index: 40; padding: 4px 10px; background: var(--paper); border: 2px solid var(--line); border-radius: 8px; font-weight: 800; pointer-events: none; animation: discfly .8s ease-in both; }
 @keyframes discfly { 0% { transform: translate(-50%, 0) scale(.6); opacity: 0; } 25% { transform: translate(-50%, -20px) scale(1); opacity: 1; } 100% { left: calc(100% - 60px); bottom: 40px; transform: translate(-50%, 0) scale(.3) rotate(30deg); opacity: 0; } }
+button.chip { font: inherit; cursor: pointer; color: var(--ink); }
+.review .card, .review .card * { color: var(--ink); }
+.review .card .chance { color: var(--bad); }
+.review .recallsrc, .review .hint { color: #dfe5f5; }
+.review { margin: 12px auto; max-width: 760px; text-align: center; }
+.review .two { margin-top: 10px; }
+.troublebadge.unlucky { background: #e7e3f8; }
+.title.actclear { justify-content: flex-start; padding: 24px 16px 40px; overflow-y: auto; }
+button.chip { align-items: baseline; line-height: 1.2; }

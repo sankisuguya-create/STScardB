@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 14;
+  var ENGINE_VER = 15;
 
   // --- 乱数 ---
   function rand(s) {
@@ -372,8 +372,8 @@
     if (st) b.usage[st]++;
     if (c.type === 'calm') {
       b.calm = true;
-      var pi = b.hand.findIndex(function (x) { return x.id === 'panic'; });
-      if (pi >= 0) { b.exhaust.push(b.hand.splice(pi, 1)[0]); msg(s, '落ちついて、パニックが 1つ おさまった。', 'clear'); }
+      var pi = b.hand.findIndex(function (x) { return x.id === 'panic' || card(x.id).jam; });
+      if (pi >= 0) { var gone = b.hand.splice(pi, 1)[0]; b.exhaust.push(gone); msg(s, '落ちついて、' + card(gone.id).name + 'が 1つ おさまった。', 'clear'); }
     }
 
     var okP = c.chance ? D.CHANCE[c.chance].p : 1;
@@ -397,7 +397,7 @@
       if (c.tame && en.str > 0) { en.str = 0; msg(s, 'ギャグで かわして、相手の いきおいが なくなった。', 'clear'); }
       if (c.clearPanicAll) {
         var np = 0;
-        b.hand = b.hand.filter(function (x) { if (x.id === 'panic') { b.exhaust.push(x); np++; return false; } return true; });
+        b.hand = b.hand.filter(function (x) { if (x.id === 'panic' || card(x.id).jam) { b.exhaust.push(x); np++; return false; } return true; });
         if (np) msg(s, 'パニックが ぜんぶ おさまった。', 'clear');
       }
       if (c.distance && !b.distanced) {
@@ -436,6 +436,8 @@
       log(s, { k: 'curse', why: h.id });
     }
     if (ok && h.temp && c.judge === 'good') b.playedOk[h.id] = 1;
+    if (ok && c.judge === 'good') { s.actGood = s.actGood || {}; s.actGood[h.id] = (s.actGood[h.id] || 0) + 1; }
+    if (st) { s.actUsage = s.actUsage || {}; s.actUsage[st] = (s.actUsage[st] || 0) + 1; }
     log(s, entry);
     var out = outcomeText(s, c, ok, entry, h.id);
     (s.popups || (s.popups = [])).push({ k: 'play', card: h.id, name: c.name, ok: ok, tone: out.tone, text: out.text,
@@ -531,14 +533,16 @@
     if (s.phase !== 'battle') throw new Error('not battle');
     var b = s.battle;
     b.msgs = [];
-    var moya = 0, keep = [], panics = 0;
+    var moya = 0, keep = [], panics = 0, drainEnd = 0;
     b.hand.forEach(function (h) {
       if (h.id === 'moyamoya') moya++;
       if (h.id === 'panic' && fragile(s)) panics++;
+      if (card(h.id).drainEnd) drainEnd += card(h.id).drainEnd;
       if (card(h.id).retain) { keep.push(h); return; }
       if (h.id === 'kattonaru') b.exhaust.push(h); else b.discard.push(h);
     });
     b.hand = keep;
+    if (drainEnd) { hurt(s, drainEnd); msg(s, 'イライラで ストレス +' + drainEnd, 'worry'); }
     if (panics) {
       hurt(s, panics * fragile(s).panicDrain);
       msg(s, 'パニックで ストレス +' + panics * fragile(s).panicDrain, 'worry');
@@ -820,6 +824,8 @@
   // ボスを たおした：次の層へ。さいごの層なら おわり
   function bossDown(s, lost) {
     s.actLost = !!lost;
+    s.actReview = lost ? null : makeReview(s);
+    s.actGood = {}; s.actUsage = {};
     if (lost) { s.bossLost = (s.bossLost || 0) + 1; log(s, { k: 'bossLost', act: s.act }); }
     if (s.act < s.acts - 1) {
       s.act++; s.row = 0; s.pos = null; s.hearts = D.MAP.hearts; s.slack = 0;
@@ -847,6 +853,28 @@
     startBattle(s, 'tutorial');
     return s;
   }
+  // 層クリア：何が 良かったか 振り返る（カード2まいから1まい／成長／アイテム の どれか1つ）
+  function makeReview(s) {
+    var good = s.actGood || {}, use = s.actUsage || {};
+    var cards = Object.keys(good).filter(function (id) { var c = card(id); return c && !c.unplayable && D.REWARD_POOL.concat(D.ADVANCED, D.STARTER).indexOf(id) >= 0 || (c && c.from); })
+      .sort(function (a, b) { return good[b] - good[a]; }).slice(0, 2);
+    var fill = shuffle(s, D.REWARD_POOL.filter(function (id) { return card(id).judge === 'good' && cards.indexOf(id) < 0; }));
+    while (cards.length < 2 && fill.length) cards.push(fill.shift());
+    var stat = Object.keys(D.STATS).filter(function (k) { return s.stats[k] < D.PLAYER.statMax; }).sort(function (a, b) { return (use[b] || 0) - (use[a] || 0); })[0] || null;
+    var items = Object.keys(D.SUPPORTS).filter(function (k) { return s.items.indexOf(k) < 0; });
+    return { cards: cards, counts: cards.map(function (id) { return good[id] || 0; }), stat: stat, statUses: stat ? (use[stat] || 0) : 0, item: items.length ? pick(s, items) : null, taken: null };
+  }
+  function takeReview(s, kind, id) {
+    var r = s.actReview;
+    if (s.phase !== 'actclear' || !r || r.taken) throw new Error('no review');
+    if (kind === 'card') { if (r.cards.indexOf(id) < 0) throw new Error('bad card'); s.deck.push(id); log(s, { k: 'gain', card: id, why: 'review' }); }
+    else if (kind === 'stat') { if (!r.stat) throw new Error('no stat'); s.stats[r.stat]++; log(s, { k: 'grow', stat: r.stat, to: s.stats[r.stat], uses: r.statUses, why: 'review' }); }
+    else if (kind === 'item') { if (!r.item) throw new Error('no item'); gainSupport(s, r.item, 'review'); }
+    else throw new Error('bad kind');
+    r.taken = kind;
+    return s;
+  }
+
   function nextAct(s) {
     if (s.phase !== 'actclear') throw new Error('not actclear');
     s.phase = 'map';
@@ -920,7 +948,7 @@
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, fitsEnemy: fitsEnemy, recallChoices: recallChoices, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, _battle: function (s, eid) { s.floor++; if (s.pos == null) s.pos = 0; startBattle(s, eid); s.phase = 'battle'; return s; }, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, fitsEnemy: fitsEnemy, takeReview: takeReview, recallChoices: recallChoices, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, _battle: function (s, eid) { s.floor++; if (s.pos == null) s.pos = 0; startBattle(s, eid); s.phase = 'battle'; return s; }, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D
