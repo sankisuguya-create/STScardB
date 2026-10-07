@@ -555,6 +555,7 @@
 
   function winBattle(s, passed, escaped) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    if (s.tutorial) { s.phase = 'tutorialdone'; log(s, { k: 'tutorialdone' }); return; }
     log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, passed: !!passed, escaped: !!escaped, turns: b.turn, taken: b.taken || 0 });
     if (passed && E.pass.leave) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'pass:' + en.id }); }
     var statsBefore = { think: s.stats.think, act: s.stats.act, relate: s.stats.relate };
@@ -765,6 +766,15 @@
     s.phase = 'battle';
     return s;
   }
+  // はじめの れんしゅうバトル（操作説明）。本番とは べつの 状態
+  function newTutorial(seed, heroId) {
+    var s = newRun(seed, 1, heroId);
+    s.tutorial = true;
+    s.deck = D.TUTORIAL_DECK.slice();
+    s.items = []; s.equip = [];
+    startBattle(s, 'tutorial');
+    return s;
+  }
   function nextAct(s) {
     if (s.phase !== 'actclear') throw new Error('not actclear');
     s.phase = 'map';
@@ -835,7 +845,7 @@
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D

@@ -319,6 +319,17 @@
     other: 'グループの子：「みんなの 意見が 入って よかった」'
   };
 
+  // れんしゅう用の 課題（はじめの 操作説明だけで 使う。マップには 出ない）
+  ENEMIES.tutorial = {
+    forms: ['ころがる 消しゴム虫', 'どこかへ 行った 消しゴム', 'つくえの 下の 消しゴム'],
+    intro: 'じゅぎょう中に 消しゴムを 落としてしまった。どこに 行ったかな？',
+    ctx: 'study', scene: '消しゴムを 落とした（れんしゅう）', kind: 'normal', hp: 8, art: 'forgot_item',
+    moves: [{ t: 'stress', n: 2, say: 'あせってくる' }, { t: 'stress', n: 2, say: 'ノートが 書けない' }],
+    weak: ['relate'], resist: [], backfire: [], situ: ['ask_next'],
+    other: 'となりの子：「あ、ここに あったよ！」'
+  };
+  var TUTORIAL_DECK = ['try_it', 'endure', 'talk', 'breathe', 'try_it', 'endure'];
+
   // あぶない場面（ときどき 課題の代わりに出る）。戦って勝つのは ほぼ無理で、はなれる・にげる・大人をよぶ が正解
   ENEMIES.fight_near = {
       term: 'short',
@@ -447,7 +458,7 @@
     });
   });
 
-  var DATA = { TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
+  var DATA = { TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
   else root.SST_DATA = DATA;
 })(this);

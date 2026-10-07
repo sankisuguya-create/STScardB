@@ -339,6 +339,18 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 .top .meter .fill { background: #f08c3a; }
 .top .meter.low .fill { background: var(--bad); }
 
+/* せつめい・れんしゅう */
+.rules { gap: 14px; padding: 20px; }
+.rulelist { max-width: 720px; background: var(--paper); color: var(--ink); border: 3px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 16px 20px 16px 40px; font-size: 1.15rem; line-height: 1.8; margin: 0; }
+.rulelist li + li { margin-top: 6px; }
+.rules .two { flex-direction: row; }
+.coach { position: fixed; left: 50%; top: 56px; translate: -50% 0; z-index: 30; width: min(760px, calc(100vw - 24px)); display: flex; align-items: center; gap: 10px; background: #fff7d1; color: var(--ink); border: 3px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 8px 12px; font-size: 1rem; animation: appear .3s ease-out both; }
+.coach b { font-family: var(--display); font-weight: 400; background: var(--gold); border: 2px solid var(--line); border-radius: 999px; padding: 0 8px; white-space: nowrap; }
+.coach span { flex: 1; min-width: 0; }
+button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-space: nowrap; }
+@media (max-width: 760px) { .coach { position: sticky; top: 0; translate: none; left: auto; width: auto; margin: 6px 10px; flex-wrap: wrap; } .rules .two { flex-direction: column; } }
+@media (max-width: 760px) { .coach span { order: 3; flex: 1 1 100%; } .coach button.small { margin-left: auto; } }
+
 </style>
 </head>
 <body>
@@ -665,6 +677,17 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     other: 'グループの子：「みんなの 意見が 入って よかった」'
   };
 
+  // れんしゅう用の 課題（はじめの 操作説明だけで 使う。マップには 出ない）
+  ENEMIES.tutorial = {
+    forms: ['ころがる 消しゴム虫', 'どこかへ 行った 消しゴム', 'つくえの 下の 消しゴム'],
+    intro: 'じゅぎょう中に 消しゴムを 落としてしまった。どこに 行ったかな？',
+    ctx: 'study', scene: '消しゴムを 落とした（れんしゅう）', kind: 'normal', hp: 8, art: 'forgot_item',
+    moves: [{ t: 'stress', n: 2, say: 'あせってくる' }, { t: 'stress', n: 2, say: 'ノートが 書けない' }],
+    weak: ['relate'], resist: [], backfire: [], situ: ['ask_next'],
+    other: 'となりの子：「あ、ここに あったよ！」'
+  };
+  var TUTORIAL_DECK = ['try_it', 'endure', 'talk', 'breathe', 'try_it', 'endure'];
+
   // あぶない場面（ときどき 課題の代わりに出る）。戦って勝つのは ほぼ無理で、はなれる・にげる・大人をよぶ が正解
   ENEMIES.fight_near = {
       term: 'short',
@@ -793,7 +816,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     });
   });
 
-  var DATA = { TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
+  var DATA = { TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT };
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
   else root.SST_DATA = DATA;
 })(this);
@@ -1355,6 +1378,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 
   function winBattle(s, passed, escaped) {
     var b = s.battle, en = b.enemy, E = D.ENEMIES[en.id];
+    if (s.tutorial) { s.phase = 'tutorialdone'; log(s, { k: 'tutorialdone' }); return; }
     log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, passed: !!passed, escaped: !!escaped, turns: b.turn, taken: b.taken || 0 });
     if (passed && E.pass.leave) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'pass:' + en.id }); }
     var statsBefore = { think: s.stats.think, act: s.stats.act, relate: s.stats.relate };
@@ -1565,6 +1589,15 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     s.phase = 'battle';
     return s;
   }
+  // はじめの れんしゅうバトル（操作説明）。本番とは べつの 状態
+  function newTutorial(seed, heroId) {
+    var s = newRun(seed, 1, heroId);
+    s.tutorial = true;
+    s.deck = D.TUTORIAL_DECK.slice();
+    s.items = []; s.equip = [];
+    startBattle(s, 'tutorial');
+    return s;
+  }
   function nextAct(s) {
     if (s.phase !== 'actclear') throw new Error('not actclear');
     s.phase = 'map';
@@ -1635,7 +1668,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
   }
 
   var API = {
-    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
+    ENGINE_VER: ENGINE_VER, newRun: newRun, chooseNode: chooseNode, playCard: playCard, endTurn: endTurn, useSupport: useSupport, reachable: reachable, newTutorial: newTutorial, beginBattle: beginBattle, handLimit: handLimit, nextAct: nextAct, canUseSupport: canUseSupport, setEquip: setEquip, takeSupport: takeSupport,
     pickReward: pickReward, rest: rest, chooseEvent: chooseEvent, leaveEvent: leaveEvent,
     canPlay: canPlay, meetsReq: meetsReq, reqShort: reqShort, preview: preview, intent: intent,
     optionOpen: optionOpen, summary: summary, checkInvariants: checkInvariants, card: card, fits: fits, data: D
@@ -1829,7 +1862,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     return el;
   }
 
-  function save() { if (S && S.phase !== 'battle') P.save(S); }
+  function save() { if (S && !S.tutorial && S.phase !== 'battle') P.save(S); }
 
   function act(fn) {
     try { fn(); } catch (e) { console.error(e); }
@@ -1856,7 +1889,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       h('div', { class: 'nigates' }, Object.keys(S.nigate || {}).map(function (k) {
         return h('div', { class: 'chip nigate', title: '苦手意識' }, [h('span', { class: 'lbl', text: '苦手：' + D.CTX_LABEL[k] }), h('b', { text: String(S.nigate[k]) })]);
       })),
-      h('div', { class: 'floor', text: (S.acts > 1 ? (S.act + 1) + 'そう目・' : '') + Math.min(S.row + 1, S.map.rows.length) + ' / ' + S.map.rows.length + ' だん' })
+      S.tutorial ? h('div', { class: 'floor', text: 'れんしゅう' }) : h('div', { class: 'floor', text: (S.acts > 1 ? (S.act + 1) + 'そう目・' : '') + Math.min(S.row + 1, S.map.rows.length) + ' / ' + S.map.rows.length + ' だん' })
     ]);
   }
 
@@ -1904,13 +1937,60 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     ]));
   }
   function start(mode) { heroScreen(mode === 3 ? 3 : 1); }
+  var pending = null;
+  function beginRun() {
+    S = E.newRun((Date.now() ^ (Math.random() * 1e9)) >>> 0, pending.mode, pending.hero);
+    debriefPage = 0; save(); render();
+  }
+  var RULES = [
+    { t: 'ゲームの 目的', b: ['毎日の「こまった」（課題）に、カード＝自分に できる 行動で こたえて、さいごの ボスまで たどりつこう。', 'ストレスが いっぱいに なると 動けなく なる。ストレスを ためすぎない ように しよう。', 'うまく いかなくても だいじょうぶ。いろいろな 選び方を ためして、どれが 自分にも まわりにも よいか 考えよう。'] },
+    { t: 'バトルの ルール', b: ['課題の「問題の大きさ」を 0に すると、乗りこえ！', 'カードを 使うには「元気」が いる。元気は 毎ターン 3 もどる。', 'ターンを おわると、課題が ストレスを ふやしてくる。「心の準備」の 分は 受けとめられる。', '赤い「しょうどう」カードは すぐ 効くけど、あとで モヤモヤや トラブルに なる。', '相談する・はなれる・時間を かける も、大切な 選び方。場面に 合った カードを えらぼう。'] },
+    { t: 'すすみ方', b: ['マップで 道を えらんで 進む。課題・できごと・ひと休み が ある。', '★の 課題を 乗りこえると、ボスが 弱くなる。', '乗りこえると、新しい カード（選択肢）や 成長が 手に入る。', 'さいごに ふり返りで、自分の 選び方を 見なおそう。'] }
+  ];
+  function rulesScreen(page) {
+    var R = RULES[page];
+    app.replaceChildren(h('main', { class: 'title rules' }, [
+      h('div', { class: 'dots', text: 'せつめい ' + (page + 1) + ' / ' + RULES.length }),
+      h('h2', { text: R.t }),
+      h('ul', { class: 'rulelist' }, R.b.map(function (x) { return h('li', { text: x }); })),
+      h('div', { class: 'two' }, [
+        h('button', { class: 'secondary', onclick: beginRun, text: 'せつめいを とばす' }),
+        page < RULES.length - 1
+          ? h('button', { class: 'primary', onclick: function () { rulesScreen(page + 1); }, text: '次へ' })
+          : h('button', { class: 'primary', onclick: startTutorial, text: 'れんしゅう バトルへ' })
+      ])
+    ]));
+  }
+  function startTutorial() {
+    S = E.newTutorial(1234, pending.hero);
+    sel = -1; render();
+  }
+  // れんしゅう中の ガイド
+  function coach() {
+    if (!S || !S.tutorial || S.phase !== 'battle') return null;
+    var b = S.battle, any = b.hand.some(function (x, i) { return E.canPlay(S, i); });
+    var text;
+    if (b.turn === 1 && sel < 0 && any) text = '① 下の カードを 1まい タップして えらぼう。カードには「何をするか」と「効き目」が 書いてあるよ。';
+    else if (sel >= 0 && E.canPlay(S, sel)) text = '② えらんだ カードを もう一度 タップすると 使えるよ。「解決」は 問題を 小さくし、「心の準備」は ストレスを 受けとめる。';
+    else if (!any || b.energy === 0) text = '③ 元気（黄色の 丸）が なくなったら「ターンを おわる」を おそう。課題が ストレスを ふやしてくる（上の 帯）。';
+    else text = '「よく効く」と 書いた カードは、この 課題に とくに 効くよ。問題の大きさを 0に しよう！';
+    return h('div', { class: 'coach' }, [h('b', { text: 'れんしゅう' }), h('span', { text: text }), h('button', { class: 'secondary small', onclick: beginRun, text: 'とばして 本番へ' })]);
+  }
+  function tutorialDoneScreen() {
+    return h('main', { class: 'title' }, [
+      h('h1', { text: 'れんしゅう クリア！' }),
+      h('p', { class: 'sub', text: 'カードを えらんで、もう一度 タップで 使う。元気が なくなったら ターンを おわる。これで じゅんび OK！' }),
+      h('button', { class: 'primary big', onclick: beginRun, text: 'ぼうけんを はじめる' })
+    ]);
+  }
+
   function heroScreen(mode) {
     var cards = Object.keys(D.HEROES).map(function (id) {
       var H = D.HEROES[id];
       var stat = function (k) { var v = H.stats[k]; return h('span', { class: 'hs' + (v < 0 ? ' minus' : '') }, [D.STATS[k].name + ' ', h('b', { text: v >= 2 ? '◎' : v === 1 ? '○' : v === 0 ? '△' : '×（' + v + '）' })]); };
       return h('button', { class: 'herocard', onclick: function () {
-        S = E.newRun((Date.now() ^ (Math.random() * 1e9)) >>> 0, mode, id);
-        debriefPage = 0; save(); render();
+        pending = { mode: mode, hero: id };
+        rulesScreen(0);
       } }, [
         sprite('hero_' + H.look, 2, 'hpic'),
         h('b', { class: 'hname', text: H.name }),
@@ -2072,8 +2152,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (EN.pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
       EN.anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
     ]);
-    var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(en.id, en.form), en.form, 'mon')]);
-    if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(en.id)) { monster.innerHTML = SST_ILLUST.svg(en.id); }
+    var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(EN.art || en.id, en.form), en.form, 'mon')]);
+    if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(EN.art || en.id)) { monster.innerHTML = SST_ILLUST.svg(EN.art || en.id); }
     var hero = h('div', { class: 'hero' + (b.guard ? ' shield' : '') }, [
       sprite('hero_' + (D.HEROES[S.hero] ? D.HEROES[S.hero].look : 'hayatsu'), 2, 'me'),
       h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: '心の準備' }), h('b', { text: String(b.guard) })])
@@ -2361,8 +2441,10 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     else if (S.phase === 'event') screen = eventScreen();
     else if (S.phase === 'actclear') screen = actClearScreen();
     else if (S.phase === 'intro') screen = introScreen();
+    else if (S.phase === 'tutorialdone') screen = tutorialDoneScreen();
     else screen = endScreen();
-    app.replaceChildren(topBar(), screen);
+    var cc = coach();
+    app.replaceChildren.apply(app, cc ? [topBar(), cc, screen] : [topBar(), screen]);
     app.setAttribute('data-phase', S.phase);
   }
 

@@ -20,7 +20,7 @@
     return el;
   }
 
-  function save() { if (S && S.phase !== 'battle') P.save(S); }
+  function save() { if (S && !S.tutorial && S.phase !== 'battle') P.save(S); }
 
   function act(fn) {
     try { fn(); } catch (e) { console.error(e); }
@@ -47,7 +47,7 @@
       h('div', { class: 'nigates' }, Object.keys(S.nigate || {}).map(function (k) {
         return h('div', { class: 'chip nigate', title: '苦手意識' }, [h('span', { class: 'lbl', text: '苦手：' + D.CTX_LABEL[k] }), h('b', { text: String(S.nigate[k]) })]);
       })),
-      h('div', { class: 'floor', text: (S.acts > 1 ? (S.act + 1) + 'そう目・' : '') + Math.min(S.row + 1, S.map.rows.length) + ' / ' + S.map.rows.length + ' だん' })
+      S.tutorial ? h('div', { class: 'floor', text: 'れんしゅう' }) : h('div', { class: 'floor', text: (S.acts > 1 ? (S.act + 1) + 'そう目・' : '') + Math.min(S.row + 1, S.map.rows.length) + ' / ' + S.map.rows.length + ' だん' })
     ]);
   }
 
@@ -95,13 +95,60 @@
     ]));
   }
   function start(mode) { heroScreen(mode === 3 ? 3 : 1); }
+  var pending = null;
+  function beginRun() {
+    S = E.newRun((Date.now() ^ (Math.random() * 1e9)) >>> 0, pending.mode, pending.hero);
+    debriefPage = 0; save(); render();
+  }
+  var RULES = [
+    { t: 'ゲームの 目的', b: ['毎日の「こまった」（課題）に、カード＝自分に できる 行動で こたえて、さいごの ボスまで たどりつこう。', 'ストレスが いっぱいに なると 動けなく なる。ストレスを ためすぎない ように しよう。', 'うまく いかなくても だいじょうぶ。いろいろな 選び方を ためして、どれが 自分にも まわりにも よいか 考えよう。'] },
+    { t: 'バトルの ルール', b: ['課題の「問題の大きさ」を 0に すると、乗りこえ！', 'カードを 使うには「元気」が いる。元気は 毎ターン 3 もどる。', 'ターンを おわると、課題が ストレスを ふやしてくる。「心の準備」の 分は 受けとめられる。', '赤い「しょうどう」カードは すぐ 効くけど、あとで モヤモヤや トラブルに なる。', '相談する・はなれる・時間を かける も、大切な 選び方。場面に 合った カードを えらぼう。'] },
+    { t: 'すすみ方', b: ['マップで 道を えらんで 進む。課題・できごと・ひと休み が ある。', '★の 課題を 乗りこえると、ボスが 弱くなる。', '乗りこえると、新しい カード（選択肢）や 成長が 手に入る。', 'さいごに ふり返りで、自分の 選び方を 見なおそう。'] }
+  ];
+  function rulesScreen(page) {
+    var R = RULES[page];
+    app.replaceChildren(h('main', { class: 'title rules' }, [
+      h('div', { class: 'dots', text: 'せつめい ' + (page + 1) + ' / ' + RULES.length }),
+      h('h2', { text: R.t }),
+      h('ul', { class: 'rulelist' }, R.b.map(function (x) { return h('li', { text: x }); })),
+      h('div', { class: 'two' }, [
+        h('button', { class: 'secondary', onclick: beginRun, text: 'せつめいを とばす' }),
+        page < RULES.length - 1
+          ? h('button', { class: 'primary', onclick: function () { rulesScreen(page + 1); }, text: '次へ' })
+          : h('button', { class: 'primary', onclick: startTutorial, text: 'れんしゅう バトルへ' })
+      ])
+    ]));
+  }
+  function startTutorial() {
+    S = E.newTutorial(1234, pending.hero);
+    sel = -1; render();
+  }
+  // れんしゅう中の ガイド
+  function coach() {
+    if (!S || !S.tutorial || S.phase !== 'battle') return null;
+    var b = S.battle, any = b.hand.some(function (x, i) { return E.canPlay(S, i); });
+    var text;
+    if (b.turn === 1 && sel < 0 && any) text = '① 下の カードを 1まい タップして えらぼう。カードには「何をするか」と「効き目」が 書いてあるよ。';
+    else if (sel >= 0 && E.canPlay(S, sel)) text = '② えらんだ カードを もう一度 タップすると 使えるよ。「解決」は 問題を 小さくし、「心の準備」は ストレスを 受けとめる。';
+    else if (!any || b.energy === 0) text = '③ 元気（黄色の 丸）が なくなったら「ターンを おわる」を おそう。課題が ストレスを ふやしてくる（上の 帯）。';
+    else text = '「よく効く」と 書いた カードは、この 課題に とくに 効くよ。問題の大きさを 0に しよう！';
+    return h('div', { class: 'coach' }, [h('b', { text: 'れんしゅう' }), h('span', { text: text }), h('button', { class: 'secondary small', onclick: beginRun, text: 'とばして 本番へ' })]);
+  }
+  function tutorialDoneScreen() {
+    return h('main', { class: 'title' }, [
+      h('h1', { text: 'れんしゅう クリア！' }),
+      h('p', { class: 'sub', text: 'カードを えらんで、もう一度 タップで 使う。元気が なくなったら ターンを おわる。これで じゅんび OK！' }),
+      h('button', { class: 'primary big', onclick: beginRun, text: 'ぼうけんを はじめる' })
+    ]);
+  }
+
   function heroScreen(mode) {
     var cards = Object.keys(D.HEROES).map(function (id) {
       var H = D.HEROES[id];
       var stat = function (k) { var v = H.stats[k]; return h('span', { class: 'hs' + (v < 0 ? ' minus' : '') }, [D.STATS[k].name + ' ', h('b', { text: v >= 2 ? '◎' : v === 1 ? '○' : v === 0 ? '△' : '×（' + v + '）' })]); };
       return h('button', { class: 'herocard', onclick: function () {
-        S = E.newRun((Date.now() ^ (Math.random() * 1e9)) >>> 0, mode, id);
-        debriefPage = 0; save(); render();
+        pending = { mode: mode, hero: id };
+        rulesScreen(0);
       } }, [
         sprite('hero_' + H.look, 2, 'hpic'),
         h('b', { class: 'hname', text: H.name }),
@@ -263,8 +310,8 @@
       it.passIn ? h('div', { class: 'passin', text: 'あと ' + it.passIn + ' ターン たえれば、時間とともに 過ぎ去る' + (EN.pass.leave ? '（でも モヤモヤが のこる）' : '') }) : h('div', { class: 'passin no', text: 'これは 時間がたっても 過ぎ去らない' }),
       EN.anxiety ? h('div', { class: 'note', text: 'どきどきして 力が 出にくい。整えるカードを 使うと、そのターンは ふつうに 効く。' + (b.calm ? '（いま 整っている）' : '') }) : null
     ]);
-    var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(en.id, en.form), en.form, 'mon')]);
-    if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(en.id)) { monster.innerHTML = SST_ILLUST.svg(en.id); }
+    var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(EN.art || en.id, en.form), en.form, 'mon')]);
+    if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(EN.art || en.id)) { monster.innerHTML = SST_ILLUST.svg(EN.art || en.id); }
     var hero = h('div', { class: 'hero' + (b.guard ? ' shield' : '') }, [
       sprite('hero_' + (D.HEROES[S.hero] ? D.HEROES[S.hero].look : 'hayatsu'), 2, 'me'),
       h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: '心の準備' }), h('b', { text: String(b.guard) })])
@@ -552,8 +599,10 @@
     else if (S.phase === 'event') screen = eventScreen();
     else if (S.phase === 'actclear') screen = actClearScreen();
     else if (S.phase === 'intro') screen = introScreen();
+    else if (S.phase === 'tutorialdone') screen = tutorialDoneScreen();
     else screen = endScreen();
-    app.replaceChildren(topBar(), screen);
+    var cc = coach();
+    app.replaceChildren.apply(app, cc ? [topBar(), cc, screen] : [topBar(), screen]);
     app.setAttribute('data-phase', S.phase);
   }
 

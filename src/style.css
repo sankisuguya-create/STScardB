@@ -329,3 +329,15 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 /* ストレス（ふえるほど 悪い） */
 .top .meter .fill { background: #f08c3a; }
 .top .meter.low .fill { background: var(--bad); }
+
+/* せつめい・れんしゅう */
+.rules { gap: 14px; padding: 20px; }
+.rulelist { max-width: 720px; background: var(--paper); color: var(--ink); border: 3px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 16px 20px 16px 40px; font-size: 1.15rem; line-height: 1.8; margin: 0; }
+.rulelist li + li { margin-top: 6px; }
+.rules .two { flex-direction: row; }
+.coach { position: fixed; left: 50%; top: 56px; translate: -50% 0; z-index: 30; width: min(760px, calc(100vw - 24px)); display: flex; align-items: center; gap: 10px; background: #fff7d1; color: var(--ink); border: 3px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 8px 12px; font-size: 1rem; animation: appear .3s ease-out both; }
+.coach b { font-family: var(--display); font-weight: 400; background: var(--gold); border: 2px solid var(--line); border-radius: 999px; padding: 0 8px; white-space: nowrap; }
+.coach span { flex: 1; min-width: 0; }
+button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-space: nowrap; }
+@media (max-width: 760px) { .coach { position: sticky; top: 0; translate: none; left: auto; width: auto; margin: 6px 10px; flex-wrap: wrap; } .rules .two { flex-direction: column; } }
+@media (max-width: 760px) { .coach span { order: 3; flex: 1 1 100%; } .coach button.small { margin-left: auto; } }

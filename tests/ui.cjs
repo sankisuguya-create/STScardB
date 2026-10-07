@@ -20,6 +20,15 @@ const fs = require('node:fs');
   await snap('00-title');
   await page.tap('button.primary');
   await snap('00b-hero'); await page.tap('.herocard >> nth=' + Math.floor(Math.random() * 5));
+  // せつめい 3まい → れんしゅう バトル（ガイドに したがって 勝つ）→ 本番
+  for (let k = 0; k < 3; k++) { await snap('00c-rules' + k); await page.tap('main.rules button.primary'); }
+  for (let k = 0; k < 40; k++) {
+    if (await page.$('.coach') === null) break;
+    await snap('00d-tutorial');
+    const c = await page.$$('.hand .card:not(.off)');
+    if (c.length) { await c[0].tap(); await snap('00e-tutorial-sel'); await page.tap('.hand .card.selected'); } else await page.tap('.endturn');
+  }
+  await snap('00f-tutorialdone'); await page.tap('main button.primary');
   let overflow = [];
   for (let step = 0; step < 1500; step++) {
     const phase = await page.getAttribute('#app', 'data-phase');
