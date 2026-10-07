@@ -53,10 +53,17 @@
 
   var selSup = null;
   var lastDealKey = '', lastMoyaKey = '', lastClearKey = '', lastPlay = null, shownPlay = null, lastHitKey = '';
-  function sprite(key, form, cls) {
+  // ストレスの 割合で 主人公の 見た目を かえる
+  function heroMood() {
+    if (!S) return 0;
+    if (S.battle && S.battle.frozen) return 4;
+    var r = (S.maxYoyu - S.yoyu) / S.maxYoyu;
+    return r >= 0.85 ? 3 : r >= 0.65 ? 2 : r >= 0.4 ? 1 : 0;
+  }
+  function sprite(key, form, cls, mood) {
     var cv = document.createElement('canvas');
     cv.className = 'px ' + (cls || '');
-    if (root.SST_SPRITES && SST_SPRITES.has(key)) SST_SPRITES.draw(cv, key, form || 0);
+    if (root.SST_SPRITES && SST_SPRITES.has(key)) SST_SPRITES.draw(cv, key, form || 0, mood || 0);
     return cv;
   }
   // アイテム：つけているもの（3つまで）。戦いごとに1回ずつ
@@ -318,7 +325,8 @@
     var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(EN.art || en.id, en.form), en.form, 'mon')]);
     if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(EN.art || en.id)) { monster.innerHTML = SST_ILLUST.svg(EN.art || en.id); }
     var hero = h('div', { class: 'hero' + (b.guard ? ' shield' : '') }, [
-      sprite('hero_' + (D.HEROES[S.hero] ? D.HEROES[S.hero].look : 'hayatsu'), 2, 'me'),
+      sprite('hero_' + (D.HEROES[S.hero] ? D.HEROES[S.hero].look : 'hayatsu'), 2, 'me mood' + heroMood(), heroMood()),
+      [null, 'あせ…', 'つらい…', 'もう 限界…', '動けない'][heroMood()] ? h('div', { class: 'moodlabel', text: [null, 'あせ…', 'つらい…', 'もう 限界…', '動けない'][heroMood()] }) : null,
       h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: '心の準備' }), h('b', { text: String(b.guard) })])
     ]);
     var fx = [];

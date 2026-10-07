@@ -369,3 +369,10 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
 .hurtflash { position: fixed; inset: 0; z-index: 25; pointer-events: none; background: radial-gradient(circle, rgba(229,72,77,0) 40%, rgba(229,72,77,.55) 100%); animation: flash .6s ease-out both; }
 @keyframes flash { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
 @media (max-width: 760px) { .routes { width: 100%; } .numpop.solve { right: 30px; } }
+
+/* 主人公の ストレスの 見た目 */
+.hero canvas.mood2 { animation: tremble .5s steps(2) infinite; }
+.hero canvas.mood3 { animation: tremble .25s steps(2) infinite; filter: saturate(.6); }
+.hero canvas.mood4 { filter: grayscale(.8) brightness(.85); }
+@keyframes tremble { 50% { transform: translateX(2px); } }
+.hero .moodlabel { font-size: .75rem; font-weight: 800; color: #ffd6d6; text-shadow: 0 1px 0 var(--line); }

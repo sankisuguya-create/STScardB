@@ -347,12 +347,41 @@ js = """// 自動生成（scripts/sprites.py）。直接編集しない
     ring(g, '#5a1e8c'); ring(g, 'rgba(120,50,190,0.6)'); ring(g, 'rgba(120,50,190,0.3)');
     return g;
   }
-  function draw(cv, key, form) {
+  // 主人公の ストレスの 見た目：mood 0=ふつう／1=汗／2=汗＋顔色が わるい／3=まっさお（動けない）
+  var SKIN = { '#f6cfa8': 1, '#e3ae85': 1 };
+  var PALE = ['#f1dcc4', '#d9e3d0', '#c9d3dd'];
+  function stressLook(g, key, mood) {
+    var art = ART[key], top = N, left = N, right = -1;
+    for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) if (art[r][c] === 's') { if (r < top) top = r; if (c < left) left = c; if (c > right) right = c; }
+    if (top === N) return g;
+    if (mood >= 2) {
+      var pale = PALE[mood - 2] || PALE[2];
+      for (var y = 0; y < SIZE; y++) for (var x = 0; x < SIZE; x++) if (SKIN[g[y][x]]) g[y][x] = pale;
+      // 笑顔を 消す（口の 赤を 顔色に）
+      for (var r3 = top; r3 < top + 14 && r3 < N; r3++) for (var c3 = left; c3 <= right; c3++) if (art[r3][c3] === 'r') g[r3 + M][c3 + M] = pale;
+      // 目の下の くま
+      for (var r2 = top; r2 < top + 12 && r2 < N; r2++) for (var c2 = left; c2 <= right; c2++) if (art[r2][c2] === 'k' && art[r2 - 1] && art[r2 - 1][c2] === 'k' && art[r2 + 1] && art[r2 + 1][c2] === 's') g[r2 + 1 + M][c2 + M] = '#9aa4c8';
+    }
+    if (mood >= 3) {
+      // 青い たて線（どんより）
+      for (var c4 = left + 1; c4 <= right - 1; c4 += 2) for (var r4 = top + 1; r4 < top + 4; r4++) if (art[r4] && art[r4][c4] === 's') g[r4 + M][c4 + M] = '#5b6fb5';
+    }
+    if (mood >= 1) {
+      var drops = mood >= 2 ? [[right + 2, top + 2], [right + 3, top + 5], [left - 3, top + 3]] : [[right + 2, top + 3]];
+      drops.forEach(function (d) {
+        var dx = d[0] + M, dy = d[1] + M;
+        [[0, 0], [0, 1], [-1, 1], [1, 1], [-1, 2], [0, 2], [1, 2], [0, 3]].forEach(function (o) { var yy = dy + o[1], xx = dx + o[0]; if (g[yy] && xx >= 0 && xx < SIZE) g[yy][xx] = o[1] === 0 ? '#ffffff' : '#7fd3f0'; });
+      });
+    }
+    return g;
+  }
+  function draw(cv, key, form, mood) {
     cv.width = SIZE; cv.height = SIZE;
     var x = cv.getContext('2d');
     x.clearRect(0, 0, SIZE, SIZE);
     var g = grid(key);
     if (form === 1) g = aura(g);
+    if (mood) g = stressLook(g, key, mood);
     for (var yy = 0; yy < SIZE; yy++) for (var xx = 0; xx < SIZE; xx++) if (g[yy][xx]) { x.fillStyle = g[yy][xx]; x.fillRect(xx, yy, 1, 1); }
     if (form === 1) {
       x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(70,20,110,0.28)'; x.fillRect(0, 0, SIZE, SIZE);

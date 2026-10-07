@@ -379,6 +379,13 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
 @keyframes flash { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
 @media (max-width: 760px) { .routes { width: 100%; } .numpop.solve { right: 30px; } }
 
+/* 主人公の ストレスの 見た目 */
+.hero canvas.mood2 { animation: tremble .5s steps(2) infinite; }
+.hero canvas.mood3 { animation: tremble .25s steps(2) infinite; filter: saturate(.6); }
+.hero canvas.mood4 { filter: grayscale(.8) brightness(.85); }
+@keyframes tremble { 50% { transform: translateX(2px); } }
+.hero .moodlabel { font-size: .75rem; font-weight: 800; color: #ffd6d6; text-shadow: 0 1px 0 var(--line); }
+
 </style>
 </head>
 <body>
@@ -1766,12 +1773,41 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     ring(g, '#5a1e8c'); ring(g, 'rgba(120,50,190,0.6)'); ring(g, 'rgba(120,50,190,0.3)');
     return g;
   }
-  function draw(cv, key, form) {
+  // 主人公の ストレスの 見た目：mood 0=ふつう／1=汗／2=汗＋顔色が わるい／3=まっさお（動けない）
+  var SKIN = { '#f6cfa8': 1, '#e3ae85': 1 };
+  var PALE = ['#f1dcc4', '#d9e3d0', '#c9d3dd'];
+  function stressLook(g, key, mood) {
+    var art = ART[key], top = N, left = N, right = -1;
+    for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) if (art[r][c] === 's') { if (r < top) top = r; if (c < left) left = c; if (c > right) right = c; }
+    if (top === N) return g;
+    if (mood >= 2) {
+      var pale = PALE[mood - 2] || PALE[2];
+      for (var y = 0; y < SIZE; y++) for (var x = 0; x < SIZE; x++) if (SKIN[g[y][x]]) g[y][x] = pale;
+      // 笑顔を 消す（口の 赤を 顔色に）
+      for (var r3 = top; r3 < top + 14 && r3 < N; r3++) for (var c3 = left; c3 <= right; c3++) if (art[r3][c3] === 'r') g[r3 + M][c3 + M] = pale;
+      // 目の下の くま
+      for (var r2 = top; r2 < top + 12 && r2 < N; r2++) for (var c2 = left; c2 <= right; c2++) if (art[r2][c2] === 'k' && art[r2 - 1] && art[r2 - 1][c2] === 'k' && art[r2 + 1] && art[r2 + 1][c2] === 's') g[r2 + 1 + M][c2 + M] = '#9aa4c8';
+    }
+    if (mood >= 3) {
+      // 青い たて線（どんより）
+      for (var c4 = left + 1; c4 <= right - 1; c4 += 2) for (var r4 = top + 1; r4 < top + 4; r4++) if (art[r4] && art[r4][c4] === 's') g[r4 + M][c4 + M] = '#5b6fb5';
+    }
+    if (mood >= 1) {
+      var drops = mood >= 2 ? [[right + 2, top + 2], [right + 3, top + 5], [left - 3, top + 3]] : [[right + 2, top + 3]];
+      drops.forEach(function (d) {
+        var dx = d[0] + M, dy = d[1] + M;
+        [[0, 0], [0, 1], [-1, 1], [1, 1], [-1, 2], [0, 2], [1, 2], [0, 3]].forEach(function (o) { var yy = dy + o[1], xx = dx + o[0]; if (g[yy] && xx >= 0 && xx < SIZE) g[yy][xx] = o[1] === 0 ? '#ffffff' : '#7fd3f0'; });
+      });
+    }
+    return g;
+  }
+  function draw(cv, key, form, mood) {
     cv.width = SIZE; cv.height = SIZE;
     var x = cv.getContext('2d');
     x.clearRect(0, 0, SIZE, SIZE);
     var g = grid(key);
     if (form === 1) g = aura(g);
+    if (mood) g = stressLook(g, key, mood);
     for (var yy = 0; yy < SIZE; yy++) for (var xx = 0; xx < SIZE; xx++) if (g[yy][xx]) { x.fillStyle = g[yy][xx]; x.fillRect(xx, yy, 1, 1); }
     if (form === 1) {
       x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(70,20,110,0.28)'; x.fillRect(0, 0, SIZE, SIZE);
@@ -1922,10 +1958,17 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
 
   var selSup = null;
   var lastDealKey = '', lastMoyaKey = '', lastClearKey = '', lastPlay = null, shownPlay = null, lastHitKey = '';
-  function sprite(key, form, cls) {
+  // ストレスの 割合で 主人公の 見た目を かえる
+  function heroMood() {
+    if (!S) return 0;
+    if (S.battle && S.battle.frozen) return 4;
+    var r = (S.maxYoyu - S.yoyu) / S.maxYoyu;
+    return r >= 0.85 ? 3 : r >= 0.65 ? 2 : r >= 0.4 ? 1 : 0;
+  }
+  function sprite(key, form, cls, mood) {
     var cv = document.createElement('canvas');
     cv.className = 'px ' + (cls || '');
-    if (root.SST_SPRITES && SST_SPRITES.has(key)) SST_SPRITES.draw(cv, key, form || 0);
+    if (root.SST_SPRITES && SST_SPRITES.has(key)) SST_SPRITES.draw(cv, key, form || 0, mood || 0);
     return cv;
   }
   // アイテム：つけているもの（3つまで）。戦いごとに1回ずつ
@@ -2187,7 +2230,8 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     var monster = h('div', { class: 'monster f' + en.form }, [sprite(SST_SPRITES.enemyKey(EN.art || en.id, en.form), en.form, 'mon')]);
     if (en.form === 2 && root.SST_ILLUST && SST_ILLUST.svg(EN.art || en.id)) { monster.innerHTML = SST_ILLUST.svg(EN.art || en.id); }
     var hero = h('div', { class: 'hero' + (b.guard ? ' shield' : '') }, [
-      sprite('hero_' + (D.HEROES[S.hero] ? D.HEROES[S.hero].look : 'hayatsu'), 2, 'me'),
+      sprite('hero_' + (D.HEROES[S.hero] ? D.HEROES[S.hero].look : 'hayatsu'), 2, 'me mood' + heroMood(), heroMood()),
+      [null, 'あせ…', 'つらい…', 'もう 限界…', '動けない'][heroMood()] ? h('div', { class: 'moodlabel', text: [null, 'あせ…', 'つらい…', 'もう 限界…', '動けない'][heroMood()] }) : null,
       h('div', { class: 'chip guard' + (b.guard ? ' on' : '') }, [h('span', { class: 'lbl', text: '心の準備' }), h('b', { text: String(b.guard) })])
     ]);
     var fx = [];
