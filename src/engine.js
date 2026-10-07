@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 10;
+  var ENGINE_VER = 11;
 
   // --- 乱数 ---
   function rand(s) {
@@ -128,8 +128,9 @@
     s.nodeRelated = !!n.related;
     if (n.kind === 'mystery') {
       var act = D.ACTS[s.act];
-      var mr = rand(s);
-      if (mr < D.MAP.mysteryElite) { startBattle(s, pick(s, act.elites)); s.phase = 'intro'; }
+      var mr = rand(s), tp = Math.min(D.MAP.troubleMax, (s.impulse || 0) * D.MAP.troublePer);
+      if (tp > 0 && rand(s) < tp) { startBattle(s, pick(s, D.TROUBLE_ENEMIES)); s.phase = 'intro'; s.mysteryBattle = true; log(s, { k: 'troubleMon', p: tp }); }
+      else if (mr < D.MAP.mysteryElite) { startBattle(s, pick(s, act.elites)); s.phase = 'intro'; }
       else if (mr < D.MAP.mysteryElite + D.MAP.mysteryBattle) {
         var pool = act.others.concat(rand(s) < D.RULES.dangerChance * 2 ? act.dangers : []);
         startBattle(s, pick(s, pool)); s.phase = 'intro'; s.mysteryBattle = true;
@@ -144,6 +145,7 @@
   }
 
   function advance(s) {
+    s.popups = (s.popups || []).filter(function (p) { return p.k !== 'play'; });
     s.row++;
     s.phase = 'map';
     s.battle = null; s.reward = null; s.event = null;
@@ -365,6 +367,7 @@
     var entry = { k: 'play', card: h.id, enemy: en.id, ok: ok, judge: c.judge, style: c.style, temp: !!h.temp, revealedBefore: en.revealed };
 
     if (c.trust) addTrust(s, c.trust, h.id, c.trust > 0);
+    if (c.judge === 'impulse') s.impulse = (s.impulse || 0) + 1;
     var tr = D.TROUBLE_OF[h.id];
     if (tr && (!s.trouble || D.TROUBLE_RANK.indexOf(tr) < D.TROUBLE_RANK.indexOf(s.trouble))) s.trouble = tr;
 
@@ -748,13 +751,14 @@
     if (s.phase !== 'event' || s.event.done) throw new Error('not event');
     var o = D.EVENTS[s.event.id].options[i];
     if (!o || !optionOpen(s, o)) throw new Error('bad option');
-    var e = o.effects;
+    var e = o.effects, y0 = s.yoyu, t0 = s.trust, it0 = s.items.length;
     if (e.trust) addTrust(s, e.trust, 'event:' + s.event.id, false);
     if (e.yoyu) s.yoyu = Math.max(1, Math.min(s.maxYoyu, s.yoyu + e.yoyu));
     if (e.slack) { s.slack = (s.slack || 0) + e.slack; log(s, { k: 'slack', n: s.slack }); }
     if (e.addCard) { s.deck.push(e.addCard); log(s, { k: 'gain', card: e.addCard, why: 'event' }); }
     if (e.support) gainSupport(s, e.support, 'event');
     if (e.curse) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'event:' + s.event.id }); }
+    s.event.changes = { stress: y0 - s.yoyu, trust: s.trust - t0, card: e.addCard || null, support: s.items.length > it0 ? e.support : null, curse: e.curse || 0, slack: e.slack || 0 };
     s.event.done = i;
     log(s, { k: 'choice', id: s.event.id, i: i });
     return s;

@@ -500,3 +500,26 @@ test('耐久：ストレス6割以下で たえきると モヤモヤは のこ�
   assert.ok(s.reward.passed && s.reward.endured);
   assert.strictEqual(s.deck.filter((x) => x === 'moyamoya').length, n0);
 });
+
+test('衝動カードを 使うほど ？マスで トラブル課題が 出やすい', () => {
+  let calm = 0, wild = 0;
+  for (let seed = 1; seed < 400; seed++) {
+    for (const imp of [0, 10]) {
+      const s = E.newRun(seed, 1, 'hanoko'); s.impulse = imp;
+      const i = E.reachable(s).find((k) => s.map.rows[0][k].kind === 'mystery');
+      if (i === undefined) { s.map.rows[0][0].kind = 'mystery'; E.chooseNode(s, 0); } else E.chooseNode(s, i);
+      const tr = s.battle && D.ENEMIES[s.battle.enemy.id].trouble;
+      if (tr) { if (imp) wild++; else calm++; }
+    }
+  }
+  assert.strictEqual(calm, 0);
+  assert.ok(wild > 100, String(wild));
+});
+
+test('できごと：えらんだ結果の 変化を 記録する', () => {
+  const s = E.newRun(1, 1, 'hanoko'); s.yoyu = 20;
+  s.phase = 'event'; s.event = { id: 'recess', done: null };
+  E.chooseEvent(s, 0);
+  assert.strictEqual(s.event.changes.stress, -18);
+  assert.strictEqual(s.event.changes.trust, 1);
+});

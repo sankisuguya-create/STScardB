@@ -330,6 +330,36 @@
     other: 'グループの子：「みんなの 意見が 入って よかった」'
   };
 
+
+  // ===== トラブル課題（衝動的な 行動が 多いほど ？マスで 出やすい）=====
+  ENEMIES.payback = {
+    trouble: true, art: 'bumped',
+    intro: 'この前 カッと なって やり返した 子が、今日は こっちを にらんでいる。「この前の、おぼえてるからな」',
+    forms: ['しかえし 火の玉', 'にらんでくる あの子', 'まだ おこっている 子'],
+    ctx: 'conflict', scene: 'しかえし', kind: 'normal', hp: 30,
+    moves: [{ t: 'inject', card: 'tataku', say: 'また 手が 出そうに なる（たたく が まざる）' }, { t: 'stress', n: 8, say: 'にらまれる' }, { t: 'grow', n: 2, say: '話が 大きく なっていく' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['apologize', 'tell_feeling', 'hit_back'],
+    other: 'あの子：「…あやまってくれたなら、もう いいよ」'
+  };
+  ENEMIES.bad_rep = {
+    trouble: true, art: 'rumor',
+    intro: '教室に 入ると、ひそひそ 声。「あの子、すぐ おこるんだって」 自分の ことが うわさに なっている。',
+    forms: ['うわさの 黒い けむり', 'ひそひそ 話す クラスの 子', '前の ことを 気にしている 子たち'],
+    ctx: 'tease', scene: '自分の うわさ', kind: 'normal', hp: 28,
+    moves: [{ t: 'inject', card: 'warukuchi', say: '言い返したく なる（悪口が まざる）' }, { t: 'stress', n: 8, say: '目を そらされる' }, { t: 'stress', n: 7, say: 'うわさが 広がる' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['not_join', 'tell_teacher', 'spread'],
+    other: 'クラスの子：「ちゃんと あやまってたの、見てたよ」'
+  };
+  ENEMIES.cold_class = {
+    trouble: true, art: 'left_out',
+    intro: '休み時間。いつもの 遊びに 行ったら、みんなが ちょっと だまった。「…どうする？」と 目を 見合わせている。',
+    forms: ['つめたい かぜの かべ', '目を 見合わせる みんな', 'まだ 様子を 見ている みんな'],
+    ctx: 'join', scene: 'みんなが よそよそしい', kind: 'normal', hp: 30,
+    moves: [{ t: 'stress', n: 7, say: 'さそって もらえない' }, { t: 'worry', say: '「もう 入れて もらえない？」と 考えてしまう' }, { t: 'stress', n: 8, say: '休み時間が おわっていく' }],
+    weak: ['relate'], resist: [], backfire: ['impulse'], situ: ['let_me_in', 'invite_other', 'sulk'],
+    other: '遊んでいた子：「この前は びっくりした。でも、また いっしょに やろう」'
+  };
+
   // れんしゅう用の 課題（はじめの 操作説明だけで 使う。マップには 出ない）
   ENEMIES.tutorial = {
     forms: ['ころがる 消しゴム虫', 'どこかへ 行った 消しゴム', 'つくえの 下の 消しゴム'],
@@ -472,7 +502,7 @@
     { id: 'easy', name: '楽そうな道', note: '課題は 1つ だけで 休める。でも 先のばしに すると、ボスが 大きくなる', nodes: ['mystery', 'slack', 'event', 'slack', 'rest', 'battle', 'slack', 'event', 'rest'] }
   ];
 
-  var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.15, mysteryElite: 0.05, slackBoss: 0.05, actHealAmount: 0, relatedShare: 0.5, hearts: 3, heartHp: 0.18, heartStress: 0.2, bossBase: 1.15, actHeal: 1 };
+  var MAP = { rows: 10, cols: 3, paths: 3, crossEdge: 0, straight: true, mysteryBattle: 0.15, mysteryElite: 0.05, troublePer: 0.06, troubleMax: 0.6, slackBoss: 0.05, actHealAmount: 0, relatedShare: 0.5, hearts: 3, heartHp: 0.18, heartStress: 0.2, bossBase: 1.15, actHeal: 1 };
 
   // カードを 使った時の「どうなったか」（場面 × カードの系統）
   var OUTCOME = {
@@ -502,7 +532,7 @@
     });
   });
 
-  var DATA = { ROUTES: ROUTES, TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT, OUTCOME: OUTCOME };
+  var DATA = { ROUTES: ROUTES, TUTORIAL_DECK: TUTORIAL_DECK, TERM_LABEL: TERM_LABEL, RARE_LINE: RARE_LINE, ADVANCED: ADVANCED, HEROES: HEROES, TROUBLE_OF: TROUBLE_OF, TROUBLE_RANK: TROUBLE_RANK, MAP: MAP, FORMS: FORMS, TEACHER_CARDS: TEACHER_CARDS, FRIEND_CARDS: FRIEND_CARDS, SUPPORTS: SUPPORTS, SUPPORT_RULES: SUPPORT_RULES, CTX_LABEL: CTX_LABEL, STATS: STATS, TYPE_LABEL: TYPE_LABEL, CHANCE: CHANCE, PLAYER: PLAYER, RULES: RULES, CARDS: CARDS, STARTER: STARTER, REWARD_POOL: REWARD_POOL, ENEMIES: ENEMIES, EVENTS: EVENTS, ACTS: ACTS, TEXT: TEXT, OUTCOME: OUTCOME, TROUBLE_ENEMIES: ['payback', 'bad_rep', 'cold_class'] };
   if (typeof module !== 'undefined' && module.exports) module.exports = DATA;
   else root.SST_DATA = DATA;
 })(this);

@@ -426,3 +426,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
 @media (max-width: 760px) { .popwrap { top: 64px; } .heartpop .popstage { height: 130px; } .heartpop canvas.popboss { width: 110px; height: 110px; } .monster .spark { display: none; } .monster .spark:nth-of-type(odd) { display: block; } }
 @media (prefers-reduced-motion: reduce) { .monster .slash, .monster .spark { display: none; } }
 .heartpop canvas.popboss.still { animation: tremble .5s steps(2) infinite; transform: none; }
+.changes { margin: 10px 0 14px; padding: 10px 12px; background: var(--paper); border: 2px solid var(--line); border-radius: 10px; }
+.changes b { display: block; font-size: .85rem; color: var(--sub); margin-bottom: 6px; }
+.changes .fx { font-size: 1rem; padding: 4px 10px; }
+.intro .troublebadge { margin-bottom: 8px; }

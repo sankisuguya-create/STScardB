@@ -187,10 +187,11 @@
   // 戦いの前に、状きょうを 語る ページ
   function introScreen() {
     var en = S.battle.enemy, EN = D.ENEMIES[en.id];
-    var kind = en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : en.kind === 'danger' ? 'あぶない場面' : '課題';
+    var kind = EN.trouble ? 'トラブル' : en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : en.kind === 'danger' ? 'あぶない場面' : '課題';
     return h('main', { class: 'intro k-' + en.kind }, [
+      EN.trouble ? h('div', { class: 'troublebadge', text: 'トラブル：これまでの 衝動的な 行動が 原因で 起きた（衝動カードを 使うほど ？マスで 出やすくなる）' }) : null,
       h('div', { class: 'intro-kind', text: kind + '：' + EN.scene }),
-      h('div', { class: 'intro-art' }, [sprite(SST_SPRITES.enemyKey(en.id, en.form), en.form, 'mon')]),
+      h('div', { class: 'intro-art' }, [sprite(SST_SPRITES.enemyKey(EN.art || en.id, en.form), en.form, 'mon')]),
       h('p', { class: 'intro-text', text: EN.intro }),
       h('button', { class: 'primary big', onclick: function () { act(function () { E.beginBattle(S); }); }, text: '向き合う' })
     ]);
@@ -311,7 +312,7 @@
     var itText = it.t === 'stress' ? 'ストレス +' + it.n : it.t === 'grow' ? '問題の いきおい +' + it.n : 'モヤモヤが まざる';
     var hpPct = Math.max(0, Math.round(en.hp / en.maxHp * 100));
     var bubble = h('section', { class: 'bubble k-' + en.kind }, [
-      h('div', { class: 'ekind', text: (en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
+      h('div', { class: 'ekind', text: (EN.trouble ? 'トラブル' : en.kind === 'boss' ? 'ボス' : en.kind === 'elite' ? '大きなかべ' : '課題') + '：' + EN.scene }),
       h('h2', { class: 'ename' }, [en.name, en.kind === 'boss' ? hearts(S.hearts) : null]),
       h('div', { class: 'meter hp' }, [
         h('span', { class: 'lbl', text: '問題の大きさ' }),
@@ -396,7 +397,9 @@
   // --- 報酬 ---
   function rewardScreen() {
     var r = S.reward;
+    var lastPop = (S.popups || []).filter(function (p) { return p.k === 'play'; }).pop();
     return h('main', { class: 'reward' }, [
+      lastPop && !(S.popups || []).some(function (p) { return p.k === 'heart'; }) ? playPopView(lastPop, true) : null,
       h('h2', { text: r.frozen ? '時間が すぎた…' : r.fled ? 'その場を はなれた' : r.escaped ? '安全な ところへ はなれた！' : r.passed ? '時間が たった' : '乗りこえた！' }),
       r.frozen ? h('p', { class: 'story', text: '動けないまま、時間が すぎた。「' + D.CTX_LABEL[r.frozen.ctx] + '」に 苦手意識が ついた（' + r.frozen.to + '）。この場面では ストレスが 少し ふえる。ストレスは 9割まで さがった。' }) : null,
       r.fled ? h('p', { class: 'story', text: 'にげたので、問題は そのまま のこった（モヤモヤが デッキに 入った）。にげるのが いい場面と、そうでない場面が ある。' }) : null,
@@ -458,6 +461,22 @@
   }
 
   // --- できごと ---
+  // できごとで 何が 変わったか
+  function changeChips(c) {
+    if (!c) return null;
+    var out = [];
+    if (c.stress < 0) out.push(h('span', { class: 'fx heal', text: 'ストレス ' + c.stress }));
+    if (c.stress > 0) out.push(h('span', { class: 'fx bad', text: 'ストレス +' + c.stress }));
+    if (c.trust > 0) out.push(h('span', { class: 'fx trust', text: '信頼 +' + c.trust }));
+    if (c.trust < 0) out.push(h('span', { class: 'fx bad', text: '信頼 ' + c.trust }));
+    if (c.card) out.push(h('span', { class: 'fx guard', text: 'カード「' + E.card(c.card).name.replace(/^「|」$/g, '') + '」を 手に入れた' }));
+    if (c.support) out.push(h('span', { class: 'fx guard', text: 'アイテム「' + D.SUPPORTS[c.support].name + '」を 手に入れた' }));
+    if (c.curse) out.push(h('span', { class: 'fx bad', text: 'モヤモヤが デッキに 入った' }));
+    if (c.slack) out.push(h('span', { class: 'fx bad', text: 'ボスが 少し 大きくなった' }));
+    if (!out.length) out.push(h('span', { class: 'fx', text: '変化なし' }));
+    return h('div', { class: 'changes' }, [h('b', { text: 'かわったこと' }), h('div', { class: 'fxs' }, out)]);
+  }
+
   function eventScreen() {
     var ev = D.EVENTS[S.event.id], done = S.event.done;
     return h('main', { class: 'event' }, [
@@ -472,6 +491,7 @@
         }))
         : h('div', {}, [
           h('p', { class: 'result', text: ev.options[done].result }),
+          changeChips(S.event.changes),
           h('button', { class: 'primary', onclick: function () { act(function () { E.leaveEvent(S); }); }, text: '次へ' })
         ])
     ]);
@@ -678,7 +698,7 @@
         h('button', { class: 'primary', onclick: function () { S.popups = S.popups.filter(function (p) { return p !== heart && p.k !== 'play'; }); save(); render(); }, text: 'つぎへ' })
       ])]);
     }
-    if (!play) return null;
+    if (!play || S.phase !== 'battle') return null;
     var key = play.card + ':' + play.text + ':' + ps.length + ':' + S.floor;
     if (popTimerKey !== key) {
       popTimerKey = key; clearTimeout(popTimer);
