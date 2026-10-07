@@ -4875,6 +4875,18 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
     }
   }
 
+  function line(g, x0, y0, x1, y1, w, v) {
+    var n = Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0))) * 2 + 1;
+    for (var i = 0; i <= n; i++) { var t = i / n; ell(g, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, w / 2, w / 2, v); }
+  }
+  // デフォルメ体型：大きめの 頭・耳・なで肩
+  function chibi(g, dy, o) {
+    var sw = o.shoulder || 14;
+    ell(g, 32, 50, sw, 7, 1); rect(g, 32 - sw, 50, sw * 2 + 1, 14, 1);  // 肩と 胴
+    rect(g, 29, 38 + dy * 0.5, 7, 8, 1);                                 // くび
+    ell(g, 32, 28 + dy, 12, 12.5, 1);                                    // 頭
+    ell(g, 20, 30 + dy, 2, 3, 1); ell(g, 44, 30 + dy, 2, 3, 1);          // 耳
+  }
   // 体（肩・胴）と 頭。dy＝うつむき（頭を 下げる）
   function body(g, o) {
     var sw = o.shoulder || 15, top = 44;
@@ -4890,24 +4902,29 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
       ell(g, 32, 24 + dy, 13, 11, 1); rect(g, 19, 24 + dy, 4, 12, 1); rect(g, 41, 24 + dy, 4, 12, 1);
       return { glasses: true };
     },
-    // B：つんつん頭
+    // B：ボリュームの ある つんつん頭。片手を あげて「おーい！」と あいさつ（人なつっこい）
     tario: function (g, dy) {
-      body(g, { shoulder: 15 }); head(g, dy);
-      for (var i = 0; i < 6; i++) { var x = 22 + i * 4; poly(g, [[x - 3, 21 + dy], [x + 1, 11 + dy - (i % 2) * 2], [x + 4, 21 + dy]], 1); }
+      chibi(g, dy, { shoulder: 14 });
+      ell(g, 32, 22 + dy, 13, 8, 1);
+      [[19, 22, 15, 15], [22, 18, 20, 10], [27, 16, 26, 8], [33, 15, 33, 7], [38, 16, 40, 8], [42, 18, 46, 11], [45, 22, 49, 16]].forEach(function (s) {
+        poly(g, [[s[0] - 3, s[1] + 4 + dy], [s[2], s[3] + dy], [s[0] + 4, s[1] + 3 + dy]], 1);
+      });
+      line(g, 44, 49, 51, 40, 5, 1); line(g, 51, 40, 53, 31, 4.5, 1); ell(g, 53.5, 28, 3.2, 3.6, 1); // あげた うで と 手
       return {};
     },
-    // C：はちまき（はしが うしろで ゆれる）、がっしりした 肩
+    // C：スポーツがり＋なびく はちまき、広い 肩、にぎった こぶし（体を 動かすのが とくい）
     musuhi: function (g, dy) {
-      body(g, { shoulder: 17 }); head(g, dy);
-      ell(g, 32, 21 + dy, 11, 6, 1);
-      poly(g, [[42, 22 + dy], [51, 18 + dy], [50, 22 + dy], [53, 25 + dy], [43, 25 + dy]], 1);
+      chibi(g, dy, { shoulder: 17 });
+      ell(g, 32, 20 + dy, 12, 6, 1);
+      poly(g, [[43, 22 + dy], [55, 17 + dy], [52, 22 + dy], [58, 26 + dy], [45, 26 + dy]], 1); // はちまきの はし
       return { band: true };
     },
-    // D：横わけの 髪、背が 高い
+    // D：ととのった 横わけ（長い 前がみが 目に かかる）、えり付きの シャツ、すらっと 背が 高い
     hayatsu: function (g, dy) {
-      body(g, { shoulder: 15 }); head(g, dy - 1, 11);
-      poly(g, [[20, 26 + dy], [21, 17 + dy], [30, 13 + dy], [44, 16 + dy], [45, 25 + dy], [38, 19 + dy], [26, 21 + dy]], 1);
-      return {};
+      chibi(g, dy - 2, { shoulder: 13 });
+      poly(g, [[19, 30 + dy], [19, 20 + dy], [25, 13 + dy], [36, 11 + dy], [44, 15 + dy], [46, 24 + dy], [44, 22 + dy], [34, 22 + dy], [28, 31 + dy], [26, 24 + dy], [22, 31 + dy]], 1);
+      poly(g, [[27, 44], [32, 50], [37, 44], [39, 46], [32, 54], [25, 46]], 0); // えりの すきま
+      return { collar: true };
     },
     // E：長い髪と アホ毛、少し 小さい
     kitori: function (g, dy) {
@@ -4944,6 +4961,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
       });
       hl(30, 33, gy - 1, '#d9e3ff');
     }
+    if (extra.collar) { [[26, 45], [27, 46], [28, 47], [29, 48], [30, 49], [31, 50], [32, 51], [38, 45], [37, 46], [36, 47], [35, 48], [34, 49], [33, 50]].forEach(function (p) { px(p[0], p[1], rim); }); }
     // はちまき：線で 見せる
     if (extra.band) { hl(21, 43, 22 + dy, '#e8590c'); hl(21, 43, 23 + dy, '#e8590c'); }
     // 汗
@@ -5131,7 +5149,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
     if (k === 'think') { var sp = h('span', { class: 'ico ico-brain', role: 'img', 'aria-label': name }); sp.innerHTML = BRAIN_SVG; return sp; }
     if (k === 'act') return h('span', { class: 'ico', role: 'img', 'aria-label': name, text: '💪' });
     if (k === 'relate') return h('span', { class: 'ico ico-tomo', role: 'img', 'aria-label': name, text: '友' });
-    var tr = h('span', { class: 'ico ico-trust', role: 'img', 'aria-label': name }); tr.innerHTML = TRUST_SVG; return tr;
+    return h('span', { class: 'ico', role: 'img', 'aria-label': name, text: '👍' });
   }
   var STAT_HELP = {
     trust: '信頼（0〜10）：まわりの 人からの 信頼。よい関わりで 上がり（1回の 戦いで +2まで）、衝動的な 行動や ふうんな できごとで 下がる。7以上：戦いの はじめに 友だちが そばに いて 心の準備 +6。8以上：報酬の カードが 1まい ふえる。3以下：やり直しの チャンスが 来る。',

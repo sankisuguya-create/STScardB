@@ -82,7 +82,7 @@
     if (k === 'think') { var sp = h('span', { class: 'ico ico-brain', role: 'img', 'aria-label': name }); sp.innerHTML = BRAIN_SVG; return sp; }
     if (k === 'act') return h('span', { class: 'ico', role: 'img', 'aria-label': name, text: '💪' });
     if (k === 'relate') return h('span', { class: 'ico ico-tomo', role: 'img', 'aria-label': name, text: '友' });
-    var tr = h('span', { class: 'ico ico-trust', role: 'img', 'aria-label': name }); tr.innerHTML = TRUST_SVG; return tr;
+    return h('span', { class: 'ico', role: 'img', 'aria-label': name, text: '👍' });
   }
   var STAT_HELP = {
     trust: '信頼（0〜10）：まわりの 人からの 信頼。よい関わりで 上がり（1回の 戦いで +2まで）、衝動的な 行動や ふうんな できごとで 下がる。7以上：戦いの はじめに 友だちが そばに いて 心の準備 +6。8以上：報酬の カードが 1まい ふえる。3以下：やり直しの チャンスが 来る。',
