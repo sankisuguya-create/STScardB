@@ -4902,22 +4902,22 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
       ell(g, 32, 24 + dy, 13, 11, 1); rect(g, 19, 24 + dy, 4, 12, 1); rect(g, 41, 24 + dy, 4, 12, 1);
       return { glasses: true };
     },
-    // B：ボリュームの ある つんつん頭。片手を あげて「おーい！」と あいさつ（人なつっこい）
+    // B：うしろ向きの キャップ（つばが うしろに 出る）、明るい 印象
     tario: function (g, dy) {
       chibi(g, dy, { shoulder: 14 });
-      ell(g, 32, 22 + dy, 13, 8, 1);
-      [[19, 22, 15, 15], [22, 18, 20, 10], [27, 16, 26, 8], [33, 15, 33, 7], [38, 16, 40, 8], [42, 18, 46, 11], [45, 22, 49, 16]].forEach(function (s) {
-        poly(g, [[s[0] - 3, s[1] + 4 + dy], [s[2], s[3] + dy], [s[0] + 4, s[1] + 3 + dy]], 1);
-      });
-      line(g, 44, 49, 51, 40, 5, 1); line(g, 51, 40, 53, 31, 4.5, 1); ell(g, 53.5, 28, 3.2, 3.6, 1); // あげた うで と 手
-      return {};
+      ell(g, 32, 21 + dy, 13, 9, 1);                                        // ぼうしの 丸み
+      poly(g, [[19, 21 + dy], [11, 23 + dy], [10, 26 + dy], [11, 28 + dy], [20, 28 + dy]], 1); // うしろに 出た つば
+      rect(g, 31, 11 + dy, 3, 2, 1);                                        // てっぺんの ボタン
+      poly(g, [[38, 27 + dy], [44, 25 + dy], [45, 31 + dy], [41, 30 + dy]], 1); // ぼうしから 出た 横の 毛
+      return { cap: true };
     },
-    // C：スポーツがり＋なびく はちまき、広い 肩、にぎった こぶし（体を 動かすのが とくい）
+    // C：高い ポニーテール（動きの ある 髪）、広めの 肩
     musuhi: function (g, dy) {
-      chibi(g, dy, { shoulder: 17 });
-      ell(g, 32, 20 + dy, 12, 6, 1);
-      poly(g, [[43, 22 + dy], [55, 17 + dy], [52, 22 + dy], [58, 26 + dy], [45, 26 + dy]], 1); // はちまきの はし
-      return { band: true };
+      chibi(g, dy, { shoulder: 16 });
+      ell(g, 32, 22 + dy, 12.5, 8, 1);
+      ell(g, 41, 15 + dy, 3, 3, 1);                                            // 結び目
+      poly(g, [[42, 13 + dy], [50, 12 + dy], [55, 17 + dy], [55, 25 + dy], [51, 22 + dy], [47, 18 + dy], [43, 18 + dy]], 1); // しっぽ
+      return {};
     },
     // D：ととのった 横わけ（長い 前がみが 目に かかる）、えり付きの シャツ、すらっと 背が 高い
     hayatsu: function (g, dy) {
@@ -4963,7 +4963,7 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
     }
     if (extra.collar) { [[26, 45], [27, 46], [28, 47], [29, 48], [30, 49], [31, 50], [32, 51], [38, 45], [37, 46], [36, 47], [35, 48], [34, 49], [33, 50]].forEach(function (p) { px(p[0], p[1], rim); }); }
     // はちまき：線で 見せる
-    if (extra.band) { hl(21, 43, 22 + dy, '#e8590c'); hl(21, 43, 23 + dy, '#e8590c'); }
+    if (extra.cap) { hl(19, 45, 25 + dy, rim); }
     // 汗
     function drop(cx, cy) {
       [[0, 0], [0, 1], [-1, 2], [0, 2], [1, 2], [-1, 3], [0, 3], [1, 3], [0, 4]].forEach(function (o) { px(cx + o[0], cy + o[1], o[1] === 0 ? '#ffffff' : '#7fd3f0'); });
