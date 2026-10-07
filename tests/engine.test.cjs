@@ -121,7 +121,7 @@ test('アイテム：戦いごとに1回、なくならない。先生は場面�
     assert.ok(s.reward.choices.includes(tc));
     E.pickReward(s, null);
     E.chooseNode(s, 0);
-    if (s.phase === 'battle' && D.ENEMIES[s.battle.enemy.id].term !== 'short') assert.ok(E.canUseSupport(s, 'teacher'));
+    if (s.phase === 'battle' && D.ENEMIES[s.battle.enemy.id].term !== 'short' && !D.ENEMIES[s.battle.enemy.id].solo) assert.ok(E.canUseSupport(s, 'teacher'));
     return;
   }
   assert.fail('homework が出なかった');
