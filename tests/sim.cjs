@@ -104,11 +104,12 @@ function runOne(seed, polName, mode, hero) {
 function stats(n) {
   const out = {};
   for (const name of Object.keys(POLICIES)) {
-    let taken = 0, turns = 0, battles = 0, wins = 0, goodTry = 0, goodFail = 0, impTry = 0, impOk = 0, floors = 0, grows = 0, trust = 0;
+    let taken = 0, turns = 0, battles = 0, wins = 0, goodTry = 0, goodFail = 0, impTry = 0, impOk = 0, floors = 0, grows = 0, trust = 0, stuck = 0;
     for (let i = 0; i < n; i++) {
       const s = runOne(1000 + i * 7919, name, +(process.env.ACTS||1), ['hanoko', 'tario', 'musuhi', 'hayatsu'][i % 4]);
       if (s.result && s.result.won) wins++;
       floors += s.floor;
+      stuck += E.summary(s).stuck;
       trust += s.trust;
       for (const e of s.log) {
         if (e.k === 'win' && e.turns) { battles++; turns += e.turns; taken += e.taken || 0; }
@@ -118,7 +119,7 @@ function stats(n) {
       }
     }
     out[name] = {
-      win: wins / n, turns: +(turns / Math.max(1, battles)).toFixed(2), hurt: +(taken / Math.max(1, battles)).toFixed(1), hurtPerTurn: +(taken / Math.max(1, turns)).toFixed(2), avgFloor: floors / n, avgTrust: trust / n, growsPerRun: grows / n,
+      win: wins / n, stuck: +(stuck / n).toFixed(2), turns: +(turns / Math.max(1, battles)).toFixed(2), hurt: +(taken / Math.max(1, battles)).toFixed(1), hurtPerTurn: +(taken / Math.max(1, turns)).toFixed(2), avgFloor: floors / n, avgTrust: trust / n, growsPerRun: grows / n,
       goodFailRate: goodTry ? goodFail / goodTry : null,
       impulseOkRate: impTry ? impOk / impTry : null
     };
@@ -133,7 +134,7 @@ function verdict(r) {
     ['勝率 向社会的 > 衝動', r.prosocial.win > r.impulse.win],
     ['勝率 衝動 > がまん', r.impulse.win > r.passive.win],
     ['向社会的なら 勝てる（勝率 ≥ 85%）', r.prosocial.win >= 0.85],
-    ['衝動は 勝ちにくい（向社会的より 30点以上 低い）', r.prosocial.win - r.impulse.win >= 0.3],
+    ['衝動は 勝ちにくい（ボス突破が 向社会的より 25点以上 低く、動けない回数が 2倍以上）', r.prosocial.win - r.impulse.win >= 0.25 && r.impulse.stuck >= 2 * r.prosocial.stuck],
     ['1バトルが短い（平均 3ターン以下）', r.prosocial.turns <= 3 && r.adaptive.turns <= 3],
     ['まちがった戦法は 追いこまれる（1ターンの ダメージが 適応の 1.7倍以上）', r.impulse.hurtPerTurn >= 1.7 * r.adaptive.hurtPerTurn && r.passive.hurtPerTurn >= 1.7 * r.adaptive.hurtPerTurn],
     ['よい選択の失敗率 20〜35%', r.prosocial.goodFailRate >= 0.2 && r.prosocial.goodFailRate <= 0.35],

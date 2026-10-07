@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 8;
+  var ENGINE_VER = 9;
 
   // --- 乱数 ---
   function rand(s) {
@@ -161,13 +161,14 @@
   function bossSize(s) { return D.MAP.bossBase * (1 - D.MAP.heartHp * lostHearts(s)) * (1 + D.MAP.slackBoss * (s.slack || 0)); }
   function lostHearts(s) { return D.MAP.hearts - s.hearts; }
   // ストレス過多：失敗しやすく、パニックが 入る
-  function overStressed(s) { return (s.maxYoyu - s.yoyu) / s.maxYoyu > D.PLAYER.overStress; }
+  function stressRate(s) { return (s.maxYoyu - s.yoyu) / s.maxYoyu; }
+  function overStressed(s) { return stressRate(s) > D.PLAYER.overStress; }
+  function panicStressed(s) { return stressRate(s) > D.PLAYER.panicStress; }
   function fragile(s) { var H = D.HEROES[s.hero]; return H && H.fragile; }
   // ピンチ（余裕が少ない）の時、回復が 弱まる
   function heal(s, n) {
     var f = fragile(s);
     if (f && s.yoyu < s.maxYoyu * f.pinch) n = Math.ceil(n * f.healMul);
-    if (s.phase === 'battle' && overStressed(s)) n = Math.ceil(n * D.PLAYER.overHeal);
     s.yoyu = Math.min(s.maxYoyu, s.yoyu + n);
   }
   // 助けを もとめる カード・アイテムが 強くなる 主人公（キトリ）
@@ -230,9 +231,9 @@
       s.slump--;
       msg(s, 'この前の ことが 頭から はなれない…（落ちこみ：あと ' + s.slump + '回）', 'worry');
     }
-    if (first && overStressed(s)) {
+    if (first && panicStressed(s)) {
       for (var op = 0; op < D.PLAYER.overPanic; op++) addToHand(s, { id: 'panic', temp: true });
-      msg(s, 'ストレスが 多すぎて、頭が まわらない…（ストレス過多）', 'worry');
+      msg(s, 'ストレスが 多すぎて、頭が まわらない…（パニック）', 'worry');
     }
     if (first && s.trust >= D.RULES.allyTrust) {
       b.guard += D.RULES.allyGuard;
@@ -358,7 +359,7 @@
     var okP = c.chance ? D.CHANCE[c.chance].p : 1;
     var Hh = D.HEROES[s.hero];
     if (st && s.stats[st] < 0 && !(c.help && Hh && Hh.helpSafe)) okP -= D.PLAYER.weakFail * -s.stats[st];
-    if (c.chance && overStressed(s)) okP -= D.PLAYER.overFail;
+    if (overStressed(s) && !c.escape) okP -= D.PLAYER.overFail;
     var ok = okP >= 1 ? true : rand(s) < okP;
     var entry = { k: 'play', card: h.id, enemy: en.id, ok: ok, judge: c.judge, style: c.style, temp: !!h.temp, revealedBefore: en.revealed };
 
@@ -395,7 +396,6 @@
         }
       }
       if (c.guard) b.guard += Math.round((c.guard + (st ? s.stats[st] : 0)) * helpBoost(s, c));
-      if (c.heal) heal(s, Math.round(c.heal * helpBoost(s, c)));
       if (c.draw) drawCards(s, c.draw);
       if (c.judge === 'impulse' && !entry.backfire) msg(s, '「' + c.name + '」で すっきりした。でも…', 'impulse');
     } else {
@@ -449,10 +449,12 @@
   function hurt(s, dmg) {
     var b = s.battle;
     if (b) b.taken = (b.taken || 0) + dmg;
+    var wasOver = overStressed(s);
     if (dmg > s.yoyu) {
       if (b) b.deficit = (b.deficit || 0) + (dmg - s.yoyu);
       s.yoyu = 0;
     } else s.yoyu -= dmg;
+    if (!wasOver && overStressed(s)) (s.popups || (s.popups = [])).push({ k: 'warn' });
     if (s.yoyu <= 0 && b && !b.frozen) {
       b.frozen = true; b.frozenLeft = D.RULES.frozenTurns;
       log(s, { k: 'frozen', enemy: b.enemy.id });
@@ -541,7 +543,7 @@
     log(s, { k: 'nigate', ctx: E.ctx, add: lv, to: s.nigate[E.ctx], enemy: en.id });
     if (fragile(s)) { s.slump = fragile(s).slumpBattles; log(s, { k: 'slump' }); }
     log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, frozen: true });
-    if (en.kind === 'boss') { endRun(s, false); return; }
+    if (en.kind === 'boss') { bossDown(s, true); return; }
     s.phase = 'reward';
     s.reward = { choices: [], other: E.other, support: null, frozen: { ctx: E.ctx, add: lv, to: s.nigate[E.ctx] } };
   }
@@ -557,7 +559,7 @@
     }
     s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'flee:' + en.id });
     log(s, { k: 'win', enemy: en.id, other: E.other, revealed: en.revealed, fled: true });
-    if (en.kind === 'boss') { endRun(s, false); return; }
+    if (en.kind === 'boss') { bossDown(s, true); return; }
     s.phase = 'reward';
     s.reward = { choices: [], other: E.other, support: null, fled: true };
   }
@@ -641,7 +643,7 @@
     b.usedItems[id] = 1;
     msg(s, '「' + u.name + '」', 'ally');
     var ib = (D.HEROES[s.hero] && D.HEROES[s.hero].helpBoost) || 1;
-    if (u.heal) heal(s, Math.round(u.heal * ib));
+    if (u.guard) { b.guard += Math.round(u.guard * ib); msg(s, '心の準備 +' + Math.round(u.guard * ib), 'ally'); }
     if (id === 'teacher') {
       var tc = D.TEACHER_CARDS[E.ctx];
       addToHand(s, { id: tc, temp: true }); b.teacherCard = tc;
@@ -724,7 +726,7 @@
     var id;
     if (s.trust <= D.RULES.lowTrust && s.usedEvents.indexOf('second_chance') < 0) id = 'second_chance';
     else {
-      var pool = act.events.filter(function (e) { return s.usedEvents.indexOf(e) < 0; });
+      var pool = act.events.filter(function (e) { return D.EVENTS[e].repeat || s.usedEvents.indexOf(e) < 0; });
       id = pick(s, pool.length ? pool : act.events);
     }
     s.usedEvents.push(id);
@@ -761,7 +763,9 @@
   }
 
   // ボスを たおした：次の層へ。さいごの層なら おわり
-  function bossDown(s) {
+  function bossDown(s, lost) {
+    s.actLost = !!lost;
+    if (lost) { s.bossLost = (s.bossLost || 0) + 1; log(s, { k: 'bossLost', act: s.act }); }
     if (s.act < s.acts - 1) {
       s.act++; s.row = 0; s.pos = null; s.hearts = D.MAP.hearts; s.slack = 0;
       s.yoyu = Math.min(s.maxYoyu, s.yoyu + Math.round(s.maxYoyu * D.MAP.actHealAmount));
@@ -771,7 +775,7 @@
       log(s, { k: 'act', act: s.act });
       return;
     }
-    endRun(s, true);
+    endRun(s, !lost);
   }
   // 状きょうの 説明を 読んでから 戦いに 入る
   function beginBattle(s) {
@@ -839,6 +843,9 @@
     plays.forEach(function (p) { if (p.temp && !seen[p.card] && p.judge === 'good') { seen[p.card] = 1; discovered.push({ card: p.card, enemy: p.enemy }); } });
     return {
       won: s.result && s.result.won, floor: s.floor,
+      overcame: L.filter(function (e) { return e.k === 'win' && !e.frozen && !e.fled; }).length,
+      stuck: L.filter(function (e) { return e.k === 'win' && e.frozen; }).length,
+      bossBeaten: s.acts - (s.bossLost || 0), acts: s.acts,
       stats: s.stats, trust: s.trust, trustStart: D.PLAYER.trustStart,
       trustLine: trustLine, recovered: recovered,
       grows: grows,

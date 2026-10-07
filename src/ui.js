@@ -200,7 +200,8 @@
   function actClearScreen() {
     var A = D.ACTS[S.act];
     return h('main', { class: 'title' }, [
-      h('h1', { text: (S.act) + 'そう目 クリア！' }),
+      h('h1', { text: S.actLost ? (S.act) + 'そう目 おわり' : (S.act) + 'そう目 クリア！' }),
+      S.actLost ? h('p', { class: 'story', text: 'ボスは 乗りこえられなかった。でも 毎日は 続く。' }) : null,
       h('p', { class: 'sub', text: 'ストレスは そのまま 次の そうへ。ストレスが 多い ときは、楽な 道で 休むのも 一つの 手。次は「' + A.name + '」' }),
       bossBanner(),
       h('button', { class: 'primary big', onclick: function () { act(function () { E.nextAct(S); }); }, text: '次の そうへ' })
@@ -448,7 +449,7 @@
       h('h2', { text: 'ひと休み' }),
       equipPanel,
       h('div', { class: 'two' }, [
-        h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['休む', h('small', { text: 'ストレスを ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' へらす。「お家の人に そうだんする」カードが もらえる' })]),
+        h('button', { class: 'primary big', onclick: function () { act(function () { E.rest(S, 'rest'); }); } }, ['家で ゆっくり 休む', h('small', { text: '家族と すごして、ストレスを ' + Math.round(S.maxYoyu * D.RULES.restHeal) + ' へらす。「お家の人に そうだんする」カードが もらえる' })]),
         h('button', { class: 'secondary big', onclick: function () { removing = true; render(); } }, ['自分を 見つめ直す', h('small', { text: 'いらない くせを 1つ 卒業する' })])
       ])
     ]);
@@ -622,7 +623,8 @@
         : h('button', { class: 'primary', onclick: function () { P.clear(); start(); }, text: 'もう一回' })
     ]);
     return h('main', { class: 'end' }, [
-      h('p', { class: 'verdict ' + (sm.won ? 'won' : 'lost'), text: sm.won ? D.TEXT.win : D.TEXT.lose })
+      h('p', { class: 'verdict won', text: D.TEXT.win }),
+      h('p', { class: 'sub', text: '乗りこえた 課題 ' + sm.overcame + '／動けなかった ' + sm.stuck + '／ボス ' + sm.bossBeaten + ' / ' + sm.acts })
     ].concat(body, [nav]));
   }
 
@@ -645,6 +647,16 @@
   function popupLayer() {
     var ps = S.popups || [];
     if (!ps.length) return null;
+    var warn = ps.filter(function (p) { return p.k === 'warn'; })[0];
+    if (warn) {
+      return h('div', { class: 'popwrap modal' }, [h('div', { class: 'heartpop warnpop' }, [
+        h('div', { class: 'hpttl', text: 'ストレスが 多すぎる！' }),
+        h('div', { class: 'popstage' }, [sprite('hero_' + (D.HEROES[S.hero] ? D.HEROES[S.hero].look : 'hayatsu'), 2, 'popboss still', 3)]),
+        h('p', { class: 'story', text: 'ストレスが 6わりを こえた。何を しても うまく いかない ことが ふえる。8わりを こえると、パニックで 手が つかなくなる。' }),
+        h('p', { class: 'story', text: '休み時間（？マス）や ひと休みで、心を 休めよう。' }),
+        h('button', { class: 'primary', onclick: function () { S.popups = S.popups.filter(function (p) { return p !== warn; }); save(); render(); }, text: 'わかった' })
+      ])]);
+    }
     var heart = ps.filter(function (p) { return p.k === 'heart'; })[0];
     var plays = ps.filter(function (p) { return p.k === 'play'; });
     var play = plays[plays.length - 1];

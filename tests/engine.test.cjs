@@ -464,3 +464,18 @@ test('ストレス過多：最初の手札に パニックが 入る', () => {
 test('層クリアで ストレスは 回復しない', () => {
   assert.strictEqual(D.MAP.actHealAmount, 0);
 });
+
+test('途中脱落なし：ボスで 動けなくなっても 次の層へ 進む', () => {
+  const s = E.newRun(5, 3, 'hanoko');
+  E._battle(s, D.ACTS[0].boss);
+  s.yoyu = 1; s.battle.guard = 0;
+  for (let k = 0; k < 20 && s.phase === 'battle'; k++) { s.battle.hand = []; E.endTurn(s); }
+  assert.strictEqual(s.phase, 'actclear');
+  assert.strictEqual(s.act, 1);
+  assert.ok(s.actLost);
+});
+
+test('カードと アイテムで ストレスは 回復しない', () => {
+  for (const id of Object.keys(D.CARDS)) assert.ok(!D.CARDS[id].heal, id);
+  for (const id of Object.keys(D.SUPPORTS)) assert.ok(!D.SUPPORTS[id].heal, id);
+});
