@@ -27,6 +27,7 @@
   // 課題ごとの 対応表（src/fit.js）に あるカードだけが 使える。表が ない課題（れんしゅう）は 場面タグで 判定
   function fitsEnemy(id, eid) {
     var E = D.ENEMIES[eid], F = D.FIT && D.FIT[eid];
+    if (D.CARDS[id].type === 'curse') return true;
     if (F) return !!F[id] && fits(id, E.ctx, E.term, E.solo);
     return fits(id, E.ctx, E.term, E.solo);
   }
@@ -693,7 +694,7 @@
     if (i < 0) return;
     s.deck.splice(i, 1);
     var b = s.battle;
-    var piles = [b.discard, b.draw, b.hand];
+    var piles = [b.discard, b.draw, b.hand, b.bench];
     for (var p = 0; p < piles.length; p++) {
       var j = piles[p].findIndex(function (h) { return h.id === 'moyamoya' && !h.temp; });
       if (j >= 0) { piles[p].splice(j, 1); break; }

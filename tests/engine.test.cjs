@@ -523,3 +523,17 @@ test('できごと：えらんだ結果の 変化を 記録する', () => {
   assert.strictEqual(s.event.changes.stress, -18);
   assert.strictEqual(s.event.changes.trust, 1);
 });
+
+test('対応表：表に ない カードは 控えへ。場面カード・混ざるカードは 表に ある', () => {
+  for (const [eid, row] of Object.entries(D.FIT)) {
+    const E0 = D.ENEMIES[eid];
+    for (const id of E0.situ) assert.ok(row[id], eid + ' ' + id);
+    for (const m of E0.moves) if (m.t === 'inject') assert.ok(row[m.card], eid + ' ' + m.card);
+    for (const id of Object.keys(row)) assert.ok(D.CARDS[id], eid + ' ' + id);
+  }
+  const s = E.newRun(1, 1, 'hanoko'); s.deck.push('teamwork', 'together');
+  E._battle(s, 'test');
+  const bench = s.battle.bench.map((h) => h.id);
+  for (const id of s.deck) if (D.CARDS[id].type !== 'curse') assert.strictEqual(bench.includes(id), !D.FIT.test[id], id);
+  assert.ok(!D.ACTS[0].related.includes('forgot_item'));
+});
