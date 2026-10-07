@@ -481,3 +481,8 @@ canvas.silhouette.mood2 { filter: brightness(0) drop-shadow(0 0 2px rgba(140, 17
 canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-shadow(0 0 3px rgba(120, 140, 220, .9)) opacity(.85); }
 .chip .ico-trust { overflow: visible; width: 26px; height: 26px; }
 .chip .ico-trust svg { display: block; }
+/* マップ：つぎの 選択肢だけ */
+.nextrow { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin: 18px auto 10px; max-width: 760px; padding: 0 16px; }
+.mnode.big { position: static; transform: none; translate: none; width: 210px; min-height: 96px; font-size: 1.2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.mnode.big small { font-size: .85rem; }
+@media (max-width: 760px) { .mnode.big { width: calc(50% - 10px); min-height: 84px; } .nextrow.n1 .mnode.big { width: 70%; } }

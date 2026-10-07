@@ -490,6 +490,11 @@ canvas.silhouette.mood2 { filter: brightness(0) drop-shadow(0 0 2px rgba(140, 17
 canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-shadow(0 0 3px rgba(120, 140, 220, .9)) opacity(.85); }
 .chip .ico-trust { overflow: visible; width: 26px; height: 26px; }
 .chip .ico-trust svg { display: block; }
+/* マップ：つぎの 選択肢だけ */
+.nextrow { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin: 18px auto 10px; max-width: 760px; padding: 0 16px; }
+.mnode.big { position: static; transform: none; translate: none; width: 210px; min-height: 96px; font-size: 1.2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.mnode.big small { font-size: .85rem; }
+@media (max-width: 760px) { .mnode.big { width: calc(50% - 10px); min-height: 84px; } .nextrow.n1 .mnode.big { width: 70%; } }
 
 </style>
 </head>
@@ -5279,12 +5284,9 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
       } }, [
         sprite('hero_' + H.look, 2, 'hpic'),
         h('b', { class: 'hname', text: H.name }),
-        h('small', { text: H.note }),
-        h('div', { class: 'hstats' }, ['think', 'act', 'relate'].map(stat).concat([h('span', { class: 'hs' }, ['ストレスの 上限 ', h('b', { text: String(H.maxYoyu + D.PLAYER.stressStart) })])])),
-        H.message ? h('small', { class: 'hmsg', text: H.message }) : null,
-        h('small', { class: 'hgood', text: 'とくいな場面：' + H.good }),
-        h('small', { class: 'hbad', text: 'にがてな場面：' + H.bad }),
-        h('small', { class: 'hcard', text: '★レア：' + (H.cards.filter(function (id) { return E.card(id).adv; }).map(cardName).join('') || 'なし（成長して 手に入れる）') })
+        h('small', { class: 'hgood', text: 'とくい：' + H.good }),
+        h('small', { class: 'hbad', text: 'にがて：' + H.bad }),
+        h('small', { class: 'hcard', text: 'カード：' + (H.cards.map(cardName).join('') || 'なし') })
       ]);
     });
     app.replaceChildren(h('main', { class: 'title heroes' }, [h('h2', { text: 'だれで ぼうけんする？' }), h('div', { class: 'herogrid' }, cards)]));
@@ -5399,11 +5401,21 @@ canvas.silhouette.mood3, canvas.silhouette.mood4 { filter: brightness(0) drop-sh
       });
     });
     var notice = S.notice; S.notice = null;
+    // つぎに えらべる マスと、さいごの ボスだけを 見せる
+    var cur = m.rows[S.row] || [], left = bossR - S.row;
+    var opts = cur.map(function (n, i) {
+      var E0 = n.enemy && D.ENEMIES[n.enemy], here = ok.indexOf(i) >= 0;
+      return h('button', {
+        class: 'mnode big ' + NODE[n.kind].cls + (here ? ' here' : '') + (n.related ? ' rel' : ''), disabled: !here,
+        onclick: function () { act(function () { E.chooseNode(S, i); }); }
+      }, [h('b', { text: (n.related ? '★' : '') + NODE[n.kind].label }), E0 && n.kind !== 'mystery' && n.kind !== 'boss' ? h('small', { text: E0.kind === 'danger' ? 'あぶない場面' : E0.scene }) : null]);
+    });
     return h('main', { class: 'map' }, [
       bossBanner(),
       notice ? h('p', { class: 'praise', text: notice }) : null,
-      h('div', { class: 'maprow2' }, [itemSlots(false), h('p', { class: 'hint', text: '光っている マスから 次に 行くところを えらぼう' })]),
-      h('div', { class: 'mapbox', style: 'aspect-ratio:' + MW + ' / ' + MH }, [svg].concat(nodes)),
+      h('div', { class: 'maprow2' }, [itemSlots(false)]),
+      h('p', { class: 'hint', text: left > 0 ? 'つぎは どうする？（ボスまで あと ' + left + ' だん）' : 'いよいよ ボス' }),
+      h('div', { class: 'nextrow n' + cur.length }, opts),
       (S.slack ? h('p', { class: 'slacknote', text: 'ゴロゴロ ' + S.slack + '回：ボスが ' + Math.round(D.MAP.slackBoss * S.slack * 100) + '% 大きく なっている' }) : null)
     ]);
   }
