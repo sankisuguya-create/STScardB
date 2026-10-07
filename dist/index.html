@@ -439,6 +439,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
 .changes b { display: block; font-size: .85rem; color: var(--sub); margin-bottom: 6px; }
 .changes .fx { font-size: 1rem; padding: 4px 10px; }
 .intro .troublebadge { margin-bottom: 8px; }
+.fx.evo { background: #ffe8a3; border-color: #b8860b; font-weight: 800; }
 
 </style>
 </head>
@@ -488,10 +489,13 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   // style: 振り返りのアサーション3分類（aggressive/passive/assertive）
   var CARDS = {
     // --- 初期デッキ ---
+    trial_error: { from: 'try_it', name: 'トライ＆エラーだ！', line: '失敗したら やり方を 変えて、もう一回。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 8, growFail: true, ctx: ['study', 'join', 'stage'] },
+    yokkoisho: { from: 'try_it', name: 'よっこいしょ！', line: '重い 気もちを かけ声で もち上げて、取りかかる。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 7, guard: 4, ctx: ['study', 'join', 'stage'] },
+    omoshiro: { from: 'try_it', name: '面白く なってきた！', line: 'むずかしいほど 面白い、と 言いかえる。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 7, draw: 1, ctx: ['study', 'join', 'stage'] },
     // --- がまんの 上位（時間を やりすごす）と 目を そらす ---
-    no_worry: { name: '失敗したって 大丈夫', line: '「まちがえても、やり直せば いい」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 16 },
-    later_down: { name: 'あとで 落ちこめば いい', line: '「今は とりあえず 前を 向こう。くやしいのは あとで」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 13, draw: 1 },
-    switch_on: { name: '切りかえて いこう', line: '「よし、次！」と 声に 出す。手札の パニックと モヤモヤを 外へ。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 10, clearPanicAll: true, clearMoya: true },
+    no_worry: { from: 'endure', name: '失敗したって 大丈夫', line: '「まちがえても、やり直せば いい」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 16 },
+    later_down: { from: 'endure', name: 'あとで 落ちこめば いい', line: '「今は とりあえず 前を 向こう。くやしいのは あとで」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 13, draw: 1 },
+    switch_on: { from: 'endure', name: '切りかえて いこう', line: '「よし、次！」と 声に 出す。手札の パニックと モヤモヤを 外へ。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 10, clearPanicAll: true, clearMoya: true },
     look_away: { name: '現実から 目を そらす', line: '「見なかった ことに しよう…」', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 22, curse: true },
     try_it: { name: 'トライする', line: 'とにかく 一度 やってみる。', type: 'act', judge: 'neutral', style: 'assertive', cost: 1, solve: 5, ctx: ['study', 'join', 'stage'] },
     endure: { name: 'がまんする', line: 'ぐっと こらえる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 7 },
@@ -858,6 +862,96 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
         { label: '見なかったことにする', effects: {}, result: 'そのまま 席にもどった。' }
       ]
     },
+    friend_retry: {
+      title: '友だちの さか上がり',
+      text: '体育の 時間。友だちが さか上がりで 何回 落ちても「もう一回！」と 足の 位置を 変えて ためしている。',
+      options: [
+        { label: '自分も まねして、やり方を 変えながら ためす', effects: { trust: 1, evolve: ['try_it', 'trial_error'] }, result: '「失敗したら、どこを 変えるか 考えれば いいんだ」と 気づいた。' },
+        { label: '「すごいね」と 声を かける', effects: { trust: 1 }, result: '友だちが「ありがとう！」と わらった。' },
+        { label: '見ているだけに する', effects: {}, result: '休み時間が おわった。' }
+      ]
+    },
+    friend_heavy: {
+      title: 'そうじの 時間',
+      text: '重い つくえを はこぶ 当番。友だちが「よっこいしょ！」と わらいながら 持ち上げている。',
+      options: [
+        { label: '自分も「よっこいしょ！」と 声を 出して 運ぶ', effects: { trust: 1, evolve: ['try_it', 'yokkoisho'] }, result: '声を 出すと、ふしぎと 体が 動いた。めんどうな ことも 取りかかれそうだ。' },
+        { label: '「手つだうよ」と 反対がわを 持つ', effects: { trust: 1, yoyu: 4 }, result: '二人で 運んだら すぐ おわった。' },
+        { label: '自分の 分だけ だまって 運ぶ', effects: {}, result: 'つくえは 運びおわった。' }
+      ]
+    },
+    friend_fun: {
+      title: 'むずかしい パズル',
+      text: '休み時間、友だちが むずかしい パズルに 何度も つまずきながら「面白く なってきた！」と 目を かがやかせている。',
+      options: [
+        { label: '自分も いっしょに やってみる', effects: { trust: 1, evolve: ['try_it', 'omoshiro'] }, result: 'むずかしい ところほど、とけた ときが うれしい。「むずかしい」が「面白い」に 見えてきた。' },
+        { label: '「がんばって」と おうえんする', effects: { trust: 1 }, result: '「とけたら 見せるね！」と 言ってくれた。' },
+        { label: '「むずかしそう…」と はなれる', effects: {}, result: '友だちは 一人で つづけていた。' }
+      ]
+    },
+    friend_shrug: {
+      title: 'テストが 返ってきた',
+      text: '友だちの テストに ばつが いくつも ある。でも「失敗したって 大丈夫。どこを まちがえたか わかったし」と 言っている。',
+      options: [
+        { label: 'その 考え方を まねしてみる', effects: { trust: 1, evolve: ['endure', 'no_worry'] }, result: 'まちがいは「わかってない ところの 目じるし」なんだ、と 思えた。' },
+        { label: 'いっしょに やり直しを する', effects: { trust: 1, addCard: 'review_notes' }, result: '二人で 見直したら、自分の まちがいも 見つかった。' },
+        { label: '自分の 点数だけ 気にする', effects: { yoyu: -4 }, result: '点数の ことが 頭から はなれなかった。' }
+      ]
+    },
+    friend_later: {
+      title: '試合に 負けた 日',
+      text: 'クラス対こうの ドッジボールで 負けた。くやしそうな 友だちが「くやしいのは あとで。今は 次の チームを おうえんしよう！」と 言った。',
+      options: [
+        { label: '自分も 気もちを あとに まわして おうえんする', effects: { trust: 1, evolve: ['endure', 'later_down'] }, result: 'おうえんしているうちに、気もちが 少し 前を 向いた。家で 思いきり くやしがろう。' },
+        { label: '「くやしいね」と 気もちを 話す', effects: { trust: 1, yoyu: 6 }, result: '「だよね」と 友だちも うなずいた。少し 楽に なった。' },
+        { label: 'だまって すわりこむ', effects: { yoyu: -4 }, result: 'しばらく 何も 考えられなかった。' }
+      ]
+    },
+    friend_switch: {
+      title: '注意された 友だち',
+      text: '友だちが ろうかを 走って 先生に 注意された。「はい。よし、次！」と すぐに 歩き出した。',
+      options: [
+        { label: 'その 切りかえを まねしてみる', effects: { trust: 1, evolve: ['endure', 'switch_on'] }, result: '「よし、次！」と 心の 中で 言うと、頭が すっきりした。' },
+        { label: '「大丈夫？」と 声を かける', effects: { trust: 1 }, result: '「うん、もう 平気！」と 笑顔で 返ってきた。' },
+        { label: '「見ちゃった」と 笑う', effects: { trust: -1 }, result: '友だちは ちょっと いやそうな 顔を した。' }
+      ]
+    },
+    lost_wallet: {
+      title: '落とし物',
+      text: 'ろうかに キャラクターの キーホルダーが 落ちている。だれのだろう。',
+      options: [
+        { label: '職員室に とどける', effects: { trust: 1 }, result: '次の 日、持ち主の 子が「ありがとう」と 言いに 来た。' },
+        { label: '「だれのー？」と 教室で 聞く', effects: { trust: 1, yoyu: 2 }, result: '「ぼくの！」と すぐに 見つかった。' },
+        { label: '見なかった ことに する', effects: {}, result: 'ずっと そこに 落ちていた。' }
+      ]
+    },
+    new_kid: {
+      title: '転校生',
+      text: '今日 来た 転校生が、休み時間に 一人で すわっている。',
+      options: [
+        { label: '「いっしょに 遊ぼう」と さそう', effects: { trust: 2, yoyu: 4 }, result: '転校生は ほっとした 顔で 立ち上がった。' },
+        { label: 'となりに すわって 話しかける', effects: { trust: 1, addCard: 'talk' }, result: '好きな まんがが 同じだった。' },
+        { label: '気に なるけど そのままに する', effects: {}, result: '転校生は ずっと 本を 見ていた。' }
+      ]
+    },
+    rainy_day: {
+      title: '雨の 休み時間',
+      text: '雨で 外に 出られない。教室は ざわざわ している。',
+      options: [
+        { label: '友だちと トランプを する', effects: { yoyu: 12 }, result: 'わらいすぎて おなかが いたくなった。' },
+        { label: '本を 読む', effects: { yoyu: 8 }, result: '物語の 世界に 入りこんで、気もちが 落ちついた。' },
+        { label: 'ぼーっと 外を 見る', effects: { yoyu: 4 }, result: '雨の 音を 聞いていた。' }
+      ]
+    },
+    neighbor: {
+      title: '近所の 人',
+      text: '帰り道、近所の おばあさんが 花に 水を あげている。',
+      options: [
+        { label: '「こんにちは」と あいさつする', effects: { trust: 1, yoyu: 6 }, result: '「おかえり。毎日 えらいね」と 言ってもらえた。' },
+        { label: '会しゃくだけ する', effects: { yoyu: 2 }, result: 'おばあさんも にっこり した。' },
+        { label: '急いで 通りすぎる', effects: {}, result: '家に ついた。' }
+      ]
+    },
     recess: {
       repeat: true,
       title: '休み時間',
@@ -939,9 +1033,9 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   // お試し版：4段＋ボス。各段は2マスから1つ選ぶ
   // 1層＝7段＋ボス。課題の半分以上は ボスに 関連する課題（related）。関連する課題を 乗りこえるたびに ボスの ハートが へる
   var ACTS = [
-    { name: '教室', boss: 'test', related: ['dunno', 'homework'], others: ['forgot_item', 'bumped', 'left_out'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'forgot', 'friend_trouble', 'library', 'family_talk', 'recess'] },
-    { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'friend_trouble', 'library', 'family_talk', 'recess'] },
-    { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'library', 'family_talk', 'friend_trouble', 'recess'] }
+    { name: '教室', boss: 'test', related: ['dunno', 'homework'], others: ['forgot_item', 'bumped', 'left_out'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'forgot', 'friend_trouble', 'library', 'family_talk', 'friend_retry', 'friend_shrug', 'lost_wallet', 'rainy_day', 'recess'] },
+    { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'friend_trouble', 'library', 'family_talk', 'friend_heavy', 'friend_later', 'new_kid', 'friend_switch', 'recess'] },
+    { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'library', 'family_talk', 'friend_trouble', 'friend_fun', 'friend_switch', 'neighbor', 'friend_later', 'recess'] }
   ];
   var ROUTES = [
     { id: 'hard', name: 'しんどいが 力が つく道', note: '課題に 向き合う マスが 多い（4つ）。ボスが 弱くなり、成長しやすい', nodes: ['battle', 'mystery', 'battle', 'event', 'battle', 'mystery', 'battle', 'event', 'rest'] },
@@ -1080,6 +1174,26 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "reset_mind": [
     "水を 飲んで 気もちを 立てなおしたら、問題が 読みやすく なった。",
     "立てなおそうと したけど、まだ 頭が つかれて いた。"
+  ],
+    "later_down": [
+    "くやしさは あとに 回して、黒板の 問題に もう一度 目を 向けられた。",
+    "あとに しようと したけど、まわりの ノートが 気に なって しまった。"
+  ],
+    "switch_on": [
+    "「よし、次！」と 小さく 言ったら、あせりが へって 黒板が 見えた。",
+    "声に 出したけど、まだ 頭の 中が ぐるぐる している。"
+  ],
+    "trial_error": [
+    "ちがう とき方を 3回 ためしたら、正しい 答えに たどりついた。",
+    "やり方を 変えて みたけど、まだ 答えまで あと一歩 だった。"
+  ],
+    "yokkoisho": [
+    "「よっこいしょ」と えんぴつを 持ちなおし、さいしょの 式を 書けた。",
+    "かけ声を かけたけど、まだ 手が なかなか 動かなかった。"
+  ],
+    "omoshiro": [
+    "「なぞときみたい」と 思ったら、図を かいて とき方が 見つかった。",
+    "面白がろうと したけど、むずかしさの ほうが まだ 大きかった。"
   ]
  },
     "test": {
@@ -1170,6 +1284,18 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "big_picture": [
     "「先に 計算、あとで 文章題」と 見通したら、時間内に 終わった。",
     "見通しを 立てたけど、文章題に 時間が かかった。"
+  ],
+    "trial_error": [
+    "けいさんが 合わない 問題を ちがう やり方で たしかめ、直せた。",
+    "やり方を 変えて みたけど、時間が 足りなく なってしまった。"
+  ],
+    "yokkoisho": [
+    "「よっこいしょ」と 気もちを 上げて、1問目から 書きはじめられた。",
+    "かけ声を かけたけど、まだ 用紙を 見ると 体が かたく なった。"
+  ],
+    "omoshiro": [
+    "むずかしい 問題を 「ちょうせんだ」と 思って、さいごまで とけた。",
+    "面白く 思おうと したけど、まだ むずかしい 問題で 止まった。"
   ]
  },
     "homework": {
@@ -1252,6 +1378,26 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "self_check": [
     "「先に 遊ぶと たまる」と ふり返って、次の 日は 先に やれた。",
     "ふり返ったけど、まだ 次の 日も 先のばし した。"
+  ],
+    "no_worry": [
+    "「まちがえても 直せば いい」と 思えて、ドリルを 気楽に 進められた。",
+    "大丈夫と 思おうと したけど、まだ 山の 多さに 気もちが 重い。"
+  ],
+    "later_down": [
+    "「ためた くやしさは あとで」と 決めて、今の 1まいに 集中できた。",
+    "あとに 回そうと したけど、ためたことが 頭から はなれなかった。"
+  ],
+    "trial_error": [
+    "音読から やって だめなら 計算からと 順番を 変え、どんどん 進んだ。",
+    "順番を 変えて みたけど、まだ 半分 のこってしまった。"
+  ],
+    "yokkoisho": [
+    "「よっこいしょ」と 声を 出して、漢字ドリルを 開く ことが できた。",
+    "かけ声を かけたけど、まだ 手が ドリルに のびなかった。"
+  ],
+    "omoshiro": [
+    "「何分で できるか きょうそうだ」と 思ったら、プリントが 早く 終わった。",
+    "ゲームに しようと したけど、まだ 量の 多さに まけそうだ。"
   ]
  },
     "forgot_item": {
@@ -1326,6 +1472,10 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "reset_mind": [
     "水を 飲んで 考えなおしたら、先生に 言えば いいと 気づいた。",
     "立てなおそうと したけど、まだ チャイムが 気に なった。"
+  ],
+    "later_down": [
+    "「しまった」は あとに 回して、今 どう するかを 考えられた。",
+    "あとに しようと したけど、わすれた ことで 頭が いっぱいだ。"
   ]
  },
     "practice": {
@@ -1428,6 +1578,18 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "give_up": [
     "その場は 楽に なった。でも 本番が もっと こわく なった。",
     "すわって いても、まちがえた ところが 気に なった。"
+  ],
+    "trial_error": [
+    "まちがえる ところを 何通りも ためして、ついに 通して できた。",
+    "やり方を 変えて みたけど、まだ 同じ ところで つまずいた。"
+  ],
+    "yokkoisho": [
+    "「よっこいしょ」と 立ち上がって、もう一回 さいしょから 練習できた。",
+    "かけ声を かけたけど、まだ つかれて 体が 重かった。"
+  ],
+    "omoshiro": [
+    "「ここを こえたら 一気に 上手に なる」と 思え、楽しく 練習できた。",
+    "面白がろうと したけど、まだ くやしい 気もちが 強かった。"
   ]
  },
     "presentation": {
@@ -1506,6 +1668,22 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "all_in": [
     "発表 一つに 集中したら、さいごまで 大きな 声で 言えた。",
     "集中しようと したけど、まだ 客せきが 気に なった。"
+  ],
+    "later_down": [
+    "きんちょうは 終わってから 考えると 決め、今の 一言に 集中できた。",
+    "あとに 回そうと したけど、まだ 心ぞうが ドキドキ している。"
+  ],
+    "trial_error": [
+    "声が 小さいと 気づいて すぐ 大きく 言いなおし、うまく つたわった。",
+    "言いなおして みたけど、まだ 声が ふるえて しまった。"
+  ],
+    "yokkoisho": [
+    "「よっこいしょ」と 心の 中で 言って、ぶたいの まん中へ 歩けた。",
+    "かけ声を かけたけど、まだ 足が なかなか 前に 出なかった。"
+  ],
+    "omoshiro": [
+    "「みんなが 聞いてくれる」と 思ったら、楽しく 発表できた。",
+    "面白く 思おうと したけど、まだ 人の 多さに どきっと した。"
   ]
  },
     "bumped": {
@@ -1604,6 +1782,14 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "look_away": [
     "見なかった ことに したら その場は すんだ。でも あとで もやもやが のこった。",
     "見ない ふりを したけど、かたの いたさで わすれられない。"
+  ],
+    "no_worry": [
+    "「ぶつかる ことも ある」と 思えて、むかっと した 気もちが しずまった。",
+    "大丈夫と 思おうと したけど、まだ かたの いたさが 気に なる。"
+  ],
+    "later_down": [
+    "むかっと したのは あとで 考えると 決めて、まず 相手を 見られた。",
+    "あとに 回そうと したけど、まだ 顔が あつく なっていた。"
   ]
  },
     "friend_fight": {
@@ -1718,6 +1904,18 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "mediate": [
     "ほかの 友だちが 間に 入って、じゅんばんに 話を 聞いて くれた。",
     "間に 入って もらったけど、まだ 二人とも うまく 話せなかった。"
+  ],
+    "no_worry": [
+    "「言い合いしても なかなおり できる」と 思えて、少し 心が 軽く なった。",
+    "大丈夫と 思おうと したけど、まだ 目を そらされると つらい。"
+  ],
+    "later_down": [
+    "かなしい 気もちは あとに して、今日の じゅぎょうに 集中できた。",
+    "あとに 回そうと したけど、友だちの ほうばかり 見てしまった。"
+  ],
+    "switch_on": [
+    "「よし、次！」と 気もちを 切りかえ、自分から 声を かける じゅんびが できた。",
+    "切りかえようと したけど、まだ きのうの ことが うかんでくる。"
   ]
  },
     "misunder": {
@@ -1824,6 +2022,18 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "move_body": [
     "外で 走ったら 気分が かわって、もやもやが へった。",
     "走って みたけど、まだ 一言が 気に なる。"
+  ],
+    "no_worry": [
+    "「聞きまちがいでも 聞けば いい」と 思えて、気もちが 楽に なった。",
+    "大丈夫と 思おうと したけど、まだ 一言が 頭に のこっている。"
+  ],
+    "later_down": [
+    "もやもやは あとに して、今の 話を おちついて 聞けた。",
+    "あとに しようと したけど、まだ もやもやが 大きかった。"
+  ],
+    "switch_on": [
+    "「よし、次！」と 言ったら、もやもやが 外に 出て 気もちが はれた。",
+    "声に 出したけど、まだ あの 言い方が 気に なっている。"
   ]
  },
     "payback": {
@@ -1934,6 +2144,18 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "look_away": [
     "見ない ふりを したら その場は すんだ。でも にらまれる 日が つづいた。",
     "見ない ふりを したけど、あの子の 目が 気に なる。"
+  ],
+    "no_worry": [
+    "「前の ことは やり直せる」と 思えて、にらまれても おちついていられた。",
+    "大丈夫と 思おうと したけど、まだ にらまれると こわかった。"
+  ],
+    "later_down": [
+    "こわさは あとに 回して、今 何を 言うかに 集中できた。",
+    "あとに しようと したけど、まだ 前の ことが 頭に うかんだ。"
+  ],
+    "switch_on": [
+    "「よし、次！」と 小さく 言って、カッと した 気もちを 外へ 出せた。",
+    "声に 出したけど、まだ 体に 力が 入ったままだった。"
   ]
  },
     "fight_near": {
@@ -2124,6 +2346,26 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "sukkiri": [
     "もやもやを 友だちに 話したら、少し すっきりした。",
     "話して みたけど、まだ もやもやが 残っている。"
+  ],
+    "later_down": [
+    "さびしい 気もちは あとに して、おにごっこの 様子を よく 見られた。",
+    "あとに しようと したけど、まだ さびしさで 足が 止まった。"
+  ],
+    "switch_on": [
+    "「よし、行こう！」と 声に 出したら、もじもじが へって 前に 出られた。",
+    "声に 出したけど、まだ 「入れて」の 声は 出なかった。"
+  ],
+    "trial_error": [
+    "声が とどかなかったので 近くで もう一度 言ったら、入れて もらえた。",
+    "言い方を 変えて みたけど、まだ 気づいて もらえなかった。"
+  ],
+    "yokkoisho": [
+    "「よっこいしょ」と ベンチから 立って、みんなの 近くまで 行けた。",
+    "かけ声を かけたけど、まだ 体が ベンチから はなれなかった。"
+  ],
+    "omoshiro": [
+    "「どう 入るか 作せんだ」と 思ったら、楽しく 声を かけられた。",
+    "面白く 思おうと したけど、まだ 声を かけるのが こわかった。"
   ]
  },
     "teased": {
@@ -2234,6 +2476,18 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "sort_out": [
     "言われた ことを 書き出したら、先生に つたえやすく なった。",
     "書き出したけど、まだ どうしたいか 決まらない。"
+  ],
+    "no_worry": [
+    "「言われても 自分は 自分」と 思えて、わらい声に 心が ゆれなかった。",
+    "大丈夫と 思おうと したけど、まだ 言われた ことが ささっている。"
+  ],
+    "later_down": [
+    "くやしさは あとに 回して、今 どう 動くかを おちついて 考えられた。",
+    "あとに しようと したけど、また わらわれて むねが いたかった。"
+  ],
+    "switch_on": [
+    "「よし、次！」と 気もちを 切りかえ、ことばに ふり回されなかった。",
+    "切りかえようと したけど、まだ わらい声が 耳に のこった。"
   ]
  },
     "rumor": {
@@ -2324,6 +2578,18 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "firm_reply": [
     "「かげで 言わないで」と 目を 見て 言ったら、話が 止まった。",
     "言ったけど、「言ってないよ」と ごまかされた。"
+  ],
+    "no_worry": [
+    "「聞きまちがいかも しれない」と 思えて、どきどきが おさまった。",
+    "大丈夫と 思おうと したけど、まだ ひそひそ声が 気に なる。"
+  ],
+    "later_down": [
+    "気に なる 気もちは あとに して、次の じゅぎょうへ 向かえた。",
+    "あとに しようと したけど、まだ 自分の 名前が 耳に のこった。"
+  ],
+    "switch_on": [
+    "「よし、次！」と 小さく 言って、もやもやを ふりはらえた。",
+    "声に 出したけど、まだ 何を 話していたか 気に なった。"
   ]
  },
     "team": {
@@ -2430,6 +2696,30 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "sulk": [
     "その場は 言い合いから ぬけられた。でも 自分の 意見は 入らなかった。",
     "すねて はなれたけど、もやもやは 消えなかった。"
+  ],
+    "no_worry": [
+    "「まとまらなくても やり直せる」と 思えて、あせらず 話し合えた。",
+    "大丈夫と 思おうと したけど、まだ 話が まとまらず あせった。"
+  ],
+    "later_down": [
+    "自分の 案が 通らない くやしさは あとに して、話し合いに 集中できた。",
+    "あとに しようと したけど、まだ 自分の 案に こだわって しまった。"
+  ],
+    "switch_on": [
+    "「よし、次！」と 声に 出したら、言い合いの 空気が かわった。",
+    "声に 出したけど、まだ みんな 言い合いを つづけていた。"
+  ],
+    "trial_error": [
+    "まとめ方を 何回か 変えて みたら、みんなが 「それで いい」と 言った。",
+    "やり方を 変えて みたけど、まだ 意見は 二つに 分かれた。"
+  ],
+    "yokkoisho": [
+    "「よっこいしょ」と 気もちを 上げて、話を まとめる 役を 引きうけた。",
+    "かけ声を かけたけど、まだ 話に 入る きっかけが なかった。"
+  ],
+    "omoshiro": [
+    "「いろんな 意見が あって 面白い」と 言ったら、話が 進みはじめた。",
+    "面白がろうと したけど、まだ 言い合いの ほうが 強かった。"
   ]
  },
     "bad_rep": {
@@ -2528,6 +2818,18 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "reframe": [
     "「おこらない ところを 見せる チャンス」と 思えて、落ちついた。",
     "考えなおそうと したけど、まだ くやしい。"
+  ],
+    "no_worry": [
+    "「前の ことは これから 変えられる」と 思えて、顔を 上げて いられた。",
+    "大丈夫と 思おうと したけど、まだ ひそひそ声が つらかった。"
+  ],
+    "later_down": [
+    "かなしさは あとに 回して、いつも どおりに じゅぎょうを うけられた。",
+    "あとに しようと したけど、まだ うわさが 頭から はなれない。"
+  ],
+    "switch_on": [
+    "「よし、次！」と 気もちを 切りかえて、おちついて すごせた。",
+    "切りかえようと したけど、まだ ひそひそ声に むっと した。"
   ]
  },
     "cold_class": {
@@ -2630,6 +2932,30 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     "self_check": [
     "前の ことを ふり返り、次の 声の かけ方を 決められた。",
     "ふり返ったけど、まだ 何が よくなかったか 分からない。"
+  ],
+    "no_worry": [
+    "「うまく いかなくても また 声を かければ いい」と 思えて、楽に なった。",
+    "大丈夫と 思おうと したけど、まだ だまられた ことが 気に なる。"
+  ],
+    "later_down": [
+    "どきっと したのは あとに して、みんなの 様子を おちついて 見られた。",
+    "あとに しようと したけど、まだ その場で かたまって しまった。"
+  ],
+    "switch_on": [
+    "「よし、次！」と 声に 出したら、気まずさが 少し ほどけた。",
+    "声に 出したけど、まだ みんなは 目を 見合わせていた。"
+  ],
+    "trial_error": [
+    "ちがう 遊びを さそって みたら、みんなが 「いいね」と 言って くれた。",
+    "さそい方を 変えて みたけど、まだ 返事は もらえなかった。"
+  ],
+    "yokkoisho": [
+    "「よっこいしょ」と 重い 気もちを 上げて、「入れて」と 言えた。",
+    "かけ声を かけたけど、まだ ことばが のどで 止まった。"
+  ],
+    "omoshiro": [
+    "「どう なかよく なるか 作せんだ」と 思え、明るく 話しかけられた。",
+    "面白く 思おうと したけど、まだ 空気の つめたさが 気に なる。"
   ]
  }
 };
@@ -2643,7 +2969,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 12;
+  var ENGINE_VER = 13;
 
   // --- 乱数 ---
   function rand(s) {
@@ -2667,7 +2993,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
   function fitsEnemy(id, eid) {
     var E = D.ENEMIES[eid], F = D.FIT && D.FIT[eid];
     if (D.CARDS[id].type === 'curse') return true;
-    if (F) return !!F[id] && fits(id, E.ctx, E.term, E.solo);
+    if (F) return !!(F[id] || (D.CARDS[id].from && F[D.CARDS[id].from])) && fits(id, E.ctx, E.term, E.solo);
     return fits(id, E.ctx, E.term, E.solo);
   }
   function fits(id, ctx, term, solo) {
@@ -3407,10 +3733,16 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     if (e.trust) addTrust(s, e.trust, 'event:' + s.event.id, false);
     if (e.yoyu) s.yoyu = Math.max(1, Math.min(s.maxYoyu, s.yoyu + e.yoyu));
     if (e.slack) { s.slack = (s.slack || 0) + e.slack; log(s, { k: 'slack', n: s.slack }); }
+    var evolved = null;
+    if (e.evolve) {
+      var ei = s.deck.indexOf(e.evolve[0]);
+      if (ei >= 0) { s.deck[ei] = e.evolve[1]; evolved = { from: e.evolve[0], to: e.evolve[1] }; log(s, { k: 'evolve', from: e.evolve[0], to: e.evolve[1] }); }
+      else { s.deck.push(e.evolve[1]); evolved = { from: null, to: e.evolve[1] }; log(s, { k: 'gain', card: e.evolve[1], why: 'event:' + s.event.id }); }
+    }
     if (e.addCard) { s.deck.push(e.addCard); log(s, { k: 'gain', card: e.addCard, why: 'event' }); }
     if (e.support) gainSupport(s, e.support, 'event');
     if (e.curse) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'event:' + s.event.id }); }
-    s.event.changes = { stress: y0 - s.yoyu, trust: s.trust - t0, card: e.addCard || null, support: s.items.length > it0 ? e.support : null, curse: e.curse || 0, slack: e.slack || 0 };
+    s.event.changes = { stress: y0 - s.yoyu, trust: s.trust - t0, card: e.addCard || null, support: s.items.length > it0 ? e.support : null, curse: e.curse || 0, slack: e.slack || 0, evolved: evolved };
     s.event.done = i;
     log(s, { k: 'choice', id: s.event.id, i: i });
     return s;
@@ -4206,6 +4538,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
     if (c.trust < 0) out.push(h('span', { class: 'fx bad', text: '信頼 ' + c.trust }));
     if (c.card) out.push(h('span', { class: 'fx guard', text: 'カード「' + E.card(c.card).name.replace(/^「|」$/g, '') + '」を 手に入れた' }));
     if (c.support) out.push(h('span', { class: 'fx guard', text: 'アイテム「' + D.SUPPORTS[c.support].name + '」を 手に入れた' }));
+    if (c.evolved) out.push(h('span', { class: 'fx evo', text: c.evolved.from ? '「' + E.card(c.evolved.from).name + '」が「' + E.card(c.evolved.to).name + '」に しんか！' : 'カード「' + E.card(c.evolved.to).name + '」を 手に入れた' }));
     if (c.curse) out.push(h('span', { class: 'fx bad', text: 'モヤモヤが デッキに 入った' }));
     if (c.slack) out.push(h('span', { class: 'fx bad', text: 'ボスが 少し 大きくなった' }));
     if (!out.length) out.push(h('span', { class: 'fx', text: '変化なし' }));
@@ -4227,6 +4560,7 @@ button.small { min-height: 36px; padding: 4px 10px; font-size: .85rem; white-spa
         : h('div', {}, [
           h('p', { class: 'result', text: ev.options[done].result }),
           changeChips(S.event.changes),
+          S.event.changes && S.event.changes.evolved ? h('div', { class: 'choices evo' }, [cardView(E.card(S.event.changes.evolved.to), { showCtx: true })]) : null,
           h('button', { class: 'primary', onclick: function () { act(function () { E.leaveEvent(S); }); }, text: '次へ' })
         ])
     ]);

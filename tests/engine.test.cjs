@@ -537,3 +537,15 @@ test('対応表：表に ない カードは 控えへ。場面カード・混�
   for (const id of s.deck) if (D.CARDS[id].type !== 'curse') assert.strictEqual(bench.includes(id), !D.FIT.test[id], id);
   assert.ok(!D.ACTS[0].related.includes('forgot_item'));
 });
+
+test('友だちの まね：カードが 1まい 上位に しんかする', () => {
+  const s = E.newRun(1, 1, 'hanoko');
+  const n0 = s.deck.filter((x) => x === 'try_it').length;
+  s.phase = 'event'; s.event = { id: 'friend_retry', done: null };
+  E.chooseEvent(s, 0);
+  assert.strictEqual(s.deck.filter((x) => x === 'try_it').length, n0 - 1);
+  assert.ok(s.deck.includes('trial_error'));
+  assert.deepStrictEqual(s.event.changes.evolved, { from: 'try_it', to: 'trial_error' });
+  for (const [eid, row] of Object.entries(D.FIT)) if (row.try_it) assert.ok(E.fitsEnemy('trial_error', eid) && row.trial_error, eid);
+  for (const [eid, row] of Object.entries(D.FIT)) if (row.endure) assert.ok(row.no_worry && row.later_down && row.switch_on, eid);
+});

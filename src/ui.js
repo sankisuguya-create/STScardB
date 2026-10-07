@@ -479,6 +479,7 @@
     if (c.trust < 0) out.push(h('span', { class: 'fx bad', text: '信頼 ' + c.trust }));
     if (c.card) out.push(h('span', { class: 'fx guard', text: 'カード「' + E.card(c.card).name.replace(/^「|」$/g, '') + '」を 手に入れた' }));
     if (c.support) out.push(h('span', { class: 'fx guard', text: 'アイテム「' + D.SUPPORTS[c.support].name + '」を 手に入れた' }));
+    if (c.evolved) out.push(h('span', { class: 'fx evo', text: c.evolved.from ? '「' + E.card(c.evolved.from).name + '」が「' + E.card(c.evolved.to).name + '」に しんか！' : 'カード「' + E.card(c.evolved.to).name + '」を 手に入れた' }));
     if (c.curse) out.push(h('span', { class: 'fx bad', text: 'モヤモヤが デッキに 入った' }));
     if (c.slack) out.push(h('span', { class: 'fx bad', text: 'ボスが 少し 大きくなった' }));
     if (!out.length) out.push(h('span', { class: 'fx', text: '変化なし' }));
@@ -500,6 +501,7 @@
         : h('div', {}, [
           h('p', { class: 'result', text: ev.options[done].result }),
           changeChips(S.event.changes),
+          S.event.changes && S.event.changes.evolved ? h('div', { class: 'choices evo' }, [cardView(E.card(S.event.changes.evolved.to), { showCtx: true })]) : null,
           h('button', { class: 'primary', onclick: function () { act(function () { E.leaveEvent(S); }); }, text: '次へ' })
         ])
     ]);

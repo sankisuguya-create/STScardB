@@ -41,10 +41,13 @@
   // style: 振り返りのアサーション3分類（aggressive/passive/assertive）
   var CARDS = {
     // --- 初期デッキ ---
+    trial_error: { from: 'try_it', name: 'トライ＆エラーだ！', line: '失敗したら やり方を 変えて、もう一回。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 8, growFail: true, ctx: ['study', 'join', 'stage'] },
+    yokkoisho: { from: 'try_it', name: 'よっこいしょ！', line: '重い 気もちを かけ声で もち上げて、取りかかる。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 7, guard: 4, ctx: ['study', 'join', 'stage'] },
+    omoshiro: { from: 'try_it', name: '面白く なってきた！', line: 'むずかしいほど 面白い、と 言いかえる。', type: 'act', judge: 'good', style: 'assertive', cost: 1, solve: 7, draw: 1, ctx: ['study', 'join', 'stage'] },
     // --- がまんの 上位（時間を やりすごす）と 目を そらす ---
-    no_worry: { name: '失敗したって 大丈夫', line: '「まちがえても、やり直せば いい」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 16 },
-    later_down: { name: 'あとで 落ちこめば いい', line: '「今は とりあえず 前を 向こう。くやしいのは あとで」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 13, draw: 1 },
-    switch_on: { name: '切りかえて いこう', line: '「よし、次！」と 声に 出す。手札の パニックと モヤモヤを 外へ。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 10, clearPanicAll: true, clearMoya: true },
+    no_worry: { from: 'endure', name: '失敗したって 大丈夫', line: '「まちがえても、やり直せば いい」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 16 },
+    later_down: { from: 'endure', name: 'あとで 落ちこめば いい', line: '「今は とりあえず 前を 向こう。くやしいのは あとで」', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 13, draw: 1 },
+    switch_on: { from: 'endure', name: '切りかえて いこう', line: '「よし、次！」と 声に 出す。手札の パニックと モヤモヤを 外へ。', type: 'calm', judge: 'good', style: 'assertive', cost: 1, guard: 10, clearPanicAll: true, clearMoya: true },
     look_away: { name: '現実から 目を そらす', line: '「見なかった ことに しよう…」', type: 'impulse', judge: 'impulse', style: 'passive', cost: 0, guard: 22, curse: true },
     try_it: { name: 'トライする', line: 'とにかく 一度 やってみる。', type: 'act', judge: 'neutral', style: 'assertive', cost: 1, solve: 5, ctx: ['study', 'join', 'stage'] },
     endure: { name: 'がまんする', line: 'ぐっと こらえる。', type: 'basic', judge: 'neutral', style: 'passive', cost: 1, guard: 7 },
@@ -411,6 +414,96 @@
         { label: '見なかったことにする', effects: {}, result: 'そのまま 席にもどった。' }
       ]
     },
+    friend_retry: {
+      title: '友だちの さか上がり',
+      text: '体育の 時間。友だちが さか上がりで 何回 落ちても「もう一回！」と 足の 位置を 変えて ためしている。',
+      options: [
+        { label: '自分も まねして、やり方を 変えながら ためす', effects: { trust: 1, evolve: ['try_it', 'trial_error'] }, result: '「失敗したら、どこを 変えるか 考えれば いいんだ」と 気づいた。' },
+        { label: '「すごいね」と 声を かける', effects: { trust: 1 }, result: '友だちが「ありがとう！」と わらった。' },
+        { label: '見ているだけに する', effects: {}, result: '休み時間が おわった。' }
+      ]
+    },
+    friend_heavy: {
+      title: 'そうじの 時間',
+      text: '重い つくえを はこぶ 当番。友だちが「よっこいしょ！」と わらいながら 持ち上げている。',
+      options: [
+        { label: '自分も「よっこいしょ！」と 声を 出して 運ぶ', effects: { trust: 1, evolve: ['try_it', 'yokkoisho'] }, result: '声を 出すと、ふしぎと 体が 動いた。めんどうな ことも 取りかかれそうだ。' },
+        { label: '「手つだうよ」と 反対がわを 持つ', effects: { trust: 1, yoyu: 4 }, result: '二人で 運んだら すぐ おわった。' },
+        { label: '自分の 分だけ だまって 運ぶ', effects: {}, result: 'つくえは 運びおわった。' }
+      ]
+    },
+    friend_fun: {
+      title: 'むずかしい パズル',
+      text: '休み時間、友だちが むずかしい パズルに 何度も つまずきながら「面白く なってきた！」と 目を かがやかせている。',
+      options: [
+        { label: '自分も いっしょに やってみる', effects: { trust: 1, evolve: ['try_it', 'omoshiro'] }, result: 'むずかしい ところほど、とけた ときが うれしい。「むずかしい」が「面白い」に 見えてきた。' },
+        { label: '「がんばって」と おうえんする', effects: { trust: 1 }, result: '「とけたら 見せるね！」と 言ってくれた。' },
+        { label: '「むずかしそう…」と はなれる', effects: {}, result: '友だちは 一人で つづけていた。' }
+      ]
+    },
+    friend_shrug: {
+      title: 'テストが 返ってきた',
+      text: '友だちの テストに ばつが いくつも ある。でも「失敗したって 大丈夫。どこを まちがえたか わかったし」と 言っている。',
+      options: [
+        { label: 'その 考え方を まねしてみる', effects: { trust: 1, evolve: ['endure', 'no_worry'] }, result: 'まちがいは「わかってない ところの 目じるし」なんだ、と 思えた。' },
+        { label: 'いっしょに やり直しを する', effects: { trust: 1, addCard: 'review_notes' }, result: '二人で 見直したら、自分の まちがいも 見つかった。' },
+        { label: '自分の 点数だけ 気にする', effects: { yoyu: -4 }, result: '点数の ことが 頭から はなれなかった。' }
+      ]
+    },
+    friend_later: {
+      title: '試合に 負けた 日',
+      text: 'クラス対こうの ドッジボールで 負けた。くやしそうな 友だちが「くやしいのは あとで。今は 次の チームを おうえんしよう！」と 言った。',
+      options: [
+        { label: '自分も 気もちを あとに まわして おうえんする', effects: { trust: 1, evolve: ['endure', 'later_down'] }, result: 'おうえんしているうちに、気もちが 少し 前を 向いた。家で 思いきり くやしがろう。' },
+        { label: '「くやしいね」と 気もちを 話す', effects: { trust: 1, yoyu: 6 }, result: '「だよね」と 友だちも うなずいた。少し 楽に なった。' },
+        { label: 'だまって すわりこむ', effects: { yoyu: -4 }, result: 'しばらく 何も 考えられなかった。' }
+      ]
+    },
+    friend_switch: {
+      title: '注意された 友だち',
+      text: '友だちが ろうかを 走って 先生に 注意された。「はい。よし、次！」と すぐに 歩き出した。',
+      options: [
+        { label: 'その 切りかえを まねしてみる', effects: { trust: 1, evolve: ['endure', 'switch_on'] }, result: '「よし、次！」と 心の 中で 言うと、頭が すっきりした。' },
+        { label: '「大丈夫？」と 声を かける', effects: { trust: 1 }, result: '「うん、もう 平気！」と 笑顔で 返ってきた。' },
+        { label: '「見ちゃった」と 笑う', effects: { trust: -1 }, result: '友だちは ちょっと いやそうな 顔を した。' }
+      ]
+    },
+    lost_wallet: {
+      title: '落とし物',
+      text: 'ろうかに キャラクターの キーホルダーが 落ちている。だれのだろう。',
+      options: [
+        { label: '職員室に とどける', effects: { trust: 1 }, result: '次の 日、持ち主の 子が「ありがとう」と 言いに 来た。' },
+        { label: '「だれのー？」と 教室で 聞く', effects: { trust: 1, yoyu: 2 }, result: '「ぼくの！」と すぐに 見つかった。' },
+        { label: '見なかった ことに する', effects: {}, result: 'ずっと そこに 落ちていた。' }
+      ]
+    },
+    new_kid: {
+      title: '転校生',
+      text: '今日 来た 転校生が、休み時間に 一人で すわっている。',
+      options: [
+        { label: '「いっしょに 遊ぼう」と さそう', effects: { trust: 2, yoyu: 4 }, result: '転校生は ほっとした 顔で 立ち上がった。' },
+        { label: 'となりに すわって 話しかける', effects: { trust: 1, addCard: 'talk' }, result: '好きな まんがが 同じだった。' },
+        { label: '気に なるけど そのままに する', effects: {}, result: '転校生は ずっと 本を 見ていた。' }
+      ]
+    },
+    rainy_day: {
+      title: '雨の 休み時間',
+      text: '雨で 外に 出られない。教室は ざわざわ している。',
+      options: [
+        { label: '友だちと トランプを する', effects: { yoyu: 12 }, result: 'わらいすぎて おなかが いたくなった。' },
+        { label: '本を 読む', effects: { yoyu: 8 }, result: '物語の 世界に 入りこんで、気もちが 落ちついた。' },
+        { label: 'ぼーっと 外を 見る', effects: { yoyu: 4 }, result: '雨の 音を 聞いていた。' }
+      ]
+    },
+    neighbor: {
+      title: '近所の 人',
+      text: '帰り道、近所の おばあさんが 花に 水を あげている。',
+      options: [
+        { label: '「こんにちは」と あいさつする', effects: { trust: 1, yoyu: 6 }, result: '「おかえり。毎日 えらいね」と 言ってもらえた。' },
+        { label: '会しゃくだけ する', effects: { yoyu: 2 }, result: 'おばあさんも にっこり した。' },
+        { label: '急いで 通りすぎる', effects: {}, result: '家に ついた。' }
+      ]
+    },
     recess: {
       repeat: true,
       title: '休み時間',
@@ -492,9 +585,9 @@
   // お試し版：4段＋ボス。各段は2マスから1つ選ぶ
   // 1層＝7段＋ボス。課題の半分以上は ボスに 関連する課題（related）。関連する課題を 乗りこえるたびに ボスの ハートが へる
   var ACTS = [
-    { name: '教室', boss: 'test', related: ['dunno', 'homework'], others: ['forgot_item', 'bumped', 'left_out'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'forgot', 'friend_trouble', 'library', 'family_talk', 'recess'] },
-    { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'friend_trouble', 'library', 'family_talk', 'recess'] },
-    { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'library', 'family_talk', 'friend_trouble', 'recess'] }
+    { name: '教室', boss: 'test', related: ['dunno', 'homework'], others: ['forgot_item', 'bumped', 'left_out'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'forgot', 'friend_trouble', 'library', 'family_talk', 'friend_retry', 'friend_shrug', 'lost_wallet', 'rainy_day', 'recess'] },
+    { name: '友だち', boss: 'friend_fight', related: ['misunder', 'bumped', 'rumor'], others: ['left_out', 'dunno'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'friend_trouble', 'library', 'family_talk', 'friend_heavy', 'friend_later', 'new_kid', 'friend_switch', 'recess'] },
+    { name: '行事', boss: 'presentation', related: ['practice', 'team'], others: ['left_out', 'rumor'], elites: ['teased'], dangers: ['fight_near', 'stranger'], events: ['recess', 'library', 'family_talk', 'friend_trouble', 'friend_fun', 'friend_switch', 'neighbor', 'friend_later', 'recess'] }
   ];
   var ROUTES = [
     { id: 'hard', name: 'しんどいが 力が つく道', note: '課題に 向き合う マスが 多い（4つ）。ボスが 弱くなり、成長しやすい', nodes: ['battle', 'mystery', 'battle', 'event', 'battle', 'mystery', 'battle', 'event', 'rest'] },

@@ -4,7 +4,7 @@
   'use strict';
   var D = (typeof module !== 'undefined' && module.exports) ? require('./data.js') : root.SST_DATA;
 
-  var ENGINE_VER = 12;
+  var ENGINE_VER = 13;
 
   // --- 乱数 ---
   function rand(s) {
@@ -28,7 +28,7 @@
   function fitsEnemy(id, eid) {
     var E = D.ENEMIES[eid], F = D.FIT && D.FIT[eid];
     if (D.CARDS[id].type === 'curse') return true;
-    if (F) return !!F[id] && fits(id, E.ctx, E.term, E.solo);
+    if (F) return !!(F[id] || (D.CARDS[id].from && F[D.CARDS[id].from])) && fits(id, E.ctx, E.term, E.solo);
     return fits(id, E.ctx, E.term, E.solo);
   }
   function fits(id, ctx, term, solo) {
@@ -768,10 +768,16 @@
     if (e.trust) addTrust(s, e.trust, 'event:' + s.event.id, false);
     if (e.yoyu) s.yoyu = Math.max(1, Math.min(s.maxYoyu, s.yoyu + e.yoyu));
     if (e.slack) { s.slack = (s.slack || 0) + e.slack; log(s, { k: 'slack', n: s.slack }); }
+    var evolved = null;
+    if (e.evolve) {
+      var ei = s.deck.indexOf(e.evolve[0]);
+      if (ei >= 0) { s.deck[ei] = e.evolve[1]; evolved = { from: e.evolve[0], to: e.evolve[1] }; log(s, { k: 'evolve', from: e.evolve[0], to: e.evolve[1] }); }
+      else { s.deck.push(e.evolve[1]); evolved = { from: null, to: e.evolve[1] }; log(s, { k: 'gain', card: e.evolve[1], why: 'event:' + s.event.id }); }
+    }
     if (e.addCard) { s.deck.push(e.addCard); log(s, { k: 'gain', card: e.addCard, why: 'event' }); }
     if (e.support) gainSupport(s, e.support, 'event');
     if (e.curse) { s.deck.push('moyamoya'); log(s, { k: 'curse', why: 'event:' + s.event.id }); }
-    s.event.changes = { stress: y0 - s.yoyu, trust: s.trust - t0, card: e.addCard || null, support: s.items.length > it0 ? e.support : null, curse: e.curse || 0, slack: e.slack || 0 };
+    s.event.changes = { stress: y0 - s.yoyu, trust: s.trust - t0, card: e.addCard || null, support: s.items.length > it0 ? e.support : null, curse: e.curse || 0, slack: e.slack || 0, evolved: evolved };
     s.event.done = i;
     log(s, { k: 'choice', id: s.event.id, i: i });
     return s;
