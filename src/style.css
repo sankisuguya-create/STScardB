@@ -186,7 +186,7 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 @keyframes pulse { 50% { opacity: .55; } }
 @keyframes deal { from { transform: translate(-60vw, 40px) rotate(-25deg) scale(.4); opacity: 0; } to { transform: translateY(var(--lift, 0)) rotate(var(--rot, 0deg)); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
-.monster.f2 svg { width: 280px; height: 266px; display: block; animation: appear .35s ease-out both; }
+.monster.f2 svg { width: 280px; height: 280px; display: block; animation: appear .35s ease-out both; }
 @keyframes appear { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
 .nigates { display: flex; gap: 6px; }
 .chip.nigate { box-shadow: inset 0 -4px 0 var(--curse); }
