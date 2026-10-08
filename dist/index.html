@@ -1297,10 +1297,22 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     stranger: '道で出会った知らない大人'
   };
 
-  function svg(id) {
-    var scene = SCENES[id];
+  // 課題IDと描画シーンを明示的に対応づける。
+  var ENEMY_ILLUSTRATIONS = {
+    dunno: 'dunno',
+    bumped: 'bumped',
+    left_out: 'left_out',
+    teased: 'teased',
+    presentation: 'presentation',
+    fight_near: 'fight_near',
+    stranger: 'stranger'
+  };
+
+  function svg(enemyId) {
+    var sceneId = ENEMY_ILLUSTRATIONS[enemyId];
+    var scene = sceneId && SCENES[sceneId];
     if (!scene) return null;
-    return '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + LABELS[id] + '">' + scene() + '</svg>';
+    return '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + LABELS[enemyId] + '">' + scene() + '</svg>';
   }
 
   root.SST_ILLUST = { svg: svg };
