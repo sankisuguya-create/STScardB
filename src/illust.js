@@ -43,7 +43,7 @@
     var gaze = options.look === 'left' ? -4 : options.look === 'right' ? 4 : 0;
 
     return '<g transform="translate(' + x + ' ' + y + ') scale(' + scale + ')">' +
-      '<path d="M-12 0 L-15 18 M12 0 L15 18" stroke="' + LINE + '" stroke-width="9" stroke-linecap="round"/>' +
+      '<path d="M-12 0 L-15 8 M12 0 L15 8" stroke="' + LINE + '" stroke-width="9" stroke-linecap="round"/>' +
       '<path d="M-12 0 L-15 18 M12 0 L15 18" stroke="#35415a" stroke-width="4" stroke-linecap="round"/>' +
       limbs +
       '<path d="M-27 0 V-38 Q-27 -58 0 -58 Q27 -58 27 -38 V0 Z" fill="' + shirt + '" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/>' +
