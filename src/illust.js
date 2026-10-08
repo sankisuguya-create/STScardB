@@ -83,7 +83,7 @@
   function teased() {
     return person(58, 184, .78, { mouth: 'worried', shirt: '#3b6fd8', pose: 'reach', look: 'right' }) +
       person(142, 178, .72, { mouth: 'laugh', shirt: '#f08c3a', hair: '#d9a400', pose: 'point', look: 'left' }) +
-      person(177, 181, .62, { mouth: 'laugh', shirt: '#2b8a3e', hair: '#2a2a2a', pose: 'clap', look: 'left' }) +
+      person(173, 181, .55, { mouth: 'laugh', shirt: '#2b8a3e', hair: '#2a2a2a', pose: 'clap', look: 'left' }) +
       '<path d="M116 74 Q125 64 134 74 M150 65 Q159 55 168 65" fill="none" stroke="' + C.purple + '" stroke-width="4" stroke-linecap="round"/>';
   }
 
@@ -130,10 +130,20 @@
     stranger: stranger
   };
 
+  var LABELS = {
+    dunno: 'わからない問題のプリント',
+    bumped: 'ろうかでぶつかって驚いた子',
+    left_out: '遊びの輪に入れない子',
+    teased: 'からかわれて困っている子と、笑っている子',
+    presentation: '発表する子と、聞いているクラスの子',
+    fight_near: 'けんかをしている二人',
+    stranger: '道で出会った知らない大人'
+  };
+
   function svg(id) {
     var scene = SCENES[id];
     if (!scene) return null;
-    return '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + id + '">' + scene() + '</svg>';
+    return '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + LABELS[id] + '">' + scene() + '</svg>';
   }
 
   root.SST_ILLUST = { svg: svg };
