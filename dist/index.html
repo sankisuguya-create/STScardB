@@ -1210,6 +1210,8 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     var gaze = options.look === 'left' ? -4 : options.look === 'right' ? 4 : 0;
 
     return '<g transform="translate(' + x + ' ' + y + ') scale(' + scale + ')">' +
+      '<path d="M-12 0 L-15 8 M12 0 L15 8" stroke="' + LINE + '" stroke-width="9" stroke-linecap="round"/>' +
+      '<path d="M-12 0 L-15 18 M12 0 L15 18" stroke="#35415a" stroke-width="4" stroke-linecap="round"/>' +
       limbs +
       '<path d="M-27 0 V-38 Q-27 -58 0 -58 Q27 -58 27 -38 V0 Z" fill="' + shirt + '" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/>' +
       '<g transform="translate(0 -84) ' + headTurn + '">' +
@@ -1231,21 +1233,25 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
 
   function bumped() {
     return person(100, 181, 1.05, { mouth: 'o', shirt: C.green, pose: 'up', look: 'left' }) +
-      '<path d="M52 82 l-14 -8 M55 95 l-15 2 M144 70 l12 -9" stroke="' + C.yellow + '" stroke-width="5" stroke-linecap="round"/>';
+      '<path d="M52 82 l-14 -8 M55 95 l-15 2 M144 70 l12 -9" stroke="' + C.yellow + '" stroke-width="5" stroke-linecap="round"/>' +
+      '<path d="M52 151 Q64 139 76 151" fill="none" stroke="' + LINE + '" stroke-width="3" stroke-dasharray="4 5"/>';
   }
 
   function leftOut() {
-    return person(55, 177, .78, { mouth: 'laugh', shirt: C.orange, look: 'right' }) +
+    return '<path d="M44 132 Q100 60 156 132" fill="none" stroke="' + C.pale + '" stroke-width="4" stroke-dasharray="7 6"/>' +
+      person(55, 177, .78, { mouth: 'laugh', shirt: C.orange, look: 'right' }) +
       person(145, 177, .78, { mouth: 'laugh', shirt: '#3b6fd8', hair: '#d9a400', look: 'left' }) +
       '<circle cx="100" cy="161" r="11" fill="' + C.yellow + '" stroke="' + LINE + '" stroke-width="4"/>' +
       '<path d="M94 161 Q100 151 106 161 Q100 171 94 161" fill="none" stroke="' + LINE + '" stroke-width="2"/>' +
-      person(100, 186, .68, { mouth: 'worried', shirt: '#7a4b2a', look: 'right' });
+      person(100, 186, .68, { mouth: 'worried', shirt: '#7a4b2a', look: 'right' }) +
+      '<path d="M76 170 H67 M124 170 H133" stroke="' + C.red + '" stroke-width="4" stroke-linecap="round"/>';
   }
 
   function teased() {
     return person(58, 184, .78, { mouth: 'worried', shirt: '#3b6fd8', pose: 'reach', look: 'right' }) +
       person(142, 178, .72, { mouth: 'laugh', shirt: '#f08c3a', hair: '#d9a400', pose: 'point', look: 'left' }) +
-      person(173, 181, .55, { mouth: 'laugh', shirt: '#2b8a3e', hair: '#2a2a2a', pose: 'clap', look: 'left' });
+      person(173, 181, .55, { mouth: 'laugh', shirt: '#2b8a3e', hair: '#2a2a2a', pose: 'clap', look: 'left' }) +
+      '<path d="M116 74 Q125 64 134 74 M150 65 Q159 55 168 65" fill="none" stroke="' + C.purple + '" stroke-width="4" stroke-linecap="round"/>';
   }
 
   function audiencePerson(x, y, scale, shirt, hair) {
@@ -1260,13 +1266,15 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
       audiencePerson(165, 185, .47, C.orange, '#d9a400') +
       audiencePerson(67, 185, .5, C.green, '#2a2a2a') +
       audiencePerson(133, 185, .5, '#9b7fe0', '#6b4226') +
-      person(101, 179, .86, { mouth: 'worried', shirt: '#3b6fd8', pose: 'open', look: 'left' });
+      person(101, 179, .86, { mouth: 'worried', shirt: '#3b6fd8', pose: 'open', look: 'left' }) +
+      '<path d="M78 62 Q100 48 122 62" fill="none" stroke="' + C.yellow + '" stroke-width="4" stroke-dasharray="3 5"/>';
   }
 
   function fightNear() {
     return person(59, 184, .88, { mouth: 'angry', shirt: C.red, hair: '#2a2a2a', pose: 'reach', look: 'right' }) +
       person(141, 184, .88, { mouth: 'angry', shirt: '#5c6b8a', pose: 'reach', look: 'left' }) +
-      '<path d="M96 44 l8 14 -10 2 8 14" fill="none" stroke="' + C.yellow + '" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>';
+      '<path d="M96 44 l8 14 -10 2 8 14" fill="none" stroke="' + C.yellow + '" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>' +
+      '<path d="M76 116 l-10 -6 M124 116 l10 -6" stroke="' + C.red + '" stroke-width="4" stroke-linecap="round"/>';
   }
 
   // 知らない大人は穏やかな表情のまま描き、危険の判断を見た目に結びつけない。
@@ -1274,7 +1282,9 @@ main { flex: 1; overflow: auto; padding: 10px 14px; }
     return '<path d="M35 178 H165" stroke="' + C.pale + '" stroke-width="4"/>' +
       person(111, 187, 1.04, { mouth: 'smile', shirt: '#4a4f63', hair: '#6e7781', glasses: true, pose: 'open' }) +
       '<path d="M79 83 Q111 52 143 83 Z" fill="' + C.purple + '" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/>' +
-      '<rect x="72" y="80" width="78" height="8" rx="4" fill="' + C.purple + '" stroke="' + LINE + '" stroke-width="4"/>';
+      '<rect x="72" y="80" width="78" height="8" rx="4" fill="' + C.purple + '" stroke="' + LINE + '" stroke-width="4"/>' +
+      '<path d="M37 101 H70 M37 114 H63" stroke="' + C.blue + '" stroke-width="5" stroke-linecap="round"/>' +
+      '<circle cx="42" cy="96" r="4" fill="' + C.yellow + '"/>';
   }
 
   var SCENES = {
