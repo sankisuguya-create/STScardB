@@ -65,12 +65,11 @@
   function bumped() {
     return person(100, 181, 1.05, { mouth: 'o', shirt: C.green, pose: 'up', look: 'left' }) +
       '<path d="M52 82 l-14 -8 M55 95 l-15 2 M144 70 l12 -9" stroke="' + C.yellow + '" stroke-width="5" stroke-linecap="round"/>' +
-      '<path d="M52 151 Q64 139 76 151" fill="none" stroke="' + LINE + '" stroke-width="3" stroke-dasharray="4 5"/>';
+
   }
 
   function leftOut() {
-    return '<path d="M44 132 Q100 60 156 132" fill="none" stroke="' + C.pale + '" stroke-width="4" stroke-dasharray="7 6"/>' +
-      person(55, 177, .78, { mouth: 'laugh', shirt: C.orange, look: 'right' }) +
+    return person(55, 177, .78, { mouth: 'laugh', shirt: C.orange, look: 'right' }) +
       person(145, 177, .78, { mouth: 'laugh', shirt: '#3b6fd8', hair: '#d9a400', look: 'left' }) +
       '<circle cx="100" cy="161" r="11" fill="' + C.yellow + '" stroke="' + LINE + '" stroke-width="4"/>' +
       '<path d="M94 161 Q100 151 106 161 Q100 171 94 161" fill="none" stroke="' + LINE + '" stroke-width="2"/>' +
@@ -80,8 +79,7 @@
   function teased() {
     return person(58, 184, .78, { mouth: 'worried', shirt: '#3b6fd8', pose: 'reach', look: 'right' }) +
       person(142, 178, .72, { mouth: 'laugh', shirt: '#f08c3a', hair: '#d9a400', pose: 'point', look: 'left' }) +
-      person(173, 181, .55, { mouth: 'laugh', shirt: '#2b8a3e', hair: '#2a2a2a', pose: 'clap', look: 'left' }) +
-      '<path d="M116 74 Q125 64 134 74 M150 65 Q159 55 168 65" fill="none" stroke="' + C.purple + '" stroke-width="4" stroke-linecap="round"/>';
+      person(173, 181, .55, { mouth: 'laugh', shirt: '#2b8a3e', hair: '#2a2a2a', pose: 'clap', look: 'left' });
   }
 
   function audiencePerson(x, y, scale, shirt, hair) {
@@ -96,8 +94,7 @@
       audiencePerson(165, 185, .47, C.orange, '#d9a400') +
       audiencePerson(67, 185, .5, C.green, '#2a2a2a') +
       audiencePerson(133, 185, .5, '#9b7fe0', '#6b4226') +
-      person(101, 179, .86, { mouth: 'worried', shirt: '#3b6fd8', pose: 'open', look: 'left' }) +
-      '<path d="M78 62 Q100 48 122 62" fill="none" stroke="' + C.yellow + '" stroke-width="4" stroke-dasharray="3 5"/>';
+      person(101, 179, .86, { mouth: 'worried', shirt: '#3b6fd8', pose: 'open', look: 'left' });
   }
 
   function fightNear() {
@@ -111,9 +108,7 @@
     return '<path d="M35 178 H165" stroke="' + C.pale + '" stroke-width="4"/>' +
       person(111, 187, 1.04, { mouth: 'smile', shirt: '#4a4f63', hair: '#6e7781', glasses: true, pose: 'open' }) +
       '<path d="M79 83 Q111 52 143 83 Z" fill="' + C.purple + '" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/>' +
-      '<rect x="72" y="80" width="78" height="8" rx="4" fill="' + C.purple + '" stroke="' + LINE + '" stroke-width="4"/>' +
-      '<path d="M37 101 H70 M37 114 H63" stroke="' + C.blue + '" stroke-width="5" stroke-linecap="round"/>' +
-      '<circle cx="42" cy="96" r="4" fill="' + C.yellow + '"/>';
+      '<rect x="72" y="80" width="78" height="8" rx="4" fill="' + C.purple + '" stroke="' + LINE + '" stroke-width="4"/>';
   }
 
   var SCENES = {
