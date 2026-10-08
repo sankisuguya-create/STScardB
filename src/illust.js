@@ -43,8 +43,6 @@
     var gaze = options.look === 'left' ? -4 : options.look === 'right' ? 4 : 0;
 
     return '<g transform="translate(' + x + ' ' + y + ') scale(' + scale + ')">' +
-      '<path d="M-12 0 L-15 8 M12 0 L15 8" stroke="' + LINE + '" stroke-width="9" stroke-linecap="round"/>' +
-      '<path d="M-12 0 L-15 18 M12 0 L15 18" stroke="#35415a" stroke-width="4" stroke-linecap="round"/>' +
       limbs +
       '<path d="M-27 0 V-38 Q-27 -58 0 -58 Q27 -58 27 -38 V0 Z" fill="' + shirt + '" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/>' +
       '<g transform="translate(0 -84) ' + headTurn + '">' +
@@ -76,8 +74,7 @@
       person(145, 177, .78, { mouth: 'laugh', shirt: '#3b6fd8', hair: '#d9a400', look: 'left' }) +
       '<circle cx="100" cy="161" r="11" fill="' + C.yellow + '" stroke="' + LINE + '" stroke-width="4"/>' +
       '<path d="M94 161 Q100 151 106 161 Q100 171 94 161" fill="none" stroke="' + LINE + '" stroke-width="2"/>' +
-      person(100, 186, .68, { mouth: 'worried', shirt: '#7a4b2a', look: 'right' }) +
-      '<path d="M76 170 H67 M124 170 H133" stroke="' + C.red + '" stroke-width="4" stroke-linecap="round"/>';
+      person(100, 186, .68, { mouth: 'worried', shirt: '#7a4b2a', look: 'right' });
   }
 
   function teased() {
@@ -106,8 +103,7 @@
   function fightNear() {
     return person(59, 184, .88, { mouth: 'angry', shirt: C.red, hair: '#2a2a2a', pose: 'reach', look: 'right' }) +
       person(141, 184, .88, { mouth: 'angry', shirt: '#5c6b8a', pose: 'reach', look: 'left' }) +
-      '<path d="M96 44 l8 14 -10 2 8 14" fill="none" stroke="' + C.yellow + '" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>' +
-      '<path d="M76 116 l-10 -6 M124 116 l10 -6" stroke="' + C.red + '" stroke-width="4" stroke-linecap="round"/>';
+      '<path d="M96 44 l8 14 -10 2 8 14" fill="none" stroke="' + C.yellow + '" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>';
   }
 
   // 知らない大人は穏やかな表情のまま描き、危険の判断を見た目に結びつけない。
