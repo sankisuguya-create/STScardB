@@ -64,8 +64,7 @@
 
   function bumped() {
     return person(100, 181, 1.05, { mouth: 'o', shirt: C.green, pose: 'up', look: 'left' }) +
-      '<path d="M52 82 l-14 -8 M55 95 l-15 2 M144 70 l12 -9" stroke="' + C.yellow + '" stroke-width="5" stroke-linecap="round"/>' +
-
+      '<path d="M52 82 l-14 -8 M55 95 l-15 2 M144 70 l12 -9" stroke="' + C.yellow + '" stroke-width="5" stroke-linecap="round"/>';
   }
 
   function leftOut() {
