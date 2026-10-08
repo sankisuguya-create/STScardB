@@ -6,8 +6,6 @@
   var LINE = '#12172a';
   var SKIN = '#f6cfa8';
   var PALETTE = {
-    ink: LINE,
-    skin: SKIN,
     red: '#e5484d',
     cheek: '#f2a0a0',
     question: '#3b5bdb',
@@ -17,11 +15,12 @@
     hat: '#3d2f63'
   };
 
-  // 表情パーツは名前で選択する。未知の値は既定の笑顔に戻す。
+  // 表情パーツは名前で選択する。旧名 o も受け入れ、未知の値は笑顔に戻す。
   var MOUTHS = {
     smile: '<path d="M-8 6 Q0 13 8 6" fill="none" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/>',
     laugh: '<path d="M-10 4 Q0 18 10 4 Z" fill="' + PALETTE.red + '" stroke="' + LINE + '" stroke-width="3" stroke-linejoin="round"/>',
     surprised: '<ellipse cx="0" cy="8" rx="4" ry="5" fill="' + PALETTE.red + '" stroke="' + LINE + '" stroke-width="3"/>',
+    o: '<ellipse cx="0" cy="8" rx="4" ry="5" fill="' + PALETTE.red + '" stroke="' + LINE + '" stroke-width="3"/>',
     flat: '<path d="M-6 8 H6" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/>',
     angry: '<path d="M-8 10 Q0 2 8 10" fill="none" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round"/><path d="M-16 -14 L-5 -9 M16 -14 L5 -9" stroke="' + LINE + '" stroke-width="3" stroke-linecap="round" transform="translate(0 -2)"/>'
   };
@@ -58,7 +57,7 @@
   }
 
   function bumped() {
-    return kid(100, 178, 1.15, { mouth: 'surprised', shirt: '#2b8a3e', armsUp: true }) +
+    return kid(100, 178, 1.15, { mouth: 'o', shirt: '#2b8a3e', armsUp: true }) +
       '<path d="M150 70 l10 -8 M156 84 l14 -2" stroke="' + LINE + '" stroke-width="4" stroke-linecap="round"/>';
   }
 
@@ -91,6 +90,7 @@
       '<path d="M62 52 Q100 24 138 52 Z" fill="' + PALETTE.hat + '" stroke="' + LINE + '" stroke-width="4" stroke-linejoin="round"/><rect x="56" y="50" width="88" height="8" rx="4" fill="' + PALETTE.hat + '" stroke="' + LINE + '" stroke-width="4"/>';
   }
 
+  // ドット絵ID/カードIDとの衝突を避け、課題IDを描画キーへ明示的に変換する。
   var SCENES = {
     dunno: paper,
     bumped: bumped,
@@ -100,9 +100,19 @@
     fight_near: fightNear,
     stranger: stranger
   };
+  var ENEMY_ILLUSTRATIONS = {
+    dunno: 'dunno',
+    bumped: 'bumped',
+    left_out: 'left_out',
+    teased: 'teased',
+    presentation: 'presentation',
+    fight_near: 'fight_near',
+    stranger: 'stranger'
+  };
 
-  function svg(id) {
-    var scene = SCENES[id];
+  function svg(enemyId) {
+    var sceneId = ENEMY_ILLUSTRATIONS[enemyId];
+    var scene = sceneId && SCENES[sceneId];
     if (!scene) return null;
     return '<svg viewBox="0 0 200 190" xmlns="http://www.w3.org/2000/svg" role="img">' + scene() + '</svg>';
   }
